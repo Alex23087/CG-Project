@@ -1,4 +1,4 @@
-scene_0 = {
+export var scene_0 = {
     startPosition : [ 3.71,0,61.19 ],
 
     photoPosition : [ -55, 0, -80 ],

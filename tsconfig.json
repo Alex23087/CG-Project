@@ -1,0 +1,25 @@
+/*{
+	"compilerOptions": {
+		"target": "es6",
+		"sourceMap": false,
+		//"allowJs": true,
+		"outDir": "tsOut",
+		//"noImplicitAny": true,
+		"strictNullChecks": true,
+		"lib": ["ES2016", "DOM"]
+	},
+	"exclude": ["common/libs/gl-matrix", "tsOut"]
+}*/
+
+{
+	"compilerOptions": {
+	  "strict": false,
+	  "target": "es6",
+	  "sourceMap": true,
+	  "allowJs": true,
+	  "outDir": "tsOut",
+	  "lib": ["es2016", "dom"],
+	  "esModuleInterop": true
+	},
+	"exclude": ["tsOut"]
+  }

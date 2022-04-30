@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 
   <head>
@@ -9,21 +10,21 @@
       textarea.scrollTop = textarea.scrollHeight;
 		}
     </script>
-    
-		<script type="text/javascript" src="./../common/libs/gl-matrix/dist/gl-matrix.js"></script>
-		<script type="text/javascript" src="./../common/libs/matrix-stack.js">				    </script>
-		<script type="text/javascript" src="./../common/shapes/track_maker.js">                  </script>
-		<script type="text/javascript" src="./../common/shapes/building_maker.js">              </script>
-		<script type="text/javascript" src="./../common/shapes/quadrilateral.js">        </script>
-		<script type="text/javascript" src="./../common/shapes/triangle_car.js">			      	</script>
+		<script type="module" src="/tsOut/common/Controls.js"></script>
+		<script type="module" src="/tsOut/common/libs/gl-matrix/dist/gl-matrix.js"></script>
+		<script type="text/javascript" src="/tsOut/common/libs/matrix-stack.js"></script>
+		<script type="text/javascript" src="/tsOut/common/shapes/track_maker.js"></script>
+		<script type="text/javascript" src="/tsOut/common/shapes/building_maker.js"></script>
+		<script type="text/javascript" src="/tsOut/common/shapes/quadrilateral.js"></script>
+		<script type="text/javascript" src="/tsOut/common/shapes/triangle_car.js"></script>
 
-    <script type="text/javascript" src="./../common/shapes/cube.js">			      	</script>
-		<script type="text/javascript" src="./../common/shapes/cylinder.js">			      	</script>
+	    <script type="text/javascript" src="/tsOut/common/shapes/cube.js"></script>
+		<script type="text/javascript" src="/tsOut/common/shapes/cylinder.js"></script>
     
-    <script type="text/javascript" src="./../common/scenes/scene_0.js">			      	</script>
-		<script type="text/javascript" src="./../common/game.js"></script>
-  	<script type="text/javascript" src="./shaders.js">				</script>
-		<script type="text/javascript" src="./main.js">							</script>
+    	<script type="module" src="/tsOut/common/scenes/scene_0.js"></script>
+		<script type="module" src="/tsOut/common/game.js"></script>
+  		<script type="module" src="/tsOut/common/shaders.js"></script>
+		<script type="module" src="/tsOut/renderer_00/main.js"></script>
 
   </head>
 
@@ -42,7 +43,7 @@
 
 <div>
 <label for="cameras">Choose a camera:</label>
-<select name="cameras" id="cameras" onchange="update_camera(this.value)">
+<select name="cameras" id="cameras">
   <option value="0">FollowFromUp</option>
   <option value="1">Chase</option>
 </select>

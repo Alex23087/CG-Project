@@ -1,146 +1,176 @@
+import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js"
 
-		 class Car {
-      constructor(name, start_position){
-         this.name = name;
-         this.position = start_position;
-         this.max_speed = 0.4;
-         this.max_back_speed = 0.05;
-      }
-     
-      isRotatingLeft	 = false;
-      isRotatingRight	 = false;           
-      isAccelerating	 = false;
-      isBraking			   = false;
-      wheelsAngle 		 = 0;
-      speed				     = 0;
-      angle				     = Math.PI;
-      direction  		   = [0.0,0.0,0.0];
-      position			   = [0.0,0.0,0.0];
-      control_keys		 = [];
-      frame            = glMatrix.mat4.create();
-      lastAnimationTime = -1.0;
-       
-      update_step 		 = function( currTime ){
-        if(this.lastAnimationTime === -1){
-          this.lastAnimationTime = currTime;
-          return;
-        }
-			const deltaV = (currTime-this.lastAnimationTime);
-      this.lastAnimationTime = currTime; 
-      this.isRotatingLeft  = this.control_keys['ArrowLeft'];
-      this.isRotatingRight = this.control_keys['ArrowRight'];
-      this.isAccelerating  = this.control_keys['ArrowUp'];
-      this.isBraking 			 = this.control_keys['ArrowDown'];
-            
-     if (this.isRotatingLeft){
-          this.wheelsAngle += .004;
-        if( this.wheelsAngle > 0.3)   
-           this.wheelsAngle = .3;
-       }
-       else
-     if (this.isRotatingRight){
-          this.wheelsAngle -= .004;
-          if( this.wheelsAngle < -0.3)   
-           this.wheelsAngle  = -.3;
-       }       
-       else 
-      this.wheelsAngle*= 1.0/(1.0+0.5*Math.abs(this.speed));
-       
-      if(this.isAccelerating && this.speed < 0  ||this.isBraking && this.speed > 0 )
-        this.speed *= 0.88;
-        
-      if (!this.isAccelerating && !this.isBraking ) 
-        this.speed *= 0.98;
-          
-      if(this.isAccelerating) 	 	
-          this.speed +=deltaV;
-        
-      if(this.isBraking) 	 	
-          this.speed -=deltaV;
+interface StringIndexedBooleanArray{
+    [index: string]: boolean
+}
 
-      if(this.speed>this.max_speed)
-        this.speed  = this.max_speed;
+export class Car {
+	name: string
+	position: vec3
+	max_speed: number
+	max_back_speed: number
+	isRotatingLeft: boolean
+	isRotatingRight: boolean
+	isAccelerating: boolean
+	isBraking: boolean
+	wheelsAngle: number
+	speed: number
+	angle: number
+	direction: vec3
+	control_keys: StringIndexedBooleanArray
+	frame: mat4
+	lastAnimationTime: number
 
-      if(this.speed < -this.max_back_speed)
-       this.speed = -this.max_back_speed;
-        
-			this.angle += this.wheelsAngle*this.speed;
+	constructor(name: string, start_position: vec3){
+		this.name = name;
+		this.position = start_position;
+		this.max_speed = 0.4;
+		this.max_back_speed = 0.05;
+	 
+		this.isRotatingLeft	 = false;
+		this.isRotatingRight	 = false;           
+		this.isAccelerating	 = false;
+		this.isBraking			   = false;
+		this.wheelsAngle 		 = 0;
+		this.speed				     = 0;
+		this.angle				     = Math.PI;
+		this.direction  		   = [0.0,0.0,0.0];
+		this.position			   = [0.0,0.0,0.0];
+		this.control_keys = [] as unknown as StringIndexedBooleanArray;
+		this.frame            = glMatrix.mat4.create();
+		this.lastAnimationTime = -1.0;
+	}
+	   
+	update_step(currTime: number){
+		if(this.lastAnimationTime === -1){
+			this.lastAnimationTime = currTime;
+			return;
+		}
+		const deltaV = (currTime-this.lastAnimationTime);
+		this.lastAnimationTime = currTime;
+		this.isRotatingLeft = this.control_keys['ArrowLeft'];
+		this.isRotatingRight = this.control_keys['ArrowRight'];
+		this.isAccelerating  = this.control_keys['ArrowUp'];
+		this.isBraking = this.control_keys['ArrowDown'];
+			
+		if(this.isRotatingLeft){
+			this.wheelsAngle += .004;
+		if( this.wheelsAngle > 0.3)   
+			this.wheelsAngle = .3;
+		}
+		else
+		if(this.isRotatingRight){
+			this.wheelsAngle -= .004;
+			if(this.wheelsAngle < -0.3) {  
+				this.wheelsAngle  = -.3;
+			}
+		}else{
+			this.wheelsAngle*= 1.0/(1.0+0.5*Math.abs(this.speed));
+		}
+	   
+		if(this.isAccelerating && this.speed < 0  ||this.isBraking && this.speed > 0 )
+			this.speed *= 0.88;
+		
+		if (!this.isAccelerating && !this.isBraking ) 
+			this.speed *= 0.98;
+		  
+		if(this.isAccelerating) 	 	
+			this.speed +=deltaV;
+		
+		if(this.isBraking) 	 	
+			this.speed -=deltaV;
 
-      let sinC = Math.sin(this.angle);
-			let cosC = Math.cos(this.angle);
+		if(this.speed>this.max_speed)
+			this.speed  = this.max_speed;
+
+		if(this.speed < -this.max_back_speed)
+			this.speed = -this.max_back_speed;
+		
+		this.angle += this.wheelsAngle*this.speed;
+
+		let sinC = Math.sin(this.angle);
+		let cosC = Math.cos(this.angle);
 			
 			
-      this.direction = [cosC,0, -sinC];
-      
-      this.position[0] = this.position[0] + this.direction[0]*this.speed;
-      this.position[2] = this.position[2] + this.direction[2]*this.speed;
-      
-      this.isAccelerating 	= false;
-      this.isRotatingLeft   = false;
-      this.isRotatingRight  = false;
-      this.isBraking   		 = false;
+		this.direction = [cosC,0, -sinC];
+	  
+		this.position[0] = this.position[0] + this.direction[0]*this.speed;
+		this.position[2] = this.position[2] + this.direction[2]*this.speed;
+	  
+		this.isAccelerating 	= false;
+		this.isRotatingLeft   = false;
+		this.isRotatingRight  = false;
+		this.isBraking   		 = false;
 
 
-      var o =  this.position; 
-      var y_axis = [0,1,0];  
-      var z_axis =   [-this.direction[0],-this.direction[1],-this.direction[2]];
-      var x_axis = glMatrix.vec3.create();
-      glMatrix.vec3.cross(x_axis,y_axis,z_axis);
-      
-      glMatrix.mat4.set(this.frame,
-                        x_axis[0],x_axis[1],x_axis[2],0.0,
-                        y_axis[0],y_axis[1],y_axis[2],0.0,
-                        z_axis[0],z_axis[1],z_axis[2],0.0,
-                        o[0],o[1],o[2],1.0
-                        )
-      }       
+		var o =  this.position; 
+		var y_axis = [0,1,0];  
+		var z_axis =   [-this.direction[0],-this.direction[1],-this.direction[2]];
+		var x_axis = glMatrix.vec3.create();
+		glMatrix.vec3.cross(x_axis,y_axis,z_axis);
+	  
+		glMatrix.mat4.set(this.frame,
+						x_axis[0],x_axis[1],x_axis[2],0.0,
+						y_axis[0],y_axis[1],y_axis[2],0.0,
+						z_axis[0],z_axis[1],z_axis[2],0.0,
+						o[0],o[1],o[2],1.0
+						)
+	}
 
-       key_down(key){
-         
-       }
-		};		
+	//key_down(key){}
+}		
 
-Game = {
-  cars : [],
-  addCar: function (name){
-    newCar = new Car(name,Game.scene.startPosition);
-    Game.cars.push(newCar);
-    if(Game.cars.length===1)
-      window.requestAnimationFrame(Game.update_step) ;
-    return newCar;
-  },
-  update_step : function(currTime){
-    for(i=0; i < Game.cars.length;++i)
-      Game.cars[i].update_step.call(Game.cars[i],currTime);
-  window.requestAnimationFrame(Game.update_step) ;
 
-  },
-  setScene(scene){
-    Game.scene = new Parser.Race(scene)
+export class Game {
+	cars: Car[]
+	scene: any
 
-    Game.scene.trackObj = new TrackMaker_texCoords(Game.scene.track,0.2);
-	  var bbox = scene.bbox;
-  	var quad = [bbox[0], bbox[1] - 0.01, bbox[5],
-            		bbox[3], bbox[1] - 0.01, bbox[5],
-            		bbox[3], bbox[1] - 0.01, bbox[2],
-                bbox[0], bbox[1] - 0.01, bbox[2],
-            	];
+	constructor(){
+		this.cars = []
+	}
 
-	  Game.scene.groundObj = new QuadGround(quad,10);
-
-	  Game.scene.buildingsObj  = new Array(Game.scene.buildings.length);
-	  Game.scene.buildingsObjTex  = new Array(Game.scene.buildings.length);
-  	for (var i = 0; i < Game.scene.buildings.length; ++i){  
-	  	Game.scene.buildingsObj[i] = new BuildingMaker(Game.scene.buildings[i],0.1);
-	  	Game.scene.buildingsObjTex[i] = new BuildingMaker_texCoordsFacades(Game.scene.buildings[i],0.1);
-	  	Game.scene.buildingsObjTex[i].roof = new BuildingMaker_texCoordsRoof(Game.scene.buildings[i],1.0);
+	addCar(name: string){
+		var newCar = new Car(name, this.scene.startPosition)
+		this.cars.push(newCar);
+		if(this.cars.length===1)
+		window.requestAnimationFrame(this.update_step)
+		return newCar;
   	}
+	
+ 	update_step = (currTime: number) => {
+		for(var i = 0; i < this.cars.length; ++i){
+			this.cars[i].update_step.call(this.cars[i],currTime)
+		}
+		window.requestAnimationFrame(this.update_step)
+  	}
+
+  	setScene(scene){
+		this.scene = new Parser.Race(scene)
+
+		this.scene.trackObj = new TrackMaker_texCoords(this.scene.track,0.2);
+		var bbox = scene.bbox;
+		var quad = [
+			bbox[0], bbox[1] - 0.01, bbox[5],
+			bbox[3], bbox[1] - 0.01, bbox[5],
+			bbox[3], bbox[1] - 0.01, bbox[2],
+			bbox[0], bbox[1] - 0.01, bbox[2],
+		];
+
+		this.scene.groundObj = new QuadGround(quad,10);
+
+		this.scene.buildingsObj  = new Array(this.scene.buildings.length);
+		this.scene.buildingsObjTex  = new Array(this.scene.buildings.length);
+		for (var i = 0; i < this.scene.buildings.length; ++i){  
+			this.scene.buildingsObj[i] = new BuildingMaker(this.scene.buildings[i]);
+			this.scene.buildingsObjTex[i] = new BuildingMaker_texCoordsFacades(this.scene.buildings[i],0.1);
+			this.scene.buildingsObjTex[i].roof = new BuildingMaker_texCoordsRoof(this.scene.buildings[i],1.0);
+		}
   }
 };
 
 var Parser = Parser || { };
   
- Parser.Tunnel = function (obj) {
+Parser.Tunnel = function (obj) {
 	this._parse(obj);
 };
 

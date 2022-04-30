@@ -1,4 +1,4 @@
-uniformShader = function (gl) {//line 1,Listing 2.14
+export function uniformShader(gl) {//line 1,Listing 2.14
   var vertexShaderSource = `
     uniform   mat4 uModelViewMatrix;               
     uniform   mat4 uProjectionMatrix;              
