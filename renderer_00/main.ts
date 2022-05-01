@@ -14,7 +14,6 @@ function on_keydown(e: KeyboardEvent){
 
 window.onload = function (){
 	renderer = new Renderer()
-	renderer.initializeAndDisplay()
 	//Controls.injectControls(Game.cars[0])
 	renderer.canvas.addEventListener('mousemove', on_mouseMove, false);
 	renderer.canvas.addEventListener('keydown', on_keydown, false);

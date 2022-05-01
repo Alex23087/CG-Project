@@ -14,7 +14,7 @@
 {
 	"compilerOptions": {
 	  "strict": false,
-	  "target": "es6",
+	  "target": "es2020",
 	  "sourceMap": true,
 	  "allowJs": true,
 	  "outDir": "tsOut",

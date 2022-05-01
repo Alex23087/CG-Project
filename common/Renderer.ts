@@ -1,5 +1,5 @@
 import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js"
-import { uniformShader } from "./shaders.js"
+import * as Shaders from "./Shaders.js"
 import { scene_0 } from "./scenes/scene_0.js"
 import { Game } from "./game.js"
 
@@ -10,7 +10,7 @@ export type CameraIndex = 0 | 1
 export class Renderer{
 	cameras: any[]
 	currentCamera: CameraIndex
-	uniformShader: any
+	uniformShader: Shaders.UniformShader
 	stack: any
 	gl: WebGLRenderingContext
 	canvas: HTMLCanvasElement
@@ -43,16 +43,15 @@ export class Renderer{
         /* create the matrix stack */
         this.stack = new MatrixStack();
         this.game = new Game()
-	}
-
-    initializeAndDisplay(){
         /* initialize objects to be rendered */
         this.initializeObjects(this.gl);
 
         /* create the shader */
-        this.uniformShader = uniformShader(this.gl);
-        this.Display();
-    }
+        Shaders.UniformShader.create(this.gl).then(program => {
+			this.uniformShader = program
+			this.Display()
+		});
+	}
 
 	/*
 	create the buffers for an object as specified in common/shapes/triangle.js
@@ -236,7 +235,7 @@ export class Renderer{
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 
-		gl.useProgram(this.uniformShader);
+		gl.useProgram(this.uniformShader.program);
 		
 		gl.uniformMatrix4fv(this.uniformShader.uProjectionMatrixLocation, false, glMatrix.mat4.perspective(glMatrix.mat4.create(), 3.14 / 4, ratio, 1, 500) as Float32List);
 
