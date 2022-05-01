@@ -23,7 +23,7 @@ export class Cylinder extends Shape {
 		
 		var radius = 1.0;
 		var angle;
-		var step = Math.PI / resolution;
+		var step = Math.PI * 2 / resolution;
 		
 		// lower circle
 		var vertexoffset = 0;

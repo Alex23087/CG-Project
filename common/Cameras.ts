@@ -27,7 +27,7 @@ export class FollowFromUpCamera extends Camera{
 		let target = glMatrix.vec3.create()
 		let up = glMatrix.vec4.create()
 		
-		glMatrix.vec3.transformMat4(eye, [0, 50, 0], this.frame)
+		glMatrix.vec3.transformMat4(eye, [0, 10, 0], this.frame)
 		glMatrix.vec3.transformMat4(target, [0.0, 0.0, 0.0, 1.0], this.frame)
 		glMatrix.vec4.transformMat4(up, [0.0, 0.0, -1, 0.0], this.frame)
 		

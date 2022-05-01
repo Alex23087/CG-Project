@@ -7,6 +7,8 @@ import { Cube } from "./shapes/Cube.js"
 import { Cylinder } from "./shapes/Cylinder.js"
 import { Shape } from "./shapes/Shape.js"
 import { MatrixStack } from "./libs/MatrixStack.js"
+import { Transform } from "./Transform.js"
+import { GameObject } from "./GameObject.js"
 
 type Color = [number, number, number, number]
 
@@ -20,19 +22,19 @@ export class Renderer{
 	currentCamera: CameraIndex
 
 	shader: Shaders.Shader
-	stack: MatrixStack
 	gl: WebGLRenderingContext
 	canvas: HTMLCanvasElement
     car: any
     cube: Cube
     cylinder: Cylinder
     game: Game
-
+	stack: MatrixStack
+	
     canvasDefaultSize: {x: number, y: number} = {x: 800, y: 450}
 
 	public constructor(canvas: HTMLCanvasElement){
 		// set the camera currently in use
-		this.currentCamera = 1;
+		this.currentCamera = 1
         this.canvas = canvas
             
         /* get the webgl context */
@@ -61,7 +63,7 @@ export class Renderer{
 	draw an object as specified in common/shapes/triangle.js for which the buffer 
 	have alrady been created
 	*/
-	drawObject(obj: Shape, fillColor: Color, lineColor: Color) {
+	drawObject(obj: Shape, fillColor: Color, lineColor: Color, matrix: mat4 = this.stack.matrix) {
 		if(Shaders.isPositionable(this.shader)){
 			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, obj.vertexBuffer);
 			this.gl.enableVertexAttribArray(this.shader.aPositionIndex);
@@ -107,85 +109,104 @@ export class Renderer{
 	/*
 	draw the car
 	*/
-	drawCar() {
+	drawCar(parentMatrix: mat4) {/*
 		if(!Shaders.hasMVMatrix(this.shader)){
 			return
 		}
-		var M                 = glMatrix.mat4.create();
-		var rotate_transform  = glMatrix.mat4.create();
-		var translate_matrix  = glMatrix.mat4.create();
-		var scale_matrix      = glMatrix.mat4.create();
-	
-		glMatrix.mat4.fromTranslation(translate_matrix,[0,1,1]);
-		glMatrix.mat4.fromScaling(scale_matrix,[0.7,0.25,1]);
-		glMatrix.mat4.mul(M,scale_matrix,translate_matrix);
-		glMatrix.mat4.fromRotation(rotate_transform,-0.1,[1,0,0]);
-		glMatrix.mat4.mul(M,rotate_transform,M);
-		glMatrix.mat4.fromTranslation(translate_matrix,[0,0.1,-1]);
-		glMatrix.mat4.mul(M,translate_matrix,M);
 
-		this.stack.push();
-		this.stack.multiply(M);
-		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List);
+		var currentMatrix = glMatrix.mat4.create()
+
+		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, currentMatrix as Float32List);
 
 		this.drawObject(this.cube,[0.8,0.6,0.7,1.0],[0.8,0.6,0.7,1.0]);
 		this.stack.pop();
 
-		var Mw                 = glMatrix.mat4.create();
-		/* draw the wheels */
-		glMatrix.mat4.fromRotation(rotate_transform,3.14/2.0,[0,0,1]);
-		glMatrix.mat4.fromTranslation(translate_matrix,[1,0,0]);
-		glMatrix.mat4.mul(Mw,translate_matrix,rotate_transform);
-		
-		glMatrix.mat4.fromScaling(scale_matrix,[0.1,0.2,0.2]);
-		glMatrix.mat4.mul(Mw,scale_matrix,Mw);
-		/* now the diameter of the wheel is 2*0.2 = 0.4 and the wheel is centered in 0,0,0 */
-
 		
 		glMatrix.mat4.identity(M);
 		
-		glMatrix.mat4.fromTranslation(translate_matrix,[-0.8,0.2,-0.7]);
-		glMatrix.mat4.mul(M,translate_matrix,Mw);
+		this.drawWheel([-0.8,0.2,-0.7])
+		this.drawWheel([0.8,0.2,-0.7])
 
-		this.stack.push();
-		this.stack.multiply(M);
-		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List);
-	
-		this.drawObject(this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
-		this.stack.pop();
-
-		glMatrix.mat4.fromTranslation(translate_matrix,[0.8,0.2,-0.7]);
-		glMatrix.mat4.mul(M,translate_matrix,Mw);
-
-		this.stack.push();
-		this.stack.multiply(M);
-		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List); 
-		this.drawObject(this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
-		this.stack.pop();
-
-		/* this will increase the size of the wheel to 0.4*1,5=0.6 */
+		/* this will increase the size of the wheel to 0.4*1,5=0.6 *//*
 		glMatrix.mat4.fromScaling(scale_matrix,[1,1.5,1.5]);;
 		glMatrix.mat4.mul(Mw,scale_matrix,Mw);
 		
-		glMatrix.mat4.fromTranslation(translate_matrix,[0.8,0.25,0.7]);
-		glMatrix.mat4.mul(M,translate_matrix,Mw);
-	
-		this.stack.push();
-		this.stack.multiply(M);
-		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List); 
-		this.stack.pop();
+		this.drawWheel([0.8,0.25,0.7])
+		this.drawWheel([-0.8,0.3,0.7])*/
 
-		this.drawObject(this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
+		var car = GameObject.empty("Car")
 
-		glMatrix.mat4.fromTranslation(translate_matrix,[-0.8,0.3,0.7]);
-		glMatrix.mat4.mul(M,translate_matrix,Mw);
-	
-		this.stack.push();
-		this.stack.multiply(M);
-		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List); 
-		this.drawObject(this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
-		this.stack.pop();
+		var carHull = new GameObject("CarHull", car, this.cube)
+		carHull.transform.position[1] += 0.8
+		carHull.transform.scaling = [0.8, 0.3, 1]
+
+		var frontLeftWheel = new GameObject("FrontLeftWheel", car, this.cylinder)
+		frontLeftWheel.transform.pivotAdjustment = [1, 0, 0]
+		frontLeftWheel.transform.position = [-0.9, 0.2, -0.8]
+		frontLeftWheel.transform.rotation = [0, 0, Math.PI / 2]
+		frontLeftWheel.transform.scaling = [0.1, 0.2, 0.2]
+
+		var frontRightWheel = new GameObject("FrontRightWheel", car, this.cylinder)
+		frontRightWheel.transform.pivotAdjustment = [1, 0, 0]
+		frontRightWheel.transform.position = [0.9, 0.2, -0.8]
+		frontRightWheel.transform.rotation = [0, 0, Math.PI / 2]
+		frontRightWheel.transform.scaling = [0.1, 0.2, 0.2]
+
+		var rearRightWheel = new GameObject("RearRightWheel", car, this.cylinder)
+		rearRightWheel.transform.pivotAdjustment = [1, 0, 0]
+		rearRightWheel.transform.position = [0.9, 0.3, 0.8]
+		rearRightWheel.transform.rotation = [0, 0, Math.PI / 2]
+		rearRightWheel.transform.scaling = [0.1, 0.3, 0.3]
+
+		var rearLeftWheel = new GameObject("RearLeftWheel", car, this.cylinder)
+		rearLeftWheel.transform.pivotAdjustment = [1, 0, 0]
+		rearLeftWheel.transform.position = [-0.9, 0.3, 0.8]
+		rearLeftWheel.transform.rotation = [0, 0, Math.PI / 2]
+		rearLeftWheel.transform.scaling = [0.1, 0.3, 0.3]
+
+		this.drawGameObject(car, parentMatrix)
 	};
+
+
+	drawGameObject(gameObject: GameObject, parentMatrix: mat4){
+		if(!Shaders.hasMVMatrix(this.shader)){
+			return
+		}
+	
+		/*
+		glMatrix.mat4.fromTranslation(translate_matrix, wheelPivotAdjustment);
+		glMatrix.mat4.mul(M, translate_matrix, parentMatrix);
+		glMatrix.mat4.fromRotation(rotate_transform, wheelRotation[0], [1, 0, 0]);
+		glMatrix.mat4.mul(M, rotate_transform, M);
+		glMatrix.mat4.fromRotation(rotate_transform, wheelRotation[1], [0, 1, 0]);
+		glMatrix.mat4.mul(M, rotate_transform, M);
+		glMatrix.mat4.fromRotation(rotate_transform, wheelRotation[2], [0, 0, 1]);
+		glMatrix.mat4.mul(M, rotate_transform, M);
+		glMatrix.mat4.fromTranslation(translate_matrix, wheelPosition);
+		glMatrix.mat4.mul(M, translate_matrix, M)
+		glMatrix.mat4.fromScaling(scale_matrix, wheelScaling);
+		glMatrix.mat4.mul(M, scale_matrix, M);
+		*/
+
+
+		var modelMatrix = gameObject.transform.applyLocalTransform(
+			glMatrix.mat4.create(),
+			parentMatrix
+		)
+
+		if(gameObject.shape){
+			this.gl.uniformMatrix4fv(
+				this.shader.uModelViewMatrixLocation, false,
+				modelMatrix as Float32List
+			)
+			
+			this.drawObject(gameObject.shape, [1.0,0.6,0.5,1.0], [0.0,0.0,0.0,1.0])
+		}
+
+		for(var i = 0; i < gameObject.children.length; i++){
+			this.drawGameObject(gameObject.children[i], modelMatrix)
+		}
+	}
 
 
 	drawScene() {
@@ -223,11 +244,9 @@ export class Renderer{
 
 		// drawing the car
 		this.stack.push();
-		this.stack.multiply(this.car.frame); // projection * viewport
-		//this.gl.uniformMatrix4fv(this.uniformShader.uModelViewMatrixLocation, false, stack.matrix);
-		this.drawCar();
+		this.stack.multiply(this.cameras[this.currentCamera].frame); // projection * viewport
+		this.drawCar(this.stack.matrix)
 		this.stack.pop();
-
 		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List);
 
 		// drawing the static elements (ground, track and buldings)
