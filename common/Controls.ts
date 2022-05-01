@@ -1,9 +1,10 @@
 import { CameraIndex, Renderer } from "./Renderer.js"
-import { Car } from "./game.js"
+import { Car } from "./Car.js"
 
 //Class to implement the correct behaviour of pressing and releasing buttons
 export class Controls {
     static changeCameraKeys = ['c', 'C']
+    static fullscreenKeys = ['f', 'F']
     static upKeys = ['w', 'W', "ArrowUp"]
     static downKeys = ['s', 'S', "ArrowDown"]
     static rightKeys = ['d', 'D', "ArrowRight"]
@@ -35,6 +36,10 @@ export class Controls {
         } else if(Controls.changeCameraKeys.indexOf(key) >= 0){
             if(value){
                 this.toggleCamera()
+            }
+        } else if(Controls.fullscreenKeys.indexOf(key) >= 0){
+            if(value){
+                this.renderer.toggleFullscreen()
             }
         } else {
             car.control_keys[key] = value

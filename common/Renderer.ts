@@ -1,36 +1,39 @@
 import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js"
 import * as Shaders from "./Shaders.js"
 import { scene_0 } from "./scenes/scene_0.js"
-import { Game } from "./game.js"
+import { Game } from "./Game.js"
 import * as Cameras from "./Cameras.js"
+import { Cube } from "./shapes/Cube.js"
+import { Cylinder } from "./shapes/Cylinder.js"
+import { Shape } from "./shapes/Shape.js"
+import { MatrixStack } from "./libs/MatrixStack.js"
 
 type Color = [number, number, number, number]
 
 export type CameraIndex = 0 | 1
 
 export class Renderer{
-	cameras: Cameras.Camera[]
+	cameras: Cameras.Camera[] = [
+		new Cameras.FollowFromUpCamera(),
+		new Cameras.ChaseCamera()
+	]
 	currentCamera: CameraIndex
+
 	shader: Shaders.Shader
-	stack: any
+	stack: MatrixStack
 	gl: WebGLRenderingContext
 	canvas: HTMLCanvasElement
     car: any
-    cube: any
-    cylinder: any
-    triangle: any
+    cube: Cube
+    cylinder: Cylinder
     game: Game
 
-	public constructor(){
-		/* array of cameras that will be used */
-		this.cameras = [];
-		// add a FollowFromUpCamera
-		this.cameras.push(new Cameras.FollowFromUpCamera());
-		this.cameras.push(new Cameras.ChaseCamera());
+    canvasDefaultSize: {x: number, y: number} = {x: 800, y: 450}
+
+	public constructor(canvas: HTMLCanvasElement){
 		// set the camera currently in use
 		this.currentCamera = 1;
-        /* create the canvas */
-        this.canvas = document.getElementById("OUTPUT-CANVAS") as HTMLCanvasElement;
+        this.canvas = canvas
             
         /* get the webgl context */
         this.gl = this.canvas.getContext("webgl");
@@ -45,7 +48,7 @@ export class Renderer{
         this.stack = new MatrixStack();
         this.game = new Game()
         /* initialize objects to be rendered */
-        this.initializeObjects(this.gl);
+        this.initializeObjects();
 
         /* create the shader */
         Shaders.Shader.create(Shaders.UniformShader, this.gl).then(program => {
@@ -55,98 +58,56 @@ export class Renderer{
 	}
 
 	/*
-	create the buffers for an object as specified in common/shapes/triangle.js
-	*/
-	createObjectBuffers(gl: WebGLRenderingContext, obj: any) {
-
-		obj.vertexBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, obj.vertices, gl.STATIC_DRAW);
-		gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-		obj.indexBufferTriangles = gl.createBuffer();
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferTriangles);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, obj.triangleIndices, gl.STATIC_DRAW);
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-
-		// create edges
-		var edges = new Uint16Array(obj.numTriangles * 3 * 2);
-		for (var i = 0; i < obj.numTriangles; ++i) {
-			edges[i * 6 + 0] = obj.triangleIndices[i * 3 + 0];
-			edges[i * 6 + 1] = obj.triangleIndices[i * 3 + 1];
-			edges[i * 6 + 2] = obj.triangleIndices[i * 3 + 0];
-			edges[i * 6 + 3] = obj.triangleIndices[i * 3 + 2];
-			edges[i * 6 + 4] = obj.triangleIndices[i * 3 + 1];
-			edges[i * 6 + 5] = obj.triangleIndices[i * 3 + 2];
-		}
-
-		obj.indexBufferEdges = gl.createBuffer();
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferEdges);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, edges, gl.STATIC_DRAW);
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-	};
-
-	/*
 	draw an object as specified in common/shapes/triangle.js for which the buffer 
 	have alrady been created
 	*/
-	drawObject(gl: WebGLRenderingContext, obj: any, fillColor: Color, lineColor: Color) {
+	drawObject(obj: Shape, fillColor: Color, lineColor: Color) {
 		if(Shaders.isPositionable(this.shader)){
-			gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexBuffer);
-			gl.enableVertexAttribArray(this.shader.aPositionIndex);
-			gl.vertexAttribPointer(this.shader.aPositionIndex, 3, gl.FLOAT, false, 0, 0);
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, obj.vertexBuffer);
+			this.gl.enableVertexAttribArray(this.shader.aPositionIndex);
+			this.gl.vertexAttribPointer(this.shader.aPositionIndex, 3, this.gl.FLOAT, false, 0, 0);
 		}
 
-		gl.enable(gl.POLYGON_OFFSET_FILL);
-		gl.polygonOffset(1.0, 1.0);
+		this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
+		this.gl.polygonOffset(1.0, 1.0);
 
 		if(Shaders.isColorable(this.shader)){
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferTriangles);
-			gl.uniform4fv(this.shader.uColorLocation, fillColor);
-			gl.drawElements(gl.TRIANGLES, obj.triangleIndices.length, gl.UNSIGNED_SHORT, 0);
+			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferTriangles);
+			this.gl.uniform4fv(this.shader.uColorLocation, fillColor);
+			this.gl.drawElements(this.gl.TRIANGLES, obj.triangleIndices.length, this.gl.UNSIGNED_SHORT, 0);
 
-			gl.disable(gl.POLYGON_OFFSET_FILL);
+			this.gl.disable(this.gl.POLYGON_OFFSET_FILL);
 			
-			gl.uniform4fv(this.shader.uColorLocation, lineColor);
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferEdges);
-			gl.drawElements(gl.LINES, obj.numTriangles * 3 * 2, gl.UNSIGNED_SHORT, 0);
+			this.gl.uniform4fv(this.shader.uColorLocation, lineColor);
+			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferEdges);
+			this.gl.drawElements(this.gl.LINES, obj.numTriangles * 3 * 2, this.gl.UNSIGNED_SHORT, 0);
 		}
 
 		if(Shaders.isPositionable(this.shader)){
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-			gl.disableVertexAttribArray(this.shader.aPositionIndex);
-			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
+			this.gl.disableVertexAttribArray(this.shader.aPositionIndex);
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
 		}
 	};
 
 	/*
 	initialize the object in the scene
 	*/
-	initializeObjects(gl: WebGLRenderingContext) {
-		this.game.setScene(scene_0);
-		this.car = this.game.addCar("mycar");
-		this.triangle = new Triangle();
+	initializeObjects() {
+		this.game.setScene(this.gl, scene_0)
+		this.car = this.game.addCar("mycar")
 
-		this.cube = new Cube();
-		this.createObjectBuffers(gl,this.cube);
+		this.cube = new Cube(this.gl)
 		
-		this.cylinder = new Cylinder(10);
-		this.createObjectBuffers(gl,this.cylinder );
-		
-		this.createObjectBuffers(gl, this.triangle);
-
-		this.createObjectBuffers(gl, this.game.scene.trackObj);
-		this.createObjectBuffers(gl, this.game.scene.groundObj);
-		for (var i = 0; i < this.game.scene.buildings.length; ++i) 
-				this.createObjectBuffers(gl, this.game.scene.buildingsObj[i]);
-	};
+		this.cylinder = new Cylinder(this.gl, 10)
+	}
 
 
 
 	/*
 	draw the car
 	*/
-	drawCar(gl: WebGLRenderingContext) {
+	drawCar() {
 		if(!Shaders.hasMVMatrix(this.shader)){
 			return
 		}
@@ -165,9 +126,9 @@ export class Renderer{
 
 		this.stack.push();
 		this.stack.multiply(M);
-		gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix);
+		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List);
 
-		this.drawObject(gl,this.cube,[0.8,0.6,0.7,1.0],[0.8,0.6,0.7,1.0]);
+		this.drawObject(this.cube,[0.8,0.6,0.7,1.0],[0.8,0.6,0.7,1.0]);
 		this.stack.pop();
 
 		var Mw                 = glMatrix.mat4.create();
@@ -188,9 +149,9 @@ export class Renderer{
 
 		this.stack.push();
 		this.stack.multiply(M);
-		gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix);
+		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List);
 	
-		this.drawObject(gl,this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
+		this.drawObject(this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
 		this.stack.pop();
 
 		glMatrix.mat4.fromTranslation(translate_matrix,[0.8,0.2,-0.7]);
@@ -198,8 +159,8 @@ export class Renderer{
 
 		this.stack.push();
 		this.stack.multiply(M);
-		gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix); 
-		this.drawObject(gl,this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
+		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List); 
+		this.drawObject(this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
 		this.stack.pop();
 
 		/* this will increase the size of the wheel to 0.4*1,5=0.6 */
@@ -211,43 +172,43 @@ export class Renderer{
 	
 		this.stack.push();
 		this.stack.multiply(M);
-		gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix); 
+		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List); 
 		this.stack.pop();
 
-		this.drawObject(gl,this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
+		this.drawObject(this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
 
 		glMatrix.mat4.fromTranslation(translate_matrix,[-0.8,0.3,0.7]);
 		glMatrix.mat4.mul(M,translate_matrix,Mw);
 	
 		this.stack.push();
 		this.stack.multiply(M);
-		gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix); 
-		this.drawObject(gl,this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
+		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List); 
+		this.drawObject(this.cylinder,[1.0,0.6,0.5,1.0],[0.0,0.0,0.0,1.0]);
 		this.stack.pop();
 	};
 
 
-	drawScene(gl: WebGLRenderingContext) {
+	drawScene() {
 		if(!Shaders.hasMVMatrix(this.shader) || !Shaders.hasProjectionMatrix(this.shader)){
 			return
 		}
-		var width = this.canvas.width;
+		var width = this.canvas.width
 		var height = this.canvas.height
 		var ratio = width / height;
 		this.stack = new MatrixStack();
 
-		gl.viewport(0, 0, width, height);
+		this.gl.viewport(0, 0, width, height);
 		
-		gl.enable(gl.DEPTH_TEST);
+		this.gl.enable(this.gl.DEPTH_TEST);
 
 		// Clear the framebuffer
-		gl.clearColor(0.34, 0.5, 0.74, 1.0);
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		this.gl.clearColor(0.34, 0.5, 0.74, 1.0);
+		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
 
-		gl.useProgram(this.shader.program);
+		this.gl.useProgram(this.shader.program);
 		
-		gl.uniformMatrix4fv(this.shader.uProjectionMatrixLocation, false, glMatrix.mat4.perspective(glMatrix.mat4.create(), 3.14 / 4, ratio, 1, 500) as Float32List);
+		this.gl.uniformMatrix4fv(this.shader.uProjectionMatrixLocation, false, glMatrix.mat4.perspective(glMatrix.mat4.create(), 3.14 / 4, ratio, 1, 500) as Float32List);
 
 		this.cameras[this.currentCamera].update(this.car.frame);
 
@@ -263,26 +224,43 @@ export class Renderer{
 		// drawing the car
 		this.stack.push();
 		this.stack.multiply(this.car.frame); // projection * viewport
-		//gl.uniformMatrix4fv(this.uniformShader.uModelViewMatrixLocation, false, stack.matrix);
-		this.drawCar(gl);
+		//this.gl.uniformMatrix4fv(this.uniformShader.uModelViewMatrixLocation, false, stack.matrix);
+		this.drawCar();
 		this.stack.pop();
 
-		gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix);
+		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List);
 
 		// drawing the static elements (ground, track and buldings)
-		this.drawObject(gl, this.game.scene.groundObj, [0.3, 0.7, 0.2, 1.0], [0, 0, 0, 1.0]);
-		this.drawObject(gl, this.game.scene.trackObj, [0.9, 0.8, 0.7, 1.0], [0, 0, 0, 1.0]);
+		this.drawObject(this.game.scene.groundObj, [0.3, 0.7, 0.2, 1.0], [0, 0, 0, 1.0]);
+		this.drawObject(this.game.scene.trackObj, [0.9, 0.8, 0.7, 1.0], [0, 0, 0, 1.0]);
 		for (var i in this.game.scene.buildingsObj) 
-			this.drawObject(gl, this.game.scene.buildingsObj[i], [0.8, 0.8, 0.8, 1.0], [0.2, 0.2, 0.2, 1.0]);
-		gl.useProgram(null);
+			this.drawObject(this.game.scene.buildingsObj[i], [0.8, 0.8, 0.8, 1.0], [0.2, 0.2, 0.2, 1.0]);
+		this.gl.useProgram(null);
 	};
 
 
 
 	Display = () => {
-		this.drawScene(this.gl);
+		this.drawScene();
         //console.log("drawing")
         var that = this
 		window.requestAnimationFrame(this.Display)
 	};
+
+    toggleFullscreen(){
+        if (!document.fullscreenElement) {
+            this.canvas.requestFullscreen();
+            this.canvas.onresize = () => {
+                this.canvas.width = this.canvas.clientWidth
+                this.canvas.height = this.canvas.clientHeight
+            }
+            window.addEventListener('resize', this.canvas.onresize)
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+            this.canvas.width = this.canvasDefaultSize.x
+            this.canvas.height = this.canvasDefaultSize.y
+          }
+        }
+    }
 }
