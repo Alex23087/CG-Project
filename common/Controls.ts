@@ -1,5 +1,7 @@
 import { CameraIndex, Renderer } from "./Renderer.js"
 import { Car } from "./Car.js"
+import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js"
+import { ChaseCamera } from "./Cameras.js"
 
 //Class to implement the correct behaviour of pressing and releasing buttons
 export class Controls {
@@ -53,4 +55,38 @@ export class Controls {
     public setCamera(value: CameraIndex){
     	this.renderer.currentCamera = value;
     }
+
+    on_mouseMove(e: MouseEvent){
+        var sensitivity = 6
+
+        var amount = [
+            ((e.clientX / this.renderer.canvas.width) - 0.5) * sensitivity,
+            ((e.clientY / this.renderer.canvas.height) - 0.5) * sensitivity
+        ];
+
+        (this.renderer.cameras[this.renderer.currentCamera] as ChaseCamera).mouseMoved(amount)
+    }
+
+    onClick(e){
+        return //pointer lock disabled because it causes issues on some platforms
+        this.renderer.canvas.requestPointerLock = this.renderer.canvas.requestPointerLock || (this.renderer.canvas as any).mozRequestPointerLock;
+        document.exitPointerLock = document.exitPointerLock || (document as any).mozExitPointerLock;
+
+        document.addEventListener('pointerlockchange', this.lockChangeAlert, false);
+        document.addEventListener('mozpointerlockchange', this.lockChangeAlert, false);
+
+        this.renderer.canvas.requestPointerLock()
+    }
+
+    lockChangeAlert = () => {
+        if (document.pointerLockElement === this.renderer.canvas ||
+            (document as any).mozPointerLockElement === this.renderer.canvas) {
+          console.log('The pointer lock status is now locked');
+          document.addEventListener("mousemove", onmousemove, false);
+        } else {
+          console.log('The pointer lock status is now unlocked');
+          document.removeEventListener("mousemove", onmousemove, false);
+        }
+      }
+      
 }

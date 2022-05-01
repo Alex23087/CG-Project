@@ -6,8 +6,6 @@ var renderer: Renderer
 var controls: Controls
 var canvas: HTMLCanvasElement
 
-function on_mouseMove(e){}
-
 function on_keyup(e: KeyboardEvent){
 	controls.keyReleased(e.key);
 }
@@ -19,18 +17,42 @@ window.onload = function (){
 	canvas = document.getElementById("OUTPUT-CANVAS") as HTMLCanvasElement;
 	renderer = new Renderer(canvas, Shaders.PhongShader)
 	controls = new Controls(renderer)
-	//renderer.addObjectToScene(makeCar())
-	//Controls.injectControls(Game.cars[0])
-	renderer.canvas.addEventListener('mousemove', on_mouseMove, false);
+	renderer.canvas.addEventListener('mousemove', function(e: MouseEvent){controls.on_mouseMove(e)}, false);
 	renderer.canvas.addEventListener('keydown', on_keydown, false);
 	renderer.canvas.addEventListener('keyup', on_keyup, false);
+	
+	renderer.canvas.onclick = function (e) {
+		controls.onClick(e)
+	}
 }
 
 function update_camera(value: CameraIndex){
 	controls.setCamera(value)
 }
 
-var selector = (document.getElementById("cameras") as HTMLSelectElement)
-selector.onchange = function (){
-	update_camera(selector.value as unknown as CameraIndex)
+var wireframeCheckbox = document.getElementById("wireframe") as HTMLInputElement
+wireframeCheckbox.onchange = function(e: Event){
+	renderer.wireframeEnabled = wireframeCheckbox.checked as unknown as boolean
+}
+
+var cameraSelector = (document.getElementById("cameras") as HTMLSelectElement)
+cameraSelector.onchange = function (){
+	update_camera(cameraSelector.value as unknown as CameraIndex)
+}
+
+var shaderSelector = (document.getElementById("shader") as HTMLSelectElement)
+shaderSelector.onchange = function (){
+	console.log(shaderSelector.value)
+	switch(shaderSelector.value){
+		case "0":
+			Shaders.Shader.create(Shaders.UniformShader, renderer.gl).then( shader => {
+				renderer.shader = shader
+			})
+		break;
+		case "1":
+			Shaders.Shader.create(Shaders.PhongShader, renderer.gl).then( shader => {
+				renderer.shader = shader
+			})
+		break;
+	}
 }

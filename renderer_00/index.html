@@ -25,16 +25,21 @@
     	style  = "border: 1px solid black"
     ></canvas>
     </div>
-<div>
-	<textarea id="log" rows="10" cols="60"></textarea>
-</div>
 
 <div>
-<label for="cameras">Choose a camera:</label>
-<select name="cameras" id="cameras">
-  <option value="0">FollowFromUp</option>
-  <option value="1">Chase</option>
-</select>
+  <label for="cameras">Camera:</label>
+  <select name="cameras" id="cameras">
+    <option value="0">FollowFromUp</option>
+    <option value="1">Chase</option>
+  </select>
+  <br/>
+  <label for="shader">Shader:</label>
+  <select name="shader" id="shader">
+    <option value="0">Uniform</option>
+    <option value="1">Phong</option>
+  </select>
+  <br/>
+  <input name="wireframe" id="wireframe" type="checkbox"><label for="wireframe">Wireframe</label>
 </div>
     
   </body>

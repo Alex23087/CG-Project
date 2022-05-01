@@ -50,33 +50,27 @@ export class Car extends GameObject{
 		var wheelXScaling = 0.1
 
 		var frontLeftWheelContainer = new GameObject("FrontLeftWheelContainer", this, null)
-		frontLeftWheelContainer.transform.pivotAdjustment = [0, 1, 1]
-		frontLeftWheelContainer.transform.position = [0, -1, -1]
 		var frontRightWheelContainer = new GameObject("FrontRightWheelContainer", this, null)
 		var rearLeftWheelContainer = new GameObject("RearLeftWheelContainer", this, null)
 		var rearRightWheelContainer = new GameObject("RearRightWheelContainer", this, null)
 
 		var frontLeftWheel = new GameObject("FrontLeftWheel", frontLeftWheelContainer, Shape.cylinder)
-		frontLeftWheel.transform.pivotAdjustment = [1, 0, 0]
-		frontLeftWheel.transform.position = [-0.9, 0.2, -0.8]
+		frontLeftWheel.transform.position = [-0.8, 0.2, -0.8]
 		frontLeftWheel.transform.rotation = [0, 0, Math.PI / 2]
 		frontLeftWheel.transform.scaling = [wheelXScaling, 0.2, 0.2]
 
 		var frontRightWheel = new GameObject("FrontRightWheel", frontRightWheelContainer, Shape.cylinder)
-		frontRightWheel.transform.pivotAdjustment = [1, 0, 0]
-		frontRightWheel.transform.position = [0.9, 0.2, -0.8]
+		frontRightWheel.transform.position = [1, 0.2, -0.8]
 		frontRightWheel.transform.rotation = [0, 0, Math.PI / 2]
 		frontRightWheel.transform.scaling = [wheelXScaling, 0.2, 0.2]
 
 		var rearRightWheel = new GameObject("RearRightWheel", rearRightWheelContainer, Shape.cylinder)
-		rearRightWheel.transform.pivotAdjustment = [1, 0, 0]
-		rearRightWheel.transform.position = [0.9, 0.3, 0.8]
+		rearRightWheel.transform.position = [1, 0.3, 0.8]
 		rearRightWheel.transform.rotation = [0, 0, Math.PI / 2]
 		rearRightWheel.transform.scaling = [wheelXScaling, 0.3, 0.3]
 
 		var rearLeftWheel = new GameObject("RearLeftWheel", rearLeftWheelContainer, Shape.cylinder)
-		rearLeftWheel.transform.pivotAdjustment = [1, 0, 0]
-		rearLeftWheel.transform.position = [-0.9, 0.3, 0.8]
+		rearLeftWheel.transform.position = [-0.8, 0.3, 0.8]
 		rearLeftWheel.transform.rotation = [0, 0, Math.PI / 2]
 		rearLeftWheel.transform.scaling = [wheelXScaling, 0.3, 0.3]
 

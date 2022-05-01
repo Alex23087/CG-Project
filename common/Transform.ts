@@ -2,7 +2,7 @@ import { GameObject } from "./GameObject.js"
 import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js"
 
 export class Transform{
-    pivotAdjustment: vec3
+    //pivotAdjustment: vec3
     position: vec3
     rotation: vec3
     scaling: vec3
@@ -10,7 +10,7 @@ export class Transform{
     gameObject: GameObject = null
 
     constructor(pivotAdjustment: vec3, position: vec3, rotation: vec3, scaling: vec3){
-        this.pivotAdjustment = pivotAdjustment
+        //this.pivotAdjustment = pivotAdjustment
         this.position = position
         this.rotation = rotation
         this.scaling = scaling
@@ -37,9 +37,11 @@ export class Transform{
 		glMatrix.mat4.mul(M, rotate_transform, M)
 		glMatrix.mat4.fromRotation(rotate_transform, this.rotation[2], [0, 0, 1]);
 		glMatrix.mat4.mul(M, rotate_transform, M)
-		glMatrix.mat4.fromTranslation(translate_matrix, this.pivotAdjustment);
+		/*
+        glMatrix.mat4.fromTranslation(translate_matrix, this.pivotAdjustment);
 		glMatrix.mat4.mul(M, translate_matrix, M);
-		
+		*/
+
 		glMatrix.mat4.fromScaling(scale_matrix, this.scaling);
 		glMatrix.mat4.mul(M, scale_matrix, M);
 		glMatrix.mat4.fromTranslation(translate_matrix, this.position);

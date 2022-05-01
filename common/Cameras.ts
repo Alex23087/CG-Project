@@ -4,6 +4,7 @@ export abstract class Camera{
 	frame: vec4
 	inverseViewMatrix: mat4
 	abstract update(car_position: vec4): void
+	abstract mouseMoved(coords: vec2): void
 }
 /*
 the FollowFromUpCamera always looks at the car from a position right above the car
@@ -20,6 +21,8 @@ export class FollowFromUpCamera extends Camera{
 		this.frame = car_position
 		this.updateInverseViewMatrix()
 	}
+
+	mouseMoved(coords: vec2): void {}
 
 	/* return the transformation matrix to transform from world coordinates to the view reference frame */
 	private updateInverseViewMatrix(){
@@ -48,12 +51,18 @@ export class ChaseCamera extends Camera{
 	private localTarget: vec3 = [0.0, 1.0, 0.0, 1.0]
 	private worldEye: vec3
 	private worldTarget: vec3
+	private mouseOffset: vec2
 
 	constructor(){
 		super()
 		this.frame = glMatrix.vec4.create()
 		this.worldEye = glMatrix.vec3.create()
 		this.worldTarget = glMatrix.vec3.create()
+		this.mouseOffset = [0, 0]
+	}
+
+	public mouseMoved(coords: vec2){
+		this.mouseOffset = coords
 	}
 	
 	/* update the camera with the current car position */
@@ -64,7 +73,12 @@ export class ChaseCamera extends Camera{
 
 	/* return the transformation matrix to transform from worlod coordiantes to the view reference frame */
 	private updateInverseViewMatrix(){
-		glMatrix.vec3.transformMat4(this.worldEye, this.localEye, this.frame)
+		var tmp = []
+		tmp[0] = this.localEye[0] - this.mouseOffset[0]
+		tmp[1] = this.localEye[1] + this.mouseOffset[1]
+		tmp[2] = this.localEye[2]
+		//console.log(tmp)
+		glMatrix.vec3.transformMat4(this.worldEye, tmp, this.frame)
 		glMatrix.vec3.transformMat4(this.worldTarget, this.localTarget, this.frame)
 		this.inverseViewMatrix = glMatrix.mat4.lookAt(glMatrix.mat4.create(), this.worldEye, this.worldTarget, [0, 1, 0])
 	}

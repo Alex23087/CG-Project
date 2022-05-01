@@ -29,6 +29,7 @@ export class Renderer{
     game: Game
 	stack: MatrixStack
 	private scene: GameObject
+	wireframeEnabled = false
 	
     canvasDefaultSize: {x: number, y: number} = {x: 800, y: 450}
 
@@ -79,8 +80,11 @@ export class Renderer{
 			this.gl.vertexAttribPointer(this.shader.aNormalIndex, 3, this.gl.FLOAT, false, 0, 0);
 		}
 
-		this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
-		this.gl.polygonOffset(1.0, 1.0);
+
+		if(this.wireframeEnabled){
+			this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
+			this.gl.polygonOffset(1.0, 1.0);
+		}
 
 		if(Shaders.isShiny(this.shader)){
 			this.gl.uniform1f(this.shader.uShininessLocation, 3)
@@ -91,11 +95,12 @@ export class Renderer{
 			this.gl.uniform4fv(this.shader.uColorLocation, fillColor);
 			this.gl.drawElements(this.gl.TRIANGLES, obj.triangleIndices.length, this.gl.UNSIGNED_SHORT, 0);
 
-			this.gl.disable(this.gl.POLYGON_OFFSET_FILL);
-			
-			this.gl.uniform4fv(this.shader.uColorLocation, lineColor);
-			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferEdges);
-			this.gl.drawElements(this.gl.LINES, obj.numTriangles * 3 * 2, this.gl.UNSIGNED_SHORT, 0);
+			if(this.wireframeEnabled){
+				this.gl.disable(this.gl.POLYGON_OFFSET_FILL);
+				this.gl.uniform4fv(this.shader.uColorLocation, lineColor);
+				this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferEdges);
+				this.gl.drawElements(this.gl.LINES, obj.numTriangles * 3 * 2, this.gl.UNSIGNED_SHORT, 0);
+			}
 		}
 
 		if(Shaders.isPositionable(this.shader)){
