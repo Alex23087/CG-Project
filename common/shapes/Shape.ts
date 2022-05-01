@@ -1,3 +1,6 @@
+import { Cube } from "./Cube"
+import { Cylinder } from "./Cylinder"
+
 export abstract class Shape{
     abstract name: string
     abstract vertices: Float32Array
@@ -8,6 +11,9 @@ export abstract class Shape{
     vertexBuffer: WebGLBuffer
     indexBufferTriangles: WebGLBuffer
     indexBufferEdges: WebGLBuffer
+
+	static cube: Cube
+	static cylinder: Cylinder
 
 
 	/*

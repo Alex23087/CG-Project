@@ -18,6 +18,7 @@ window.onload = function (){
 	canvas = document.getElementById("OUTPUT-CANVAS") as HTMLCanvasElement;
 	renderer = new Renderer(canvas)
 	controls = new Controls(renderer)
+	//renderer.addObjectToScene(makeCar())
 	//Controls.injectControls(Game.cars[0])
 	renderer.canvas.addEventListener('mousemove', on_mouseMove, false);
 	renderer.canvas.addEventListener('keydown', on_keydown, false);

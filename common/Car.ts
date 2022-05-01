@@ -1,45 +1,71 @@
-import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js";
 import { StringIndexedBooleanArray } from "./Game";
+import { GameObject } from "./GameObject.js";
+import { Shape } from "./shapes/Shape.js";
 
 
-export class Car {
+export class Car extends GameObject{
 	maxWheelsAngle = 0.15;
 	wheelAngleIncrement = 0.006;
 
-	name: string;
-	position: vec3;
-	max_speed: number;
-	max_back_speed: number;
-	isRotatingLeft: boolean;
-	isRotatingRight: boolean;
-	isAccelerating: boolean;
-	isBraking: boolean;
+	max_speed: number = 0.4
+	max_back_speed: number = 0.1
+	isRotatingLeft: boolean = false
+	isRotatingRight: boolean = false
+	isAccelerating: boolean = false
+	isBraking: boolean = false
 	wheelsAngle: number;
 	speed: number;
 	angle: number;
 	direction: vec3;
 	control_keys: StringIndexedBooleanArray;
-	frame: mat4;
 	lastAnimationTime: number;
 
-	constructor(name: string, start_position: vec3) {
-		this.name = name;
-		this.position = start_position;
-		this.max_speed = 0.4;
-		this.max_back_speed = 0.1;
+	constructor(name: string, startPosition: vec3) {
+		super(name, null, null)
 
-		this.isRotatingLeft = false;
-		this.isRotatingRight = false;
-		this.isAccelerating = false;
-		this.isBraking = false;
+		this.transform.position = startPosition
+
 		this.wheelsAngle = 0;
 		this.speed = 0;
 		this.angle = Math.PI;
 		this.direction = [0.0, 0.0, 0.0];
-		this.position = [0.0, 0.0, 0.0];
+		this.transform.position = [0.0, 0.0, 0.0];
 		this.control_keys = [] as unknown as StringIndexedBooleanArray;
-		this.frame = glMatrix.mat4.create();
 		this.lastAnimationTime = -1.0;
+
+		this.createChildren()
+	}
+
+	private createChildren(){
+		var carHull = new GameObject("CarHull", this, Shape.cube)
+		carHull.transform.position[1] += 0.6
+		carHull.transform.scaling = [0.8, 0.3, 1]
+
+		var wheelXScaling = 0.1
+
+		var frontLeftWheel = new GameObject("FrontLeftWheel", this, Shape.cylinder)
+		frontLeftWheel.transform.pivotAdjustment = [1, 0, 0]
+		frontLeftWheel.transform.position = [-0.9, 0.2, -0.8]
+		frontLeftWheel.transform.rotation = [0, 0, Math.PI / 2]
+		frontLeftWheel.transform.scaling = [wheelXScaling, 0.2, 0.2]
+
+		var frontRightWheel = new GameObject("FrontRightWheel", this, Shape.cylinder)
+		frontRightWheel.transform.pivotAdjustment = [1, 0, 0]
+		frontRightWheel.transform.position = [0.9, 0.2, -0.8]
+		frontRightWheel.transform.rotation = [0, 0, Math.PI / 2]
+		frontRightWheel.transform.scaling = [wheelXScaling, 0.2, 0.2]
+
+		var rearRightWheel = new GameObject("RearRightWheel", this, Shape.cylinder)
+		rearRightWheel.transform.pivotAdjustment = [1, 0, 0]
+		rearRightWheel.transform.position = [0.9, 0.3, 0.8]
+		rearRightWheel.transform.rotation = [0, 0, Math.PI / 2]
+		rearRightWheel.transform.scaling = [wheelXScaling, 0.3, 0.3]
+
+		var rearLeftWheel = new GameObject("RearLeftWheel", this, Shape.cylinder)
+		rearLeftWheel.transform.pivotAdjustment = [1, 0, 0]
+		rearLeftWheel.transform.position = [-0.9, 0.3, 0.8]
+		rearLeftWheel.transform.rotation = [0, 0, Math.PI / 2]
+		rearLeftWheel.transform.scaling = [wheelXScaling, 0.3, 0.3]
 	}
 
 	update_step(currTime: number) {
@@ -81,27 +107,16 @@ export class Car {
 
 		this.direction = [cosC, 0, -sinC];
 
-		this.position[0] = this.position[0] + this.direction[0] * this.speed;
-		this.position[2] = this.position[2] + this.direction[2] * this.speed;
+		this.transform.position[0] = this.transform.position[0] + this.direction[0] * this.speed;
+		this.transform.position[2] = this.transform.position[2] + this.direction[2] * this.speed;
 
 		this.isAccelerating = false;
 		this.isRotatingLeft = false;
 		this.isRotatingRight = false;
 		this.isBraking = false;
 
-
-		var o = this.position;
-		var y_axis = [0, 1, 0];
-		var z_axis = [-this.direction[0], -this.direction[1], -this.direction[2]];
-		var x_axis = glMatrix.vec3.create();
-		glMatrix.vec3.cross(x_axis, y_axis, z_axis);
-
-		glMatrix.mat4.set(this.frame,
-			x_axis[0], x_axis[1], x_axis[2], 0.0,
-			y_axis[0], y_axis[1], y_axis[2], 0.0,
-			z_axis[0], z_axis[1], z_axis[2], 0.0,
-			o[0], o[1], o[2], 1.0
-		);
+		this.transform.position = this.transform.position
+		this.transform.rotation[1] = this.angle - Math.PI / 2
 	}
 
 	private updateSpeed(deltaV: number) {
