@@ -1,23 +1,21 @@
 export abstract class Shader{
-	program: WebGLProgram
-	static /*abstract*/ create: (gl: WebGLRenderingContext) => Promise<Shader>
-	protected constructor(){}
-}
+	public program: WebGLProgram
 
+	protected abstract name: string
 
-export class UniformShader extends Shader {
-	aPositionIndex: 0
-	uModelViewMatrixLocation: WebGLUniformLocation
-	uProjectionMatrixLocation: WebGLUniformLocation
-	uColorLocation: WebGLUniformLocation
+	static async create<T extends Shader>(type: {new(): T}, gl: WebGLRenderingContext): Promise<T> {
+		var shader = new type()
+		await Shader._compileProgram(shader, gl)
+		shader._bindAttribs(gl)
+		shader._getLocations(gl)
+		return shader
+	}
 
-	public static async create(gl: WebGLRenderingContext): Promise<UniformShader> {
-		var shader = new UniformShader()
-
-		var response = await fetch('/common/shaders/UniformShaderVertex.glsl')
+	protected static async _compileProgram(shader: Shader, gl: WebGLRenderingContext){
+		var response = await fetch('/common/shaders/' + shader.name + 'Vertex.glsl')
 		var vertexShaderSource = await response.text()
 
-		response = await fetch('/common/shaders/UniformShaderFragment.glsl')
+		response = await fetch('/common/shaders/' + shader.name + 'Fragment.glsl')
 		var fragmentShaderSource = await response.text()
 
 		// create the vertex shader
@@ -30,12 +28,10 @@ export class UniformShader extends Shader {
 		gl.shaderSource(fragmentShader, fragmentShaderSource)
 		gl.compileShader(fragmentShader)
 
-		// Create the shader program
-		shader.aPositionIndex = 0
 		shader.program = gl.createProgram()
 		gl.attachShader(shader.program, vertexShader)
 		gl.attachShader(shader.program, fragmentShader)
-		gl.bindAttribLocation(shader.program, shader.aPositionIndex, "aPosition")
+
 		gl.linkProgram(shader.program)
 
 		// If creating the shader program failed, alert
@@ -46,11 +42,82 @@ export class UniformShader extends Shader {
 			str += "PROG:\n" + gl.getProgramInfoLog(shader.program)
 			alert(str)
 		}
+	}
 
-		shader.uModelViewMatrixLocation = gl.getUniformLocation(shader.program, "uModelViewMatrix")
-		shader.uProjectionMatrixLocation = gl.getUniformLocation(shader.program, "uProjectionMatrix")
-		shader.uColorLocation = gl.getUniformLocation(shader.program, "uColor")
+	protected abstract _bindAttribs(gl: WebGLRenderingContext): void
+	protected abstract _getLocations(gl: WebGLRenderingContext): void
+}
 
-		return shader
+interface PositionableShader{
+	aPositionIndex: 0
+}
+
+interface ColorableShader{
+	uColorLocation: WebGLUniformLocation
+}
+
+interface MVMatrixShader{
+	uModelViewMatrixLocation: WebGLUniformLocation
+}
+
+interface ProjectionMatrixShader{
+	uProjectionMatrixLocation: WebGLUniformLocation
+}
+
+export function isPositionable(object: any): object is PositionableShader{
+	return 'aPositionIndex' in object
+}
+
+export function isColorable(object: any): object is ColorableShader{
+	return 'uColorLocation' in object
+}
+
+export function hasMVMatrix(object: any): object is MVMatrixShader{
+	return 'uModelViewMatrixLocation' in object
+}
+
+export function hasProjectionMatrix(object: any): object is ProjectionMatrixShader{
+	return 'uProjectionMatrixLocation' in object
+}
+
+
+export class UniformShader extends Shader implements PositionableShader, ColorableShader, MVMatrixShader, ProjectionMatrixShader {
+	name: string = "UniformShader"
+
+	aPositionIndex: 0
+	uColorLocation: WebGLUniformLocation
+	uModelViewMatrixLocation: WebGLUniformLocation
+	uProjectionMatrixLocation: WebGLUniformLocation
+
+
+	protected _bindAttribs(gl: WebGLRenderingContext){
+		this.aPositionIndex = 0
+		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
+	}
+
+	protected _getLocations(gl: WebGLRenderingContext){
+		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
+		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
+		this.uColorLocation = gl.getUniformLocation(this.program, "uColor")
+	}
+}
+
+
+export class PhongShader extends Shader implements PositionableShader, ColorableShader, MVMatrixShader, ProjectionMatrixShader{
+	name: string = "Phong"
+	
+	aPositionIndex: 0
+	uColorLocation: WebGLUniformLocation
+	uModelViewMatrixLocation: WebGLUniformLocation
+	uProjectionMatrixLocation: WebGLUniformLocation
+
+	protected _bindAttribs(gl: WebGLRenderingContext): void {
+		this.aPositionIndex = 0
+		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
+	}
+	protected _getLocations(gl: WebGLRenderingContext): void {
+		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
+		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
+		this.uColorLocation = gl.getUniformLocation(this.program, "uColor")
 	}
 }
