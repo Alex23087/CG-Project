@@ -68,6 +68,7 @@ class Cone extends Shape {
 		this.numVertices = this.vertices.length/3;
 		this.numTriangles = this.triangleIndices.length/3;
 
+		this.computeNormals()
 		this.createObjectBuffers(gl)
 	}
 }

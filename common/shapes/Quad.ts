@@ -38,6 +38,7 @@ export class Quad extends Shape implements TexturedShape{
 		this.numVertices  = 4;
 		this.numTriangles = 2;
 
+		this.computeNormals()
 		this.createObjectBuffers(gl)
 	}
 }

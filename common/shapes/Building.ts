@@ -57,6 +57,7 @@ export class Building extends Shape{
 		this.numVertices  = nv*2;
 		this.numTriangles = this.triangleIndices.length / 3;
 
+		this.computeNormals()
 		this.createObjectBuffers(gl)
 	}
 }

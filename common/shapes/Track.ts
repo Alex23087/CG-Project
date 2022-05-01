@@ -79,6 +79,7 @@ export class Track extends Shape implements TexturedShape{
 		this.numVertices  = nv;
 		this.numTriangles = this.triangleIndices.length / 3;
 
+		this.computeNormals()
 		this.createObjectBuffers(gl)
 	}
 }

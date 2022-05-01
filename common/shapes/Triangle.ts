@@ -9,6 +9,7 @@ class Triangle extends Shape {
 
 	constructor(gl: WebGLRenderingContext){
 		super()
+		this.computeNormals()
 		this.createObjectBuffers(gl)
 	}
 }

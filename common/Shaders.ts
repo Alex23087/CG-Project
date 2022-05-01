@@ -52,8 +52,16 @@ interface PositionableShader{
 	aPositionIndex: 0
 }
 
+interface NormalShader{
+	aNormalIndex: 1
+}
+
 interface ColorableShader{
 	uColorLocation: WebGLUniformLocation
+}
+
+interface ShinyShader{
+	uShininessLocation: WebGLUniformLocation
 }
 
 interface MVMatrixShader{
@@ -64,12 +72,24 @@ interface ProjectionMatrixShader{
 	uProjectionMatrixLocation: WebGLUniformLocation
 }
 
+interface ViewSpaceLightDirectionShader{
+	uViewSpaceLightDirectionLocation: WebGLUniformLocation
+}
+
 export function isPositionable(object: any): object is PositionableShader{
 	return 'aPositionIndex' in object
 }
 
+export function isNormal(object: any): object is NormalShader{
+	return 'aNormalIndex' in object
+}
+
 export function isColorable(object: any): object is ColorableShader{
 	return 'uColorLocation' in object
+}
+
+export function isShiny(object: any): object is ShinyShader{
+	return 'uShininessLocation' in object
 }
 
 export function hasMVMatrix(object: any): object is MVMatrixShader{
@@ -80,11 +100,17 @@ export function hasProjectionMatrix(object: any): object is ProjectionMatrixShad
 	return 'uProjectionMatrixLocation' in object
 }
 
+export function hasViewSpaceLightDirection(object: any): object is ViewSpaceLightDirectionShader{
+	return 'uViewSpaceLightDirectionLocation' in object
+}
+
+
 
 export class UniformShader extends Shader implements PositionableShader, ColorableShader, MVMatrixShader, ProjectionMatrixShader {
 	name: string = "UniformShader"
 
-	aPositionIndex: 0
+	aPositionIndex: 0 = 0
+
 	uColorLocation: WebGLUniformLocation
 	uModelViewMatrixLocation: WebGLUniformLocation
 	uProjectionMatrixLocation: WebGLUniformLocation
@@ -103,21 +129,27 @@ export class UniformShader extends Shader implements PositionableShader, Colorab
 }
 
 
-export class PhongShader extends Shader implements PositionableShader, ColorableShader, MVMatrixShader, ProjectionMatrixShader{
+export class PhongShader extends Shader implements PositionableShader, NormalShader, ColorableShader, ShinyShader, MVMatrixShader, ProjectionMatrixShader, ViewSpaceLightDirectionShader{
 	name: string = "Phong"
 	
-	aPositionIndex: 0
+	aPositionIndex: 0 = 0
+	aNormalIndex: 1 = 1
+
 	uColorLocation: WebGLUniformLocation
+	uShininessLocation: WebGLUniformLocation
 	uModelViewMatrixLocation: WebGLUniformLocation
 	uProjectionMatrixLocation: WebGLUniformLocation
+	uViewSpaceLightDirectionLocation: WebGLUniformLocation
 
 	protected _bindAttribs(gl: WebGLRenderingContext): void {
-		this.aPositionIndex = 0
 		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
+		gl.bindAttribLocation(this.program, this.aNormalIndex, "aNormal")
 	}
 	protected _getLocations(gl: WebGLRenderingContext): void {
 		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
 		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
 		this.uColorLocation = gl.getUniformLocation(this.program, "uColor")
+		this.uShininessLocation = gl.getUniformLocation(this.program, "uShininess")
+		this.uViewSpaceLightDirectionLocation = gl.getUniformLocation(this.program, "uViewSpaceLightDirection")
 	}
 }

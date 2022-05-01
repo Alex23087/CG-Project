@@ -1,5 +1,6 @@
 import { Controls } from "../common/Controls.js"
 import { CameraIndex, Renderer } from "../common/Renderer.js"
+import * as Shaders from "../common/Shaders.js"
 
 var renderer: Renderer
 var controls: Controls
@@ -16,7 +17,7 @@ function on_keydown(e: KeyboardEvent){
 
 window.onload = function (){
 	canvas = document.getElementById("OUTPUT-CANVAS") as HTMLCanvasElement;
-	renderer = new Renderer(canvas)
+	renderer = new Renderer(canvas, Shaders.PhongShader)
 	controls = new Controls(renderer)
 	//renderer.addObjectToScene(makeCar())
 	//Controls.injectControls(Game.cars[0])

@@ -1,4 +1,4 @@
-import { StringIndexedBooleanArray } from "./Game";
+import { Game, StringIndexedBooleanArray } from "./Game";
 import { GameObject } from "./GameObject.js";
 import { Shape } from "./shapes/Shape.js";
 
@@ -20,6 +20,13 @@ export class Car extends GameObject{
 	control_keys: StringIndexedBooleanArray;
 	lastAnimationTime: number;
 
+	wheels: {
+		frontLeft: GameObject
+		frontRight: GameObject
+		rearLeft: GameObject
+		rearRight: GameObject
+	}
+
 	constructor(name: string, startPosition: vec3) {
 		super(name, null, null)
 
@@ -29,7 +36,6 @@ export class Car extends GameObject{
 		this.speed = 0;
 		this.angle = Math.PI;
 		this.direction = [0.0, 0.0, 0.0];
-		this.transform.position = [0.0, 0.0, 0.0];
 		this.control_keys = [] as unknown as StringIndexedBooleanArray;
 		this.lastAnimationTime = -1.0;
 
@@ -43,29 +49,43 @@ export class Car extends GameObject{
 
 		var wheelXScaling = 0.1
 
-		var frontLeftWheel = new GameObject("FrontLeftWheel", this, Shape.cylinder)
+		var frontLeftWheelContainer = new GameObject("FrontLeftWheelContainer", this, null)
+		frontLeftWheelContainer.transform.pivotAdjustment = [0, 1, 1]
+		frontLeftWheelContainer.transform.position = [0, -1, -1]
+		var frontRightWheelContainer = new GameObject("FrontRightWheelContainer", this, null)
+		var rearLeftWheelContainer = new GameObject("RearLeftWheelContainer", this, null)
+		var rearRightWheelContainer = new GameObject("RearRightWheelContainer", this, null)
+
+		var frontLeftWheel = new GameObject("FrontLeftWheel", frontLeftWheelContainer, Shape.cylinder)
 		frontLeftWheel.transform.pivotAdjustment = [1, 0, 0]
 		frontLeftWheel.transform.position = [-0.9, 0.2, -0.8]
 		frontLeftWheel.transform.rotation = [0, 0, Math.PI / 2]
 		frontLeftWheel.transform.scaling = [wheelXScaling, 0.2, 0.2]
 
-		var frontRightWheel = new GameObject("FrontRightWheel", this, Shape.cylinder)
+		var frontRightWheel = new GameObject("FrontRightWheel", frontRightWheelContainer, Shape.cylinder)
 		frontRightWheel.transform.pivotAdjustment = [1, 0, 0]
 		frontRightWheel.transform.position = [0.9, 0.2, -0.8]
 		frontRightWheel.transform.rotation = [0, 0, Math.PI / 2]
 		frontRightWheel.transform.scaling = [wheelXScaling, 0.2, 0.2]
 
-		var rearRightWheel = new GameObject("RearRightWheel", this, Shape.cylinder)
+		var rearRightWheel = new GameObject("RearRightWheel", rearRightWheelContainer, Shape.cylinder)
 		rearRightWheel.transform.pivotAdjustment = [1, 0, 0]
 		rearRightWheel.transform.position = [0.9, 0.3, 0.8]
 		rearRightWheel.transform.rotation = [0, 0, Math.PI / 2]
 		rearRightWheel.transform.scaling = [wheelXScaling, 0.3, 0.3]
 
-		var rearLeftWheel = new GameObject("RearLeftWheel", this, Shape.cylinder)
+		var rearLeftWheel = new GameObject("RearLeftWheel", rearLeftWheelContainer, Shape.cylinder)
 		rearLeftWheel.transform.pivotAdjustment = [1, 0, 0]
 		rearLeftWheel.transform.position = [-0.9, 0.3, 0.8]
 		rearLeftWheel.transform.rotation = [0, 0, Math.PI / 2]
 		rearLeftWheel.transform.scaling = [wheelXScaling, 0.3, 0.3]
+
+		this.wheels = {
+			frontLeft: frontLeftWheelContainer,
+			frontRight: frontRightWheelContainer,
+			rearLeft: rearLeftWheelContainer,
+			rearRight: rearRightWheelContainer
+		}
 	}
 
 	update_step(currTime: number) {
@@ -117,6 +137,7 @@ export class Car extends GameObject{
 
 		this.transform.position = this.transform.position
 		this.transform.rotation[1] = this.angle - Math.PI / 2
+		this.updateWheels()
 	}
 
 	private updateSpeed(deltaV: number) {
@@ -139,5 +160,18 @@ export class Car extends GameObject{
 		} else if (this.isBraking) {
 			this.speed -= deltaV;
 		}
+	}
+
+	private updateWheels(){
+		var frontAngle = this.wheelsAngle * 0.6
+		this.wheels.frontLeft.transform.rotation[1] = frontAngle
+		this.wheels.frontRight.transform.rotation[1] = frontAngle
+
+		var rotation = this.speed
+
+		this.wheels.frontLeft.children[0].transform.rotation[1] += rotation
+		this.wheels.frontRight.children[0].transform.rotation[1] += rotation
+		this.wheels.rearLeft.children[0].transform.rotation[1] += rotation
+		this.wheels.rearRight.children[0].transform.rotation[1] += rotation
 	}
 }

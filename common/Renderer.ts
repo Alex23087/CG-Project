@@ -32,7 +32,7 @@ export class Renderer{
 	
     canvasDefaultSize: {x: number, y: number} = {x: 800, y: 450}
 
-	public constructor(canvas: HTMLCanvasElement){
+	public constructor(canvas: HTMLCanvasElement, shader: {new(): Shaders.Shader} | null = null){
 		// set the camera currently in use
 		this.currentCamera = 1
         this.canvas = canvas
@@ -52,11 +52,14 @@ export class Renderer{
         /* initialize objects to be rendered */
         this.initializeObjects();
 
-        /* create the shader */
-        Shaders.Shader.create(Shaders.UniformShader, this.gl).then(program => {
+		if(shader == null){
+			shader = Shaders.UniformShader
+		}
+
+		Shaders.Shader.create(shader, this.gl).then(program => {
 			this.shader = program
 			this.Display()
-		});
+		})
 	}
 
 	/*
@@ -70,8 +73,18 @@ export class Renderer{
 			this.gl.vertexAttribPointer(this.shader.aPositionIndex, 3, this.gl.FLOAT, false, 0, 0);
 		}
 
+		if(Shaders.isNormal(this.shader)){
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, obj.normalBuffer);
+			this.gl.enableVertexAttribArray(this.shader.aNormalIndex);
+			this.gl.vertexAttribPointer(this.shader.aNormalIndex, 3, this.gl.FLOAT, false, 0, 0);
+		}
+
 		this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
 		this.gl.polygonOffset(1.0, 1.0);
+
+		if(Shaders.isShiny(this.shader)){
+			this.gl.uniform1f(this.shader.uShininessLocation, 3)
+		}
 
 		if(Shaders.isColorable(this.shader)){
 			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferTriangles);
@@ -154,9 +167,14 @@ export class Renderer{
 
 		this.cameras[this.currentCamera].update(this.car.transform.getLocalMatrix());
 
-
-		
 		var invV = this.cameras[this.currentCamera].inverseViewMatrix;
+
+		if(Shaders.hasViewSpaceLightDirection(this.shader)){
+			var viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.game.scene.weather.sunLightDirection, invV)
+			glMatrix.vec3.normalize(viewSpaceLightDirection, viewSpaceLightDirection)
+			this.gl.uniform3fv(this.shader.uViewSpaceLightDirectionLocation, viewSpaceLightDirection as Float32List)
+		}
+
 		this.drawGameObject(this.scene, invV)
 		
 		// initialize the stack with the identity
