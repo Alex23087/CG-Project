@@ -10,28 +10,34 @@ import { MatrixStack } from "./libs/MatrixStack.js"
 import { Transform } from "./Transform.js"
 import { GameObject } from "./GameObject.js"
 import { Car } from "./Car.js"
+import { Spotlight } from "./Spotlight.js"
 
 type Color = [number, number, number, number]
 
 export type CameraIndex = 0 | 1
 
 export class Renderer{
+	gl: WebGLRenderingContext
+	shader: Shaders.Shader
+	wireframeEnabled = false
+
+	canvas: HTMLCanvasElement
+    canvasDefaultSize: {x: number, y: number} = {x: 800, y: 450}
+
 	cameras: Cameras.Camera[] = [
 		new Cameras.FollowFromUpCamera(),
 		new Cameras.ChaseCamera()
 	]
 	currentCamera: CameraIndex
 
-	shader: Shaders.Shader
-	gl: WebGLRenderingContext
-	canvas: HTMLCanvasElement
+	private lights: {
+		spotlights: Spotlight[]
+	}
+
     car: Car
     game: Game
 	stack: MatrixStack
 	private scene: GameObject
-	wireframeEnabled = false
-	
-    canvasDefaultSize: {x: number, y: number} = {x: 800, y: 450}
 
 	public constructor(canvas: HTMLCanvasElement, shader: {new(): Shaders.Shader} | null = null){
 		// set the camera currently in use
@@ -45,10 +51,15 @@ export class Renderer{
         var gl_version = this.gl.getParameter(this.gl.VERSION); 
         console.log("glversion: " + gl_version);
         var GLSL_version = this.gl.getParameter(this.gl.SHADING_LANGUAGE_VERSION)
-        console.log("glsl  version: "+GLSL_version);
+        console.log("glsl  version: " + GLSL_version);
 
         /* create the matrix stack */
         this.stack = new MatrixStack();
+
+		this.lights = {
+			spotlights: []
+		}
+
         this.game = new Game()
         /* initialize objects to be rendered */
         this.initializeObjects();
@@ -59,7 +70,7 @@ export class Renderer{
 
 		Shaders.Shader.create(shader, this.gl).then(program => {
 			this.shader = program
-			this.Display()
+			this.startRendering()
 		})
 	}
 
@@ -67,7 +78,7 @@ export class Renderer{
 	draw an object as specified in common/shapes/triangle.js for which the buffer 
 	have alrady been created
 	*/
-	drawObject(obj: Shape, fillColor: Color, lineColor: Color, matrix: mat4 = this.stack.matrix) {
+	private drawObject(obj: Shape, fillColor: Color, lineColor: Color, matrix: mat4 = this.stack.matrix) {
 		if(Shaders.isPositionable(this.shader)){
 			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, obj.vertexBuffer);
 			this.gl.enableVertexAttribArray(this.shader.aPositionIndex);
@@ -80,12 +91,6 @@ export class Renderer{
 			this.gl.vertexAttribPointer(this.shader.aNormalIndex, 3, this.gl.FLOAT, false, 0, 0);
 		}
 
-
-		if(this.wireframeEnabled){
-			this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
-			this.gl.polygonOffset(1.0, 1.0);
-		}
-
 		if(Shaders.isShiny(this.shader)){
 			this.gl.uniform1f(this.shader.uShininessLocation, 3)
 		}
@@ -93,14 +98,50 @@ export class Renderer{
 		if(Shaders.isColorable(this.shader)){
 			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferTriangles);
 			this.gl.uniform4fv(this.shader.uColorLocation, fillColor);
-			this.gl.drawElements(this.gl.TRIANGLES, obj.triangleIndices.length, this.gl.UNSIGNED_SHORT, 0);
+		}
 
-			if(this.wireframeEnabled){
-				this.gl.disable(this.gl.POLYGON_OFFSET_FILL);
-				this.gl.uniform4fv(this.shader.uColorLocation, lineColor);
-				this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferEdges);
-				this.gl.drawElements(this.gl.LINES, obj.numTriangles * 3 * 2, this.gl.UNSIGNED_SHORT, 0);
+		if(Shaders.supportsSpotlights(this.shader)){
+			var attenuation = []
+			var colors = []
+			var cutoff = []
+			var direction = []
+			var focus = []
+			var intensity = []
+			var position = []
+			for(var i = 0; i < this.lights.spotlights.length; i++){
+				attenuation[i] = this.lights.spotlights[i].attenuation
+				cutoff[i] = this.lights.spotlights[i].cutoff
+				focus[i] = this.lights.spotlights[i].focus
+				intensity[i] = this.lights.spotlights[i].intensity
+				for(var j = 0; j < 3; j++){
+					colors[i * 3 + j] = this.lights.spotlights[i].color[j]
+					direction[i * 3 + j] = this.lights.spotlights[i].direction[j]
+					position[i * 3 + j] = this.lights.spotlights[i].position[j]
+				}
 			}
+			this.gl.uniform1fv(this.shader.uSpotlightAttenuationLocation, attenuation)
+			this.gl.uniform3fv(this.shader.uSpotlightColorsLocation, colors)
+			this.gl.uniform1fv(this.shader.uSpotlightCutoffLocation, cutoff)
+			this.gl.uniform3fv(this.shader.uSpotlightDirectionsLocation, direction)
+			this.gl.uniform1fv(this.shader.uSpotlightFocusLocation, focus)
+			this.gl.uniform1fv(this.shader.uSpotlightIntensityLocation, intensity)
+			this.gl.uniform3fv(this.shader.uSpotlightPositionsLocation, position)
+		}
+
+		if(this.wireframeEnabled){
+			this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
+			this.gl.polygonOffset(1.0, 1.0);
+		}
+
+
+		this.gl.drawElements(this.gl.TRIANGLES, obj.triangleIndices.length, this.gl.UNSIGNED_SHORT, 0);
+
+
+		if(this.wireframeEnabled && Shaders.isColorable(this.shader)){
+			this.gl.disable(this.gl.POLYGON_OFFSET_FILL);
+			this.gl.uniform4fv(this.shader.uColorLocation, lineColor);
+			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferEdges);
+			this.gl.drawElements(this.gl.LINES, obj.numTriangles * 3 * 2, this.gl.UNSIGNED_SHORT, 0);
 		}
 
 		if(Shaders.isPositionable(this.shader)){
@@ -110,20 +151,8 @@ export class Renderer{
 		}
 	};
 
-	/*
-	initialize the object in the scene
-	*/
-	initializeObjects() {
-		Shape.cube = new Cube(this.gl)
-		Shape.cylinder = new Cylinder(this.gl, 10)
 
-		this.scene = GameObject.empty("Scene")
-		this.game.setScene(this.gl, scene_0)
-		this.car = this.game.addCar("mycar")
-		this.addObjectToScene(this.car)
-	}
-
-	drawGameObject(gameObject: GameObject, parentMatrix: mat4){
+	private drawGameObject(gameObject: GameObject, parentMatrix: mat4){
 		if(!Shaders.hasMVMatrix(this.shader)){
 			return
 		}
@@ -148,7 +177,7 @@ export class Renderer{
 	}
 
 
-	drawScene() {
+	private draw() {
 		if(!Shaders.hasMVMatrix(this.shader) || !Shaders.hasProjectionMatrix(this.shader)){
 			return
 		}
@@ -173,6 +202,14 @@ export class Renderer{
 		this.cameras[this.currentCamera].update(this.car.transform.getLocalMatrix());
 
 		var invV = this.cameras[this.currentCamera].inverseViewMatrix;
+
+		if(Shaders.hasViewMatrix(this.shader)){
+			this.gl.uniformMatrix4fv(this.shader.uViewMatrixLocation, false, invV as Float32List)
+		}
+
+		if(Shaders.hasLightDirection(this.shader)){
+			this.gl.uniform3fv(this.shader.uLightDirectionLocation, this.game.scene.weather.sunLightDirection)
+		}
 
 		if(Shaders.hasViewSpaceLightDirection(this.shader)){
 			var viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.game.scene.weather.sunLightDirection, invV)
@@ -204,11 +241,9 @@ export class Renderer{
 
 
 
-	Display = () => {
-		this.drawScene();
-        //console.log("drawing")
-        var that = this
-		window.requestAnimationFrame(this.Display)
+	startRendering = () => {
+		this.draw();
+		window.requestAnimationFrame(this.startRendering)
 	};
 
     toggleFullscreen(){
@@ -230,5 +265,31 @@ export class Renderer{
 
 	addObjectToScene(go: GameObject){
 		this.scene.addChild(go)
+	}
+
+	addSpotlight(spotlight: Spotlight){
+		this.lights.spotlights.push(spotlight)
+	}
+
+
+
+	/*
+	initialize the object in the scene
+	*/
+	private initializeObjects() {
+		Shape.cube = new Cube(this.gl)
+		Shape.cylinder = new Cylinder(this.gl, 10)
+
+		this.scene = GameObject.empty("Scene")
+		this.game.setScene(this.gl, scene_0)
+		this.car = this.game.addCar("mycar")
+		this.addObjectToScene(this.car)
+
+		for(var i = 0; i < this.game.scene.lamps.length; i++){
+			var spotlight = new Spotlight()
+			spotlight.position = this.game.scene.lamps[i].position
+			spotlight.position[1] = this.game.scene.lamps[i].height
+			this.addSpotlight(spotlight)
+		}
 	}
 }

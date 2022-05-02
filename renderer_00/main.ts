@@ -15,7 +15,7 @@ function on_keydown(e: KeyboardEvent){
 
 window.onload = function (){
 	canvas = document.getElementById("OUTPUT-CANVAS") as HTMLCanvasElement;
-	renderer = new Renderer(canvas, Shaders.PhongShader)
+	renderer = new Renderer(canvas, Shaders.PhongSpotlightShader)
 	controls = new Controls(renderer)
 	renderer.canvas.addEventListener('mousemove', function(e: MouseEvent){controls.on_mouseMove(e)}, false);
 	renderer.canvas.addEventListener('keydown', on_keydown, false);
@@ -42,8 +42,8 @@ cameraSelector.onchange = function (){
 
 var shaderSelector = (document.getElementById("shader") as HTMLSelectElement)
 shaderSelector.onchange = function (){
-	console.log(shaderSelector.value)
 	switch(shaderSelector.value){
+		default:
 		case "0":
 			Shaders.Shader.create(Shaders.UniformShader, renderer.gl).then( shader => {
 				renderer.shader = shader
@@ -51,6 +51,11 @@ shaderSelector.onchange = function (){
 		break;
 		case "1":
 			Shaders.Shader.create(Shaders.PhongShader, renderer.gl).then( shader => {
+				renderer.shader = shader
+			})
+		break;
+		case "2":
+			Shaders.Shader.create(Shaders.PhongSpotlightShader, renderer.gl).then( shader => {
 				renderer.shader = shader
 			})
 		break;

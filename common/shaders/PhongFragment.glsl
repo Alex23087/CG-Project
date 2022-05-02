@@ -7,7 +7,7 @@ varying vec3 vViewSpaceNormal;
 varying vec3 vViewSpaceViewDirection;
 
 void main(void){
-    float diffuseLight = max(dot(uViewSpaceLightDirection, vViewSpaceNormal), 0.0);
+    float diffuseLight = max(dot(uViewSpaceLightDirection, vViewSpaceNormal), 0.0) * 0.5 + 0.5;
     vec3 diffuseColor = uColor.xyz * diffuseLight;
     
     vec3 reflectedLightDirection = -uViewSpaceLightDirection + 2.0 * dot(uViewSpaceLightDirection, vViewSpaceNormal) * vViewSpaceNormal;
