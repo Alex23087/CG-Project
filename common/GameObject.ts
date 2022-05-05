@@ -25,4 +25,15 @@ export class GameObject{
         gameObject.transform.parent = this.transform
         this.children.push(gameObject)
     }
+
+    public update(deltaT: number) {}
+
+    public findChildWithName(name: string): GameObject | null{
+        for(var i = 0; i < this.children.length; i++){
+            if(this.children[i].name == name){
+                return this.children[i]
+            }
+        }
+        return null
+    }
 }

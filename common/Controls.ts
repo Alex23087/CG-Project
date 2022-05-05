@@ -1,7 +1,8 @@
-import { CameraIndex, Renderer } from "./Renderer.js"
+import { Renderer } from "./Renderer.js"
 import { Car } from "./Car.js"
 import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js"
-import { ChaseCamera } from "./Cameras.js"
+import { Camera } from "./Cameras.js"
+import { Game } from "./Game.js"
 
 //Class to implement the correct behaviour of pressing and releasing buttons
 export class Controls {
@@ -13,17 +14,19 @@ export class Controls {
     static leftKeys = ['a', 'A', "ArrowLeft"]
 
     renderer: Renderer
+    game: Game
 
-    public constructor(renderer: Renderer){
+    public constructor(renderer: Renderer, game: Game){
         this.renderer = renderer
+        this.game = game
     }
 
     keyPressed(key: string){
-        this.setKey(this.renderer.car, key, true)
+        this.setKey(this.game.cars[0], key, true)
     }
 
     keyReleased(key: string){
-        this.setKey(this.renderer.car, key, false)
+        this.setKey(this.game.cars[0], key, false)
     }
 
     private setKey(car: Car, key: string, value: boolean){
@@ -49,10 +52,10 @@ export class Controls {
     }
 
     private toggleCamera(){
-        this.renderer.currentCamera = (this.renderer.currentCamera + 1) % this.renderer.cameras.length as CameraIndex
+        //this.renderer.currentCamera = (this.renderer.currentCamera + 1) % this.renderer.cameras.length as CameraIndex
     }
 
-    public setCamera(value: CameraIndex){
+    public setCamera(value){
     	this.renderer.currentCamera = value;
     }
 
@@ -64,7 +67,7 @@ export class Controls {
             ((e.clientY / this.renderer.canvas.height) - 0.5) * sensitivity
         ];
 
-        (this.renderer.cameras[this.renderer.currentCamera] as ChaseCamera).mouseMoved(amount)
+        (this.renderer.currentCamera as Camera).mouseMoved(amount)
     }
 
     onClick(e){

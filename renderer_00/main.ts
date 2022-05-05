@@ -1,9 +1,11 @@
 import { Controls } from "../common/Controls.js"
-import { CameraIndex, Renderer } from "../common/Renderer.js"
+import { Game } from "../common/Game.js"
+import { Renderer } from "../common/Renderer.js"
 import * as Shaders from "../common/Shaders.js"
 
 var renderer: Renderer
 var controls: Controls
+var game: Game
 var canvas: HTMLCanvasElement
 
 function on_keyup(e: KeyboardEvent){
@@ -16,7 +18,8 @@ function on_keydown(e: KeyboardEvent){
 window.onload = function (){
 	canvas = document.getElementById("OUTPUT-CANVAS") as HTMLCanvasElement;
 	renderer = new Renderer(canvas, Shaders.PhongSpotlightShader)
-	controls = new Controls(renderer)
+	game = new Game(renderer)
+	controls = new Controls(renderer, game)
 	renderer.canvas.addEventListener('mousemove', function(e: MouseEvent){controls.on_mouseMove(e)}, false);
 	renderer.canvas.addEventListener('keydown', on_keydown, false);
 	renderer.canvas.addEventListener('keyup', on_keyup, false);
@@ -26,7 +29,7 @@ window.onload = function (){
 	}
 }
 
-function update_camera(value: CameraIndex){
+function update_camera(value){
 	controls.setCamera(value)
 }
 
@@ -37,7 +40,7 @@ wireframeCheckbox.onchange = function(e: Event){
 
 var cameraSelector = (document.getElementById("cameras") as HTMLSelectElement)
 cameraSelector.onchange = function (){
-	update_camera(cameraSelector.value as unknown as CameraIndex)
+	update_camera(cameraSelector.value)
 }
 
 var shaderSelector = (document.getElementById("shader") as HTMLSelectElement)

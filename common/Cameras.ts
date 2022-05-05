@@ -1,24 +1,21 @@
+import { GameObject } from "./GameObject.js"
 import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js"
 
-export abstract class Camera{
-	frame: vec4
+export interface Camera{
 	inverseViewMatrix: mat4
-	abstract update(car_position: vec4): void
-	abstract mouseMoved(coords: vec2): void
+	mouseMoved(coords: vec2): void
 }
 /*
 the FollowFromUpCamera always looks at the car from a position right above the car
 */
-export class FollowFromUpCamera extends Camera{
-	constructor(){
-		super()
-		/* the only data it needs is the position of the camera */
-		this.frame = glMatrix.vec4.create()
-		
+export class FollowFromUpCamera extends GameObject implements Camera{
+	inverseViewMatrix: mat4
+
+	constructor(parent: GameObject){
+		super("FollowFromUpCamera", parent, null)
 	}
 		/* update the camera with the current car position */
-	update(car_position: vec4){
-		this.frame = car_position
+	update(deltaT: number){
 		this.updateInverseViewMatrix()
 	}
 
@@ -30,9 +27,11 @@ export class FollowFromUpCamera extends Camera{
 		let target = glMatrix.vec3.create()
 		let up = glMatrix.vec4.create()
 		
-		glMatrix.vec3.transformMat4(eye, [0, 10, 0], this.frame)
-		glMatrix.vec3.transformMat4(target, [0.0, 0.0, 0.0, 1.0], this.frame)
-		glMatrix.vec4.transformMat4(up, [0.0, 0.0, -1, 0.0], this.frame)
+		let frame = this.transform.getWorldMatrix()
+
+		glMatrix.vec3.transformMat4(eye, [0, 10, 0], frame)
+		glMatrix.vec3.transformMat4(target, [0.0, 0.0, 0.0, 1.0], frame)
+		glMatrix.vec4.transformMat4(up, [0.0, 0.0, -1, 0.0], frame)
 		
 		this.inverseViewMatrix = glMatrix.mat4.lookAt(
 			glMatrix.mat4.create(),
@@ -46,16 +45,16 @@ export class FollowFromUpCamera extends Camera{
 /*
 the ChaseCamera always look at the car from behind the car, slightly above
 */
-export class ChaseCamera extends Camera{
+export class ChaseCamera extends GameObject implements Camera{
+	inverseViewMatrix: mat4
 	private localEye: vec3 = [0, 3, 8, 1.0]
 	private localTarget: vec3 = [0.0, 1.0, 0.0, 1.0]
 	private worldEye: vec3
 	private worldTarget: vec3
 	private mouseOffset: vec2
 
-	constructor(){
-		super()
-		this.frame = glMatrix.vec4.create()
+	constructor(parent: GameObject){
+		super("ChaseCamera", parent, null)
 		this.worldEye = glMatrix.vec3.create()
 		this.worldTarget = glMatrix.vec3.create()
 		this.mouseOffset = [0, 0]
@@ -66,8 +65,7 @@ export class ChaseCamera extends Camera{
 	}
 	
 	/* update the camera with the current car position */
-	update(car_frame: vec4){
-		this.frame = (car_frame as number[]).slice()
+	update(deltaT: number){
 		this.updateInverseViewMatrix()
 	}
 
@@ -77,9 +75,12 @@ export class ChaseCamera extends Camera{
 		tmp[0] = this.localEye[0] - this.mouseOffset[0]
 		tmp[1] = this.localEye[1] + this.mouseOffset[1]
 		tmp[2] = this.localEye[2]
+
+		let frame = this.transform.getWorldMatrix()
+
 		//console.log(tmp)
-		glMatrix.vec3.transformMat4(this.worldEye, tmp, this.frame)
-		glMatrix.vec3.transformMat4(this.worldTarget, this.localTarget, this.frame)
+		glMatrix.vec3.transformMat4(this.worldEye, tmp, frame)
+		glMatrix.vec3.transformMat4(this.worldTarget, this.localTarget, frame)
 		this.inverseViewMatrix = glMatrix.mat4.lookAt(glMatrix.mat4.create(), this.worldEye, this.worldTarget, [0, 1, 0])
 	}
 }

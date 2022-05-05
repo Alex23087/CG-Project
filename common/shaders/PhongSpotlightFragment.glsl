@@ -40,5 +40,5 @@ void main(void){
         spotlightColor += tmpColor;
     }
 
-    gl_FragColor = vec4(spotlightColor, 1.0);
+    gl_FragColor = vec4(diffuseColor + specularColor + spotlightColor, 1.0);
 }

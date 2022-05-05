@@ -1,20 +1,11 @@
 import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js"
 import * as Shaders from "./Shaders.js"
-import { scene_0 } from "./scenes/scene_0.js"
-import { Game } from "./Game.js"
 import * as Cameras from "./Cameras.js"
-import { Cube } from "./shapes/Cube.js"
-import { Cylinder } from "./shapes/Cylinder.js"
 import { Shape } from "./shapes/Shape.js"
-import { MatrixStack } from "./libs/MatrixStack.js"
-import { Transform } from "./Transform.js"
 import { GameObject } from "./GameObject.js"
-import { Car } from "./Car.js"
 import { Spotlight } from "./Spotlight.js"
 
 type Color = [number, number, number, number]
-
-export type CameraIndex = 0 | 1
 
 export class Renderer{
 	gl: WebGLRenderingContext
@@ -24,24 +15,17 @@ export class Renderer{
 	canvas: HTMLCanvasElement
     canvasDefaultSize: {x: number, y: number} = {x: 800, y: 450}
 
-	cameras: Cameras.Camera[] = [
-		new Cameras.FollowFromUpCamera(),
-		new Cameras.ChaseCamera()
-	]
-	currentCamera: CameraIndex
+	currentCamera: Cameras.Camera
 
 	private lights: {
 		spotlights: Spotlight[]
+		directional: vec3
 	}
 
-    car: Car
-    game: Game
-	stack: MatrixStack
+	private currentTime: number
 	private scene: GameObject
 
 	public constructor(canvas: HTMLCanvasElement, shader: {new(): Shaders.Shader} | null = null){
-		// set the camera currently in use
-		this.currentCamera = 1
         this.canvas = canvas
             
         /* get the webgl context */
@@ -53,24 +37,22 @@ export class Renderer{
         var GLSL_version = this.gl.getParameter(this.gl.SHADING_LANGUAGE_VERSION)
         console.log("glsl  version: " + GLSL_version);
 
-        /* create the matrix stack */
-        this.stack = new MatrixStack();
-
 		this.lights = {
-			spotlights: []
+			spotlights: [],
+			directional: [0, -1, 0]
 		}
 
-        this.game = new Game()
-        /* initialize objects to be rendered */
-        this.initializeObjects();
+		this.scene = GameObject.empty("Scene")
 
 		if(shader == null){
 			shader = Shaders.UniformShader
 		}
 
+		this.currentTime = 0
+
 		Shaders.Shader.create(shader, this.gl).then(program => {
 			this.shader = program
-			this.startRendering()
+			this.startRendering(0)
 		})
 	}
 
@@ -78,7 +60,7 @@ export class Renderer{
 	draw an object as specified in common/shapes/triangle.js for which the buffer 
 	have alrady been created
 	*/
-	private drawObject(obj: Shape, fillColor: Color, lineColor: Color, matrix: mat4 = this.stack.matrix) {
+	private drawObject(obj: Shape, fillColor: Color, lineColor: Color) {
 		if(Shaders.isPositionable(this.shader)){
 			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, obj.vertexBuffer);
 			this.gl.enableVertexAttribArray(this.shader.aPositionIndex);
@@ -184,7 +166,6 @@ export class Renderer{
 		var width = this.canvas.width
 		var height = this.canvas.height
 		var ratio = width / height;
-		this.stack = new MatrixStack();
 
 		this.gl.viewport(0, 0, width, height);
 		
@@ -199,52 +180,43 @@ export class Renderer{
 		
 		this.gl.uniformMatrix4fv(this.shader.uProjectionMatrixLocation, false, glMatrix.mat4.perspective(glMatrix.mat4.create(), 3.14 / 4, ratio, 1, 500) as Float32List);
 
-		this.cameras[this.currentCamera].update(this.car.transform.getLocalMatrix());
-
-		var invV = this.cameras[this.currentCamera].inverseViewMatrix;
+		var invV = this.currentCamera.inverseViewMatrix;
 
 		if(Shaders.hasViewMatrix(this.shader)){
 			this.gl.uniformMatrix4fv(this.shader.uViewMatrixLocation, false, invV as Float32List)
 		}
 
 		if(Shaders.hasLightDirection(this.shader)){
-			this.gl.uniform3fv(this.shader.uLightDirectionLocation, this.game.scene.weather.sunLightDirection)
+			this.gl.uniform3fv(this.shader.uLightDirectionLocation, this.lights.directional as Float32List)
 		}
 
 		if(Shaders.hasViewSpaceLightDirection(this.shader)){
-			var viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.game.scene.weather.sunLightDirection, invV)
+			var viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional, invV)
 			glMatrix.vec3.normalize(viewSpaceLightDirection, viewSpaceLightDirection)
 			this.gl.uniform3fv(this.shader.uViewSpaceLightDirectionLocation, viewSpaceLightDirection as Float32List)
 		}
 
 		this.drawGameObject(this.scene, invV)
-		
-		// initialize the stack with the identity
-		this.stack.loadIdentity();
-		// multiply by the view matrix
-		this.stack.multiply(invV);
-
-		// drawing the car
-		this.stack.push();
-		this.stack.multiply(this.cameras[this.currentCamera].frame); // projection * viewport
-		//this.drawCar(this.stack.matrix)
-		this.stack.pop();
-		this.gl.uniformMatrix4fv(this.shader.uModelViewMatrixLocation, false, this.stack.matrix as Float32List);
-
-		// drawing the static elements (ground, track and buldings)
-		this.drawObject(this.game.scene.groundObj, [0.3, 0.7, 0.2, 1.0], [0, 0, 0, 1.0]);
-		this.drawObject(this.game.scene.trackObj, [0.9, 0.8, 0.7, 1.0], [0, 0, 0, 1.0]);
-		for (var i in this.game.scene.buildingsObj) 
-			this.drawObject(this.game.scene.buildingsObj[i], [0.8, 0.8, 0.8, 1.0], [0.2, 0.2, 0.2, 1.0]);
 		this.gl.useProgram(null);
 	};
 
 
 
-	startRendering = () => {
-		this.draw();
+	startRendering = (time: number) => {
+		this.updateGameObjects(this.scene, time - this.currentTime)
+		if(this.currentCamera){
+			this.draw();
+		}
+		this.currentTime = time
 		window.requestAnimationFrame(this.startRendering)
-	};
+	}
+
+	private updateGameObjects(obj: GameObject, deltaT: number){
+		obj.update(deltaT)
+		for(var i = 0; i < obj.children.length; i++){
+			this.updateGameObjects(obj.children[i], deltaT)
+		}
+	}
 
     toggleFullscreen(){
         if (!document.fullscreenElement) {
@@ -271,25 +243,7 @@ export class Renderer{
 		this.lights.spotlights.push(spotlight)
 	}
 
-
-
-	/*
-	initialize the object in the scene
-	*/
-	private initializeObjects() {
-		Shape.cube = new Cube(this.gl)
-		Shape.cylinder = new Cylinder(this.gl, 10)
-
-		this.scene = GameObject.empty("Scene")
-		this.game.setScene(this.gl, scene_0)
-		this.car = this.game.addCar("mycar")
-		this.addObjectToScene(this.car)
-
-		for(var i = 0; i < this.game.scene.lamps.length; i++){
-			var spotlight = new Spotlight()
-			spotlight.position = this.game.scene.lamps[i].position
-			spotlight.position[1] = this.game.scene.lamps[i].height
-			this.addSpotlight(spotlight)
-		}
+	setDirectionalLight(direction: vec3){
+		this.lights.directional = direction
 	}
 }

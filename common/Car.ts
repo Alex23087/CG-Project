@@ -1,4 +1,5 @@
-import { Game, StringIndexedBooleanArray } from "./Game";
+import { ChaseCamera, FollowFromUpCamera } from "./Cameras.js";
+import { Game, StringIndexedBooleanArray } from "./Game.js";
 import { GameObject } from "./GameObject.js";
 import { Shape } from "./shapes/Shape.js";
 
@@ -43,55 +44,46 @@ export class Car extends GameObject{
 	}
 
 	private createChildren(){
+		new FollowFromUpCamera(this)
+		new ChaseCamera(this)
+
 		var carHull = new GameObject("CarHull", this, Shape.cube)
 		carHull.transform.position[1] += 0.6
 		carHull.transform.scaling = [0.8, 0.3, 1]
 
 		var wheelXScaling = 0.1
 
-		var frontLeftWheelContainer = new GameObject("FrontLeftWheelContainer", this, null)
-		var frontRightWheelContainer = new GameObject("FrontRightWheelContainer", this, null)
-		var rearLeftWheelContainer = new GameObject("RearLeftWheelContainer", this, null)
-		var rearRightWheelContainer = new GameObject("RearRightWheelContainer", this, null)
-
-		var frontLeftWheel = new GameObject("FrontLeftWheel", frontLeftWheelContainer, Shape.cylinder)
+		var frontLeftWheel = new GameObject("FrontLeftWheel", this, Shape.cylinder)
 		frontLeftWheel.transform.position = [-0.8, 0.2, -0.8]
 		frontLeftWheel.transform.rotation = [0, 0, Math.PI / 2]
-		frontLeftWheel.transform.scaling = [wheelXScaling, 0.2, 0.2]
+		frontLeftWheel.transform.scaling = [0.2, wheelXScaling, 0.2]
 
-		var frontRightWheel = new GameObject("FrontRightWheel", frontRightWheelContainer, Shape.cylinder)
+		var frontRightWheel = new GameObject("FrontRightWheel", this, Shape.cylinder)
 		frontRightWheel.transform.position = [1, 0.2, -0.8]
 		frontRightWheel.transform.rotation = [0, 0, Math.PI / 2]
-		frontRightWheel.transform.scaling = [wheelXScaling, 0.2, 0.2]
+		frontRightWheel.transform.scaling = [0.2, wheelXScaling, 0.2]
 
-		var rearRightWheel = new GameObject("RearRightWheel", rearRightWheelContainer, Shape.cylinder)
+		var rearRightWheel = new GameObject("RearRightWheel", this, Shape.cylinder)
 		rearRightWheel.transform.position = [1, 0.3, 0.8]
 		rearRightWheel.transform.rotation = [0, 0, Math.PI / 2]
-		rearRightWheel.transform.scaling = [wheelXScaling, 0.3, 0.3]
+		rearRightWheel.transform.scaling = [0.3, wheelXScaling, 0.3]
 
-		var rearLeftWheel = new GameObject("RearLeftWheel", rearLeftWheelContainer, Shape.cylinder)
+		var rearLeftWheel = new GameObject("RearLeftWheel", this, Shape.cylinder)
 		rearLeftWheel.transform.position = [-0.8, 0.3, 0.8]
 		rearLeftWheel.transform.rotation = [0, 0, Math.PI / 2]
-		rearLeftWheel.transform.scaling = [wheelXScaling, 0.3, 0.3]
+		rearLeftWheel.transform.scaling = [0.3, wheelXScaling, 0.3]
 
 		this.wheels = {
-			frontLeft: frontLeftWheelContainer,
-			frontRight: frontRightWheelContainer,
-			rearLeft: rearLeftWheelContainer,
-			rearRight: rearRightWheelContainer
+			frontLeft: frontLeftWheel,
+			frontRight: frontRightWheel,
+			rearLeft: rearLeftWheel,
+			rearRight: rearRightWheel
 		}
 	}
 
-	update_step(currTime: number) {
-		if (this.lastAnimationTime === -1) {
-			this.lastAnimationTime = currTime;
-			return;
-		}
+	update(deltaT: number) {
+		deltaT /= 1000;
 
-		var deltaV = (currTime - this.lastAnimationTime);
-		deltaV /= 1000;
-
-		this.lastAnimationTime = currTime;
 		this.isRotatingLeft = this.control_keys['ArrowLeft'];
 		this.isRotatingRight = this.control_keys['ArrowRight'];
 		this.isAccelerating = this.control_keys['ArrowUp'];
@@ -111,7 +103,7 @@ export class Car extends GameObject{
 			this.wheelsAngle /= (1.0 + 0.5 * Math.abs(this.speed));
 		}
 
-		this.updateSpeed(deltaV);
+		this.updateSpeed(deltaT);
 
 		this.angle += this.wheelsAngle * this.speed * 0.8;
 
@@ -157,15 +149,15 @@ export class Car extends GameObject{
 	}
 
 	private updateWheels(){
-		var frontAngle = this.wheelsAngle * 0.6
+		var frontAngle = this.wheelsAngle
 		this.wheels.frontLeft.transform.rotation[1] = frontAngle
 		this.wheels.frontRight.transform.rotation[1] = frontAngle
 
 		var rotation = this.speed
 
-		this.wheels.frontLeft.children[0].transform.rotation[1] += rotation
-		this.wheels.frontRight.children[0].transform.rotation[1] += rotation
-		this.wheels.rearLeft.children[0].transform.rotation[1] += rotation
-		this.wheels.rearRight.children[0].transform.rotation[1] += rotation
+		this.wheels.frontLeft.transform.rotation[0] -= rotation
+		this.wheels.frontRight.transform.rotation[0] -= rotation
+		this.wheels.rearLeft.transform.rotation[0] -= rotation
+		this.wheels.rearRight.transform.rotation[0] -= rotation
 	}
 }
