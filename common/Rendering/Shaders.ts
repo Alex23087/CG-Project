@@ -1,58 +1,45 @@
+import { Renderer } from "./Renderer.js"
+
 export abstract class Shader{
 	public program: WebGLProgram
 
 	protected abstract name: string
-	
-	public static async create<T extends Shader>(type: {new(): T}, gl: WebGLRenderingContext): Promise<T> {
-		var instance = (type as any).instance
 
-		if(instance == null || instance == undefined){
-			var shader = new type()
-			await Shader._compileProgram(shader, gl)
-			shader._bindAttribs(gl)
-			shader._getLocations(gl);
-			(type as any).instance = shader
-			return shader
-		}else{
-			return instance
-		}
-	}
-
-	protected static async _compileProgram(shader: Shader, gl: WebGLRenderingContext){
-		var response = await fetch('../../common/shaders/' + shader.name + 'Vertex.glsl')
+	public static async _compileProgram(shader: Shader, gl: WebGL2RenderingContext){
+		var response = await fetch('../../../common/Rendering/shaders/' + shader.name + 'Vertex.glsl')
 		var vertexShaderSource = await response.text()
 
-		response = await fetch('../../common/shaders/' + shader.name + 'Fragment.glsl')
+		response = await fetch('../../../common/Rendering/shaders/' + shader.name + 'Fragment.glsl')
 		var fragmentShaderSource = await response.text()
 
 		// create the vertex shader
-		var vertexShader = gl.createShader(gl.VERTEX_SHADER)
-		gl.shaderSource(vertexShader, vertexShaderSource)
-		gl.compileShader(vertexShader)
+		var vertexShader = Renderer.gl.createShader(Renderer.gl.VERTEX_SHADER)
+		Renderer.gl.shaderSource(vertexShader, vertexShaderSource)
+		Renderer.gl.compileShader(vertexShader)
 
 		// create the fragment shader
-		var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
-		gl.shaderSource(fragmentShader, fragmentShaderSource)
-		gl.compileShader(fragmentShader)
+		var fragmentShader = Renderer.gl.createShader(Renderer.gl.FRAGMENT_SHADER)
+		Renderer.gl.shaderSource(fragmentShader, fragmentShaderSource)
+		Renderer.gl.compileShader(fragmentShader)
 
-		shader.program = gl.createProgram()
-		gl.attachShader(shader.program, vertexShader)
-		gl.attachShader(shader.program, fragmentShader)
+		shader.program = Renderer.gl.createProgram()
+		Renderer.gl.attachShader(shader.program, vertexShader)
+		Renderer.gl.attachShader(shader.program, fragmentShader)
 
-		gl.linkProgram(shader.program)
+		Renderer.gl.linkProgram(shader.program)
 
 		// If creating the shader program failed, alert
-		if (!gl.getProgramParameter(shader.program, gl.LINK_STATUS)) {
+		if (!Renderer.gl.getProgramParameter(shader.program, Renderer.gl.LINK_STATUS)) {
 			var str = "Unable to initialize the shader program.\n\n"
-			str += "VS:\n" + gl.getShaderInfoLog(vertexShader) + "\n\n"
-			str += "FS:\n" + gl.getShaderInfoLog(fragmentShader) + "\n\n"
-			str += "PROG:\n" + gl.getProgramInfoLog(shader.program)
+			str += "VS:\n" + Renderer.gl.getShaderInfoLog(vertexShader) + "\n\n"
+			str += "FS:\n" + Renderer.gl.getShaderInfoLog(fragmentShader) + "\n\n"
+			str += "PROG:\n" + Renderer.gl.getProgramInfoLog(shader.program)
 			alert(str)
 		}
 	}
 
-	protected abstract _bindAttribs(gl: WebGLRenderingContext): void
-	protected abstract _getLocations(gl: WebGLRenderingContext): void
+	public abstract _bindAttribs(gl: WebGLRenderingContext): void
+	public abstract _getLocations(gl: WebGLRenderingContext): void
 
 	protected static getSpotlightLocations(gl: WebGLRenderingContext, shader: SpotlightShader){
 		shader.uSpotlightPositionsLocation = gl.getUniformLocation(shader.program, "uSpotlightPositions")
@@ -62,6 +49,21 @@ export abstract class Shader{
 		shader.uSpotlightColorsLocation = gl.getUniformLocation(shader.program, "uSpotlightColors")
 		shader.uSpotlightFocusLocation = gl.getUniformLocation(shader.program, "uSpotlightFocus")
 		shader.uSpotlightIntensityLocation = gl.getUniformLocation(shader.program, "uSpotlightIntensity")
+	}
+}
+
+export async function create<T extends Shader>(type: {new(): T}): Promise<T> {
+	var instance = (type as any).instance
+
+	if(instance == null || instance == undefined){
+		var shader = new type()
+		await Shader._compileProgram(shader, Renderer.gl)
+		shader._bindAttribs(Renderer.gl)
+		shader._getLocations(Renderer.gl);
+		(type as any).instance = shader
+		return shader
+	}else{
+		return instance
 	}
 }
 
@@ -163,12 +165,12 @@ export class UniformShader extends Shader implements PositionableShader, Colorab
 	uProjectionMatrixLocation: WebGLUniformLocation
 
 
-	protected _bindAttribs(gl: WebGLRenderingContext){
+	_bindAttribs(gl: WebGLRenderingContext){
 		this.aPositionIndex = 0
 		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
 	}
 
-	protected _getLocations(gl: WebGLRenderingContext){
+	_getLocations(gl: WebGLRenderingContext){
 		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
 		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
 		this.uColorLocation = gl.getUniformLocation(this.program, "uColor")
@@ -188,11 +190,11 @@ export class PhongShader extends Shader implements PositionableShader, NormalSha
 	uProjectionMatrixLocation: WebGLUniformLocation
 	uViewSpaceLightDirectionLocation: WebGLUniformLocation
 
-	protected _bindAttribs(gl: WebGLRenderingContext): void {
+	_bindAttribs(gl: WebGLRenderingContext): void {
 		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
 		gl.bindAttribLocation(this.program, this.aNormalIndex, "aNormal")
 	}
-	protected _getLocations(gl: WebGLRenderingContext): void {
+	_getLocations(gl: WebGLRenderingContext): void {
 		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
 		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
 		this.uColorLocation = gl.getUniformLocation(this.program, "uColor")
@@ -227,11 +229,11 @@ export class PhongSpotlightShader extends Shader implements
 	uSpotlightFocusLocation: WebGLUniformLocation
 	uSpotlightIntensityLocation: WebGLUniformLocation
 
-	protected _bindAttribs(gl: WebGLRenderingContext): void {
+	_bindAttribs(gl: WebGLRenderingContext): void {
 		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
 		gl.bindAttribLocation(this.program, this.aNormalIndex, "aNormal")
 	}
-	protected _getLocations(gl: WebGLRenderingContext): void {
+	_getLocations(gl: WebGLRenderingContext): void {
 		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
 		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
 		this.uColorLocation = gl.getUniformLocation(this.program, "uColor")

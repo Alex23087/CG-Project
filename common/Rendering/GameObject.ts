@@ -1,13 +1,16 @@
-import { Shape } from "./shapes/Shape.js"
+import { Shape } from "../shapes/Shape.js"
+import { ShaderMaterial } from "./ShaderMaterial.js"
 import { Transform } from "./Transform.js"
 
 export class GameObject{
     name: string
     children: GameObject[] = []
     transform: Transform
+
+    material: ShaderMaterial | null = null
     shape: Shape | null
 
-    constructor(name: string, parent: GameObject, shape: Shape | null){
+    constructor(name: string, parent: GameObject, shape: Shape | null = null){
         this.name = name
         this.transform = Transform.empty()
         this.transform.gameObject = this

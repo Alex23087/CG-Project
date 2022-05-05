@@ -1,7 +1,6 @@
-import { Renderer } from "./Renderer.js"
+import { Renderer } from "./Rendering/Renderer.js"
 import { Car } from "./Car.js"
-import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js"
-import { Camera } from "./Cameras.js"
+import { Camera } from "./Rendering/Cameras.js"
 import { Game } from "./Game.js"
 
 //Class to implement the correct behaviour of pressing and releasing buttons

@@ -8,7 +8,7 @@ export class Track extends Shape implements TexturedShape{
 	numTriangles: number
 	texCoords: Float32Array
 	
-	constructor(gl: WebGLRenderingContext, track, scale: number) {
+	constructor(track, scale: number) {
 		super()
 
 		var nv = track.pointsCount;
@@ -80,6 +80,6 @@ export class Track extends Shape implements TexturedShape{
 		this.numTriangles = this.triangleIndices.length / 3;
 
 		this.computeNormals()
-		this.createObjectBuffers(gl)
+		this.createObjectBuffers()
 	}
 }

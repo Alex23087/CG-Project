@@ -12,7 +12,7 @@ class Cone extends Shape {
 	vertices: Float32Array
 	
 
-	constructor(gl: WebGLRenderingContext, resolution: number){
+	constructor(resolution: number){
 		super()
 
 		this.vertices = new Float32Array(3*(resolution+2))
@@ -69,6 +69,6 @@ class Cone extends Shape {
 		this.numTriangles = this.triangleIndices.length/3;
 
 		this.computeNormals()
-		this.createObjectBuffers(gl)
+		this.createObjectBuffers()
 	}
 }

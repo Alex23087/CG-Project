@@ -13,7 +13,7 @@ export class Cylinder extends Shape {
 	numVertices: number;
 	numTriangles: number;
 
-	constructor(gl: WebGLRenderingContext, resolution: number){
+	constructor(resolution: number){
 		super()
 
 		// vertices definition
@@ -100,6 +100,6 @@ export class Cylinder extends Shape {
 		this.numTriangles = this.triangleIndices.length/3;
 
 		this.computeNormals()
-		this.createObjectBuffers(gl)
+		this.createObjectBuffers()
 	}
 }

@@ -1,5 +1,5 @@
 import { GameObject } from "./GameObject.js"
-import * as glMatrix from "./libs/gl-matrix/dist/esm/index.js"
+import * as glMatrix from "../libs/gl-matrix/dist/esm/index.js"
 
 export interface Camera{
 	inverseViewMatrix: mat4

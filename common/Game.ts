@@ -6,11 +6,13 @@ import { Parser } from "./Parser.js"
 import { Shape } from "./shapes/Shape.js"
 import { Cube } from "./shapes/Cube.js"
 import { Cylinder } from "./shapes/Cylinder.js"
-import { GameObject } from "./GameObject.js"
+import { GameObject } from "./Rendering/GameObject.js"
 import { scene_0 } from "./scenes/scene_0.js"
-import { Renderer } from "./Renderer.js"
-import { Camera } from "./Cameras.js"
-import { Spotlight } from "./Spotlight.js"
+import { Renderer } from "./Rendering/Renderer.js"
+import { Camera } from "./Rendering/Cameras.js"
+import { Spotlight } from "./Rendering/Spotlight.js"
+import { ShaderMaterial } from "./Rendering/ShaderMaterial.js"
+import * as Shaders from "./Rendering/Shaders.js"
 
 export interface StringIndexedBooleanArray{
     [index: string]: boolean
@@ -32,12 +34,12 @@ export class Game {
 		return newCar;
   	}
 	
-  	setScene(gl: WebGLRenderingContext, scene){
+  	setScene(scene){
 		this.scene = new Parser.Race(scene)
 
 		this.worldGameObject = GameObject.empty("World")
 
-		this.scene.trackObj = new Track(gl, this.scene.track, 0.2);
+		this.scene.trackObj = new Track(this.scene.track, 0.2);
 
 		new GameObject("Track", this.worldGameObject, this.scene.trackObj)
 
@@ -49,14 +51,18 @@ export class Game {
 			bbox[0], bbox[1] - 0.01, bbox[2],
 		];
 
-		this.scene.groundObj = new Quad(gl, quad, 10);
+		this.scene.groundObj = new Quad(quad, 10);
 
-		new GameObject("Ground", this.worldGameObject, this.scene.groundObj)
+		let groundGameObject = new GameObject("Ground", this.worldGameObject, this.scene.groundObj)
+		ShaderMaterial.create(Shaders.PhongSpotlightShader).then(groundMaterial => {
+			groundMaterial.setColor([0, 0.6, 0, 1])
+			groundGameObject.material = groundMaterial
+		})
 
 		this.scene.buildingsObj  = new Array(this.scene.buildings.length);
 		this.scene.buildingsObjTex  = new Array(this.scene.buildings.length);
 		for (var i = 0; i < this.scene.buildings.length; ++i){  
-			this.scene.buildingsObj[i] = new Building(gl, this.scene.buildings[i]);
+			this.scene.buildingsObj[i] = new Building(this.scene.buildings[i]);
 
 			new GameObject("Building " + i, this.worldGameObject, this.scene.buildingsObj[i])
 
@@ -69,10 +75,10 @@ export class Game {
 	initialize the object in the scene
 	*/
 	private initializeObjects(renderer: Renderer) {
-		Shape.cube = new Cube(renderer.gl)
-		Shape.cylinder = new Cylinder(renderer.gl, 10)
+		Shape.cube = new Cube()
+		Shape.cylinder = new Cylinder(10)
 
-		this.setScene(renderer.gl, scene_0)
+		this.setScene(scene_0)
 		this.addCar("mycar")
 		renderer.currentCamera = this.cars[0].findChildWithName("ChaseCamera") as unknown as Camera
 		renderer.addObjectToScene(this.cars[0])

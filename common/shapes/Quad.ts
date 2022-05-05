@@ -8,7 +8,7 @@ export class Quad extends Shape implements TexturedShape{
 	numTriangles: number
 	texCoords: Float32Array
 
-	constructor(gl: WebGLRenderingContext, quad: number[], scale: number) {
+	constructor(quad: number[], scale: number) {
 		super()
 		if(typeof scale === 'undefined') scale = 1;
 		var nv = 4;
@@ -39,6 +39,6 @@ export class Quad extends Shape implements TexturedShape{
 		this.numTriangles = 2;
 
 		this.computeNormals()
-		this.createObjectBuffers(gl)
+		this.createObjectBuffers()
 	}
 }

@@ -7,7 +7,7 @@ export class Building extends Shape{
 	numVertices: number;
 	numTriangles: number;
 
-	constructor(gl: WebGLRenderingContext, b) {
+	constructor(b) {
 		super()
 		this.name = "Building";
 
@@ -58,7 +58,7 @@ export class Building extends Shape{
 		this.numTriangles = this.triangleIndices.length / 3;
 
 		this.computeNormals()
-		this.createObjectBuffers(gl)
+		this.createObjectBuffers()
 	}
 }
 
@@ -70,7 +70,7 @@ export class TexturedFacades extends Shape implements TexturedShape{
 	numTriangles: number;
 	texCoords: Float32Array;
 
-	constructor(b,scale) {
+	constructor(b, scale) {
 		super()
 		this.name = "TexturedFacades";
 
@@ -159,7 +159,7 @@ export class TexturedRoof extends Shape implements TexturedShape{
 	numTriangles: number;
 	texCoords: Float32Array;
 
-	constructor(b,scale) {
+	constructor(b, scale) {
 		super()
 		this.name = "TexturedRoof";
 

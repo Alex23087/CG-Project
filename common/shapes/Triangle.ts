@@ -7,9 +7,9 @@ class Triangle extends Shape {
 	numVertices  = 3;
 	numTriangles = 1;
 
-	constructor(gl: WebGLRenderingContext){
+	constructor(){
 		super()
 		this.computeNormals()
-		this.createObjectBuffers(gl)
+		this.createObjectBuffers()
 	}
 }

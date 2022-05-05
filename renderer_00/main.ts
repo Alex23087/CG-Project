@@ -1,7 +1,7 @@
 import { Controls } from "../common/Controls.js"
 import { Game } from "../common/Game.js"
-import { Renderer } from "../common/Renderer.js"
-import * as Shaders from "../common/Shaders.js"
+import { Renderer } from "../common/Rendering/Renderer.js"
+import * as Shaders from "../common/Rendering/Shaders.js"
 
 var renderer: Renderer
 var controls: Controls
@@ -17,7 +17,7 @@ function on_keydown(e: KeyboardEvent){
 
 window.onload = function (){
 	canvas = document.getElementById("OUTPUT-CANVAS") as HTMLCanvasElement;
-	renderer = new Renderer(canvas, Shaders.PhongSpotlightShader)
+	renderer = new Renderer(canvas)
 	game = new Game(renderer)
 	controls = new Controls(renderer, game)
 	renderer.canvas.addEventListener('mousemove', function(e: MouseEvent){controls.on_mouseMove(e)}, false);
@@ -44,7 +44,7 @@ cameraSelector.onchange = function (){
 }
 
 var shaderSelector = (document.getElementById("shader") as HTMLSelectElement)
-shaderSelector.onchange = function (){
+/*shaderSelector.onchange = function (){
 	switch(shaderSelector.value){
 		default:
 		case "0":
@@ -63,4 +63,4 @@ shaderSelector.onchange = function (){
 			})
 		break;
 	}
-}
+}*/

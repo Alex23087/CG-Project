@@ -34,9 +34,9 @@ export class Cube extends Shape {
 	numVertices = this.vertices.length/3
 	numTriangles = this.triangleIndices.length/3
 
-	constructor(gl: WebGLRenderingContext){
+	constructor(){
 		super()
 		this.computeNormals()
-		this.createObjectBuffers(gl)
+		this.createObjectBuffers()
 	}
 }

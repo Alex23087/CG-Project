@@ -1,7 +1,9 @@
-import { ChaseCamera, FollowFromUpCamera } from "./Cameras.js";
-import { Game, StringIndexedBooleanArray } from "./Game.js";
-import { GameObject } from "./GameObject.js";
+import { ChaseCamera, FollowFromUpCamera } from "./Rendering/Cameras.js";
+import { StringIndexedBooleanArray } from "./Game.js";
+import { GameObject } from "./Rendering/GameObject.js";
 import { Shape } from "./shapes/Shape.js";
+import { ShaderMaterial } from "./Rendering/ShaderMaterial.js";
+import * as Shaders from "./Rendering/Shaders.js"
 
 
 export class Car extends GameObject{
@@ -79,6 +81,20 @@ export class Car extends GameObject{
 			rearLeft: rearLeftWheel,
 			rearRight: rearRightWheel
 		}
+
+		ShaderMaterial.create(Shaders.PhongSpotlightShader).then(wheelMaterial => {
+			wheelMaterial.setColor([0.1, 0.1, 0.1, 1])
+
+			this.wheels.frontLeft.material = wheelMaterial
+			this.wheels.frontRight.material = wheelMaterial
+			this.wheels.rearLeft.material = wheelMaterial
+			this.wheels.rearRight.material = wheelMaterial
+		})
+
+		ShaderMaterial.create(Shaders.PhongSpotlightShader).then(carMaterial => {
+			carMaterial.setColor([1, 0, 0, 1])
+			carHull.material = carMaterial
+		})
 	}
 
 	update(deltaT: number) {
