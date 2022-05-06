@@ -4,6 +4,7 @@ import { GameObject } from "./Rendering/GameObject.js";
 import { Shape } from "./shapes/Shape.js";
 import { ShaderMaterial } from "./Rendering/ShaderMaterial.js";
 import * as Shaders from "./Rendering/Shaders.js"
+import { Spotlight } from "./Rendering/Spotlight.js";
 
 
 export class Car extends GameObject{
@@ -48,6 +49,22 @@ export class Car extends GameObject{
 	private createChildren(){
 		new FollowFromUpCamera(this)
 		new ChaseCamera(this)
+
+		let leftLight = new Spotlight()
+		leftLight.parent = this.transform
+		leftLight.position = [-0.35, 0.6, -0.5]
+		leftLight.direction = [0, -0.5, -1]
+		leftLight.cutoff = 0.95
+		leftLight.attenuation = 0.9
+		leftLight.intensity = 0.2
+
+		let rightLight = new Spotlight()
+		rightLight.parent = this.transform
+		rightLight.position = [0.35, 0.6, -0.5]
+		rightLight.direction = [0, -0.5, -1]
+		rightLight.cutoff = 0.95
+		rightLight.attenuation = 0.9
+		rightLight.intensity = 0.2
 
 		var carHull = new GameObject("CarHull", this, Shape.cube)
 		carHull.transform.position[1] += 0.6

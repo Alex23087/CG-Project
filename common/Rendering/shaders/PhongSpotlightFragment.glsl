@@ -32,7 +32,7 @@ void main(void){
     for(int i = 0; i < SPOTLIGHTS_COUNT; i++){
         float cosangle = dot(normalize(vViewSpacePosition - vViewSpaceSpotlightPositions[i]), vViewSpaceSpotlightDirections[i]);
 
-        vec3 tmpColor = uSpotlightColors[i] * uSpotlightIntensity[i] * pow(cosangle, uSpotlightFocus[i]);
+        vec3 tmpColor = uSpotlightColors[i] * max(uSpotlightIntensity[i] * pow(cosangle, uSpotlightFocus[i]), 0.0);
         if(cosangle < uSpotlightCutoff[i]){
             tmpColor *= uSpotlightAttenuation[i];
         }

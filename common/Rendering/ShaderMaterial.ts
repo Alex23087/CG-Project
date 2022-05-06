@@ -33,6 +33,6 @@ export class ShaderMaterial{
 
     public setColorTexture(textureURL: string){
         this.properties["texture"] = textureURL
-        Renderer.textureCache.loadImage(textureURL)
+        Renderer.instance.textureCache.loadImage(textureURL)
     }
 }

@@ -13,27 +13,27 @@ export abstract class Shader{
 		var fragmentShaderSource = await response.text()
 
 		// create the vertex shader
-		var vertexShader = Renderer.gl.createShader(Renderer.gl.VERTEX_SHADER)
-		Renderer.gl.shaderSource(vertexShader, vertexShaderSource)
-		Renderer.gl.compileShader(vertexShader)
+		var vertexShader = Renderer.instance.gl.createShader(Renderer.instance.gl.VERTEX_SHADER)
+		Renderer.instance.gl.shaderSource(vertexShader, vertexShaderSource)
+		Renderer.instance.gl.compileShader(vertexShader)
 
 		// create the fragment shader
-		var fragmentShader = Renderer.gl.createShader(Renderer.gl.FRAGMENT_SHADER)
-		Renderer.gl.shaderSource(fragmentShader, fragmentShaderSource)
-		Renderer.gl.compileShader(fragmentShader)
+		var fragmentShader = Renderer.instance.gl.createShader(Renderer.instance.gl.FRAGMENT_SHADER)
+		Renderer.instance.gl.shaderSource(fragmentShader, fragmentShaderSource)
+		Renderer.instance.gl.compileShader(fragmentShader)
 
-		shader.program = Renderer.gl.createProgram()
-		Renderer.gl.attachShader(shader.program, vertexShader)
-		Renderer.gl.attachShader(shader.program, fragmentShader)
+		shader.program = Renderer.instance.gl.createProgram()
+		Renderer.instance.gl.attachShader(shader.program, vertexShader)
+		Renderer.instance.gl.attachShader(shader.program, fragmentShader)
 
-		Renderer.gl.linkProgram(shader.program)
+		Renderer.instance.gl.linkProgram(shader.program)
 
 		// If creating the shader program failed, alert
-		if (!Renderer.gl.getProgramParameter(shader.program, Renderer.gl.LINK_STATUS)) {
+		if (!Renderer.instance.gl.getProgramParameter(shader.program, Renderer.instance.gl.LINK_STATUS)) {
 			var str = "Unable to initialize the shader program.\n\n"
-			str += "VS:\n" + Renderer.gl.getShaderInfoLog(vertexShader) + "\n\n"
-			str += "FS:\n" + Renderer.gl.getShaderInfoLog(fragmentShader) + "\n\n"
-			str += "PROG:\n" + Renderer.gl.getProgramInfoLog(shader.program)
+			str += "VS:\n" + Renderer.instance.gl.getShaderInfoLog(vertexShader) + "\n\n"
+			str += "FS:\n" + Renderer.instance.gl.getShaderInfoLog(fragmentShader) + "\n\n"
+			str += "PROG:\n" + Renderer.instance.gl.getProgramInfoLog(shader.program)
 			alert(str)
 		}
 	}
@@ -58,8 +58,8 @@ export async function create<T extends Shader>(type: {new(): T}): Promise<T> {
 	if(instance == null || instance == undefined){
 		var shader = new type()
 		await Shader._compileProgram(shader)
-		shader._bindAttribs(Renderer.gl)
-		shader._getLocations(Renderer.gl);
+		shader._bindAttribs(Renderer.instance.gl)
+		shader._getLocations(Renderer.instance.gl);
 		(type as any).instance = shader
 		return shader
 	}else{

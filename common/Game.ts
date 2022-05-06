@@ -120,7 +120,6 @@ export class Game {
 			spotlight.color[i%3] = 1
 			spotlight.intensity = 0.8
 			//spotlight.focus = this.gl.
-			renderer.addSpotlight(spotlight)
 		}
 
 		renderer.setDirectionalLight(this.scene.weather.sunLightDirection)

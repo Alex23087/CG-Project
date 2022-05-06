@@ -10,7 +10,8 @@ import { TextureCache } from "./TextureCache.js"
 type Color = [number, number, number, number]
 
 export class Renderer{
-	public static gl: WebGL2RenderingContext
+	public static instance: Renderer
+	public gl: WebGL2RenderingContext
 	wireframeEnabled = false
 
 	canvas: HTMLCanvasElement
@@ -28,18 +29,20 @@ export class Renderer{
 	private currentTime: number
 	private scene: GameObject
 
-	public static textureCache: TextureCache
+	public textureCache: TextureCache
 
 	public constructor(canvas: HTMLCanvasElement){
         this.canvas = canvas
+
+		Renderer.instance = this
             
         /* get the webgl context */
-        Renderer.gl = this.canvas.getContext("webgl2");
+        this.gl = this.canvas.getContext("webgl2");
 
         /* read the webgl version and log */
-        var gl_version = Renderer.gl.getParameter(Renderer.gl.VERSION); 
+        var gl_version = this.gl.getParameter(this.gl.VERSION); 
         console.log("GL version: " + gl_version);
-        var GLSL_version = Renderer.gl.getParameter(Renderer.gl.SHADING_LANGUAGE_VERSION)
+        var GLSL_version = this.gl.getParameter(this.gl.SHADING_LANGUAGE_VERSION)
         console.log("GLSL version: " + GLSL_version);
 
 		this.lights = {
@@ -51,7 +54,7 @@ export class Renderer{
 
 		this.currentTime = 0
 
-		Renderer.textureCache = new TextureCache()
+		this.textureCache = new TextureCache()
 		
 		ShaderMaterial.create(Shaders.UniformShader).then(material => {
 			let image = new Image()
@@ -60,15 +63,15 @@ export class Renderer{
 				this.defaultMaterial = material
 
 
-				Renderer.gl.activeTexture(Renderer.gl.TEXTURE0);
-				this.defaultTexture = Renderer.gl.createTexture();
-				Renderer.gl.bindTexture(Renderer.gl.TEXTURE_2D, this.defaultTexture);
-				Renderer.gl.texImage2D(Renderer.gl.TEXTURE_2D, 0, Renderer.gl.RGB, Renderer.gl.RGB, Renderer.gl.UNSIGNED_BYTE, image);
-				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_WRAP_S, Renderer.gl.REPEAT);
-				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_WRAP_T, Renderer.gl.REPEAT);
-				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_MAG_FILTER, Renderer.gl.LINEAR);
-				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_MIN_FILTER, Renderer.gl.LINEAR_MIPMAP_NEAREST);
-				Renderer.gl.generateMipmap(Renderer.gl.TEXTURE_2D)
+				this.gl.activeTexture(this.gl.TEXTURE0);
+				this.defaultTexture = this.gl.createTexture();
+				this.gl.bindTexture(this.gl.TEXTURE_2D, this.defaultTexture);
+				this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, this.gl.RGB, this.gl.UNSIGNED_BYTE, image);
+				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
+				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
+				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
+				this.gl.generateMipmap(this.gl.TEXTURE_2D)
 
 
 				this.startRendering(0)
@@ -85,58 +88,58 @@ export class Renderer{
 			material = this.defaultMaterial
 		}
 
-		Renderer.gl.useProgram(material.shader.program)
+		this.gl.useProgram(material.shader.program)
 		
 		if(Shaders.hasProjectionMatrix(material.shader)){
-			Renderer.gl.uniformMatrix4fv(material.shader.uProjectionMatrixLocation, false, this.projectionMatrix as Float32List);
+			this.gl.uniformMatrix4fv(material.shader.uProjectionMatrixLocation, false, this.projectionMatrix as Float32List);
 		}
 
 		if(Shaders.hasViewMatrix(material.shader)){
-			Renderer.gl.uniformMatrix4fv(material.shader.uViewMatrixLocation, false, this.viewMatrix as Float32List)
+			this.gl.uniformMatrix4fv(material.shader.uViewMatrixLocation, false, this.viewMatrix as Float32List)
 		}
 
 		if(Shaders.hasLightDirection(material.shader)){
-			Renderer.gl.uniform3fv(material.shader.uLightDirectionLocation, this.lights.directional as Float32List)
+			this.gl.uniform3fv(material.shader.uLightDirectionLocation, this.lights.directional as Float32List)
 		}
 
 		if(Shaders.hasViewSpaceLightDirection(material.shader)){
-			Renderer.gl.uniform3fv(material.shader.uViewSpaceLightDirectionLocation, this.viewSpaceLightDirection as Float32List)
+			this.gl.uniform3fv(material.shader.uViewSpaceLightDirectionLocation, this.viewSpaceLightDirection as Float32List)
 		}
 
 		if(Shaders.hasMVMatrix(material.shader)){
-			Renderer.gl.uniformMatrix4fv(
+			this.gl.uniformMatrix4fv(
 				material.shader.uModelViewMatrixLocation, false,
 				modelMatrix as Float32List
 			)
 		}
 
 		if(Shaders.isTextured(material.shader)){
-			Renderer.gl.uniform1i(material.shader.uSamplerLocation, Renderer.textureCache.getTexture(material.properties["texture"]))
+			this.gl.uniform1i(material.shader.uSamplerLocation, this.textureCache.getTexture(material.properties["texture"]))
 
-			Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, (obj as unknown as TexturedShape).texCoordsBuffer);
-			Renderer.gl.enableVertexAttribArray(material.shader.aTexCoordsIndex);
-			Renderer.gl.vertexAttribPointer(material.shader.aTexCoordsIndex, 2, Renderer.gl.FLOAT, false, 0, 0)
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, (obj as unknown as TexturedShape).texCoordsBuffer);
+			this.gl.enableVertexAttribArray(material.shader.aTexCoordsIndex);
+			this.gl.vertexAttribPointer(material.shader.aTexCoordsIndex, 2, this.gl.FLOAT, false, 0, 0)
 		}
 
 		if(Shaders.isPositionable(material.shader)){
-			Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, obj.vertexBuffer);
-			Renderer.gl.enableVertexAttribArray(material.shader.aPositionIndex);
-			Renderer.gl.vertexAttribPointer(material.shader.aPositionIndex, 3, Renderer.gl.FLOAT, false, 0, 0);
-			Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferTriangles);
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, obj.vertexBuffer);
+			this.gl.enableVertexAttribArray(material.shader.aPositionIndex);
+			this.gl.vertexAttribPointer(material.shader.aPositionIndex, 3, this.gl.FLOAT, false, 0, 0);
+			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferTriangles);
 		}
 
 		if(Shaders.isNormal(material.shader)){
-			Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, obj.normalBuffer);
-			Renderer.gl.enableVertexAttribArray(material.shader.aNormalIndex);
-			Renderer.gl.vertexAttribPointer(material.shader.aNormalIndex, 3, Renderer.gl.FLOAT, false, 0, 0);
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, obj.normalBuffer);
+			this.gl.enableVertexAttribArray(material.shader.aNormalIndex);
+			this.gl.vertexAttribPointer(material.shader.aNormalIndex, 3, this.gl.FLOAT, false, 0, 0);
 		}
 
 		if(Shaders.isShiny(material.shader)){
-			Renderer.gl.uniform1f(material.shader.uShininessLocation, 3)
+			this.gl.uniform1f(material.shader.uShininessLocation, 3)
 		}
 
 		if(Shaders.isColorable(material.shader)){
-			Renderer.gl.uniform4fv(material.shader.uColorLocation, material.properties["color"]);
+			this.gl.uniform4fv(material.shader.uColorLocation, material.properties["color"]);
 		}
 
 		if(Shaders.supportsSpotlights(material.shader)){
@@ -152,41 +155,45 @@ export class Renderer{
 				cutoff[i] = this.lights.spotlights[i].cutoff
 				focus[i] = this.lights.spotlights[i].focus
 				intensity[i] = this.lights.spotlights[i].intensity
+
+				let spotlightDirection = this.lights.spotlights[i].worldDirection
+				let spotlightPosition = this.lights.spotlights[i].worldPosition
+
 				for(var j = 0; j < 3; j++){
 					colors[i * 3 + j] = this.lights.spotlights[i].color[j]
-					direction[i * 3 + j] = this.lights.spotlights[i].direction[j]
-					position[i * 3 + j] = this.lights.spotlights[i].position[j]
+					direction[i * 3 + j] = spotlightDirection[j]
+					position[i * 3 + j] = spotlightPosition[j]
 				}
 			}
-			Renderer.gl.uniform1fv(material.shader.uSpotlightAttenuationLocation, attenuation)
-			Renderer.gl.uniform3fv(material.shader.uSpotlightColorsLocation, colors)
-			Renderer.gl.uniform1fv(material.shader.uSpotlightCutoffLocation, cutoff)
-			Renderer.gl.uniform3fv(material.shader.uSpotlightDirectionsLocation, direction)
-			Renderer.gl.uniform1fv(material.shader.uSpotlightFocusLocation, focus)
-			Renderer.gl.uniform1fv(material.shader.uSpotlightIntensityLocation, intensity)
-			Renderer.gl.uniform3fv(material.shader.uSpotlightPositionsLocation, position)
+			this.gl.uniform1fv(material.shader.uSpotlightAttenuationLocation, attenuation)
+			this.gl.uniform3fv(material.shader.uSpotlightColorsLocation, colors)
+			this.gl.uniform1fv(material.shader.uSpotlightCutoffLocation, cutoff)
+			this.gl.uniform3fv(material.shader.uSpotlightDirectionsLocation, direction)
+			this.gl.uniform1fv(material.shader.uSpotlightFocusLocation, focus)
+			this.gl.uniform1fv(material.shader.uSpotlightIntensityLocation, intensity)
+			this.gl.uniform3fv(material.shader.uSpotlightPositionsLocation, position)
 		}
 
 		if(this.wireframeEnabled){
-			Renderer.gl.enable(Renderer.gl.POLYGON_OFFSET_FILL);
-			Renderer.gl.polygonOffset(1.0, 1.0);
+			this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
+			this.gl.polygonOffset(1.0, 1.0);
 		}
 
 
-		Renderer.gl.drawElements(Renderer.gl.TRIANGLES, obj.triangleIndices.length, Renderer.gl.UNSIGNED_SHORT, 0);
+		this.gl.drawElements(this.gl.TRIANGLES, obj.triangleIndices.length, this.gl.UNSIGNED_SHORT, 0);
 
 
 		if(this.wireframeEnabled && Shaders.isColorable(material.shader)){
-			Renderer.gl.disable(Renderer.gl.POLYGON_OFFSET_FILL);
-			Renderer.gl.uniform4fv(material.shader.uColorLocation, [0, 0, 0]);
-			Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferEdges);
-			Renderer.gl.drawElements(Renderer.gl.LINES, obj.numTriangles * 3 * 2, Renderer.gl.UNSIGNED_SHORT, 0);
+			this.gl.disable(this.gl.POLYGON_OFFSET_FILL);
+			this.gl.uniform4fv(material.shader.uColorLocation, [0, 0, 0]);
+			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferEdges);
+			this.gl.drawElements(this.gl.LINES, obj.numTriangles * 3 * 2, this.gl.UNSIGNED_SHORT, 0);
 		}
 
 		if(Shaders.isPositionable(material.shader)){
-			Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, null);
-			Renderer.gl.disableVertexAttribArray(material.shader.aPositionIndex);
-			Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, null);
+			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
+			this.gl.disableVertexAttribArray(material.shader.aPositionIndex);
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
 		}
 	};
 
@@ -218,16 +225,16 @@ export class Renderer{
 		this.viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional, this.viewMatrix)
 		glMatrix.vec3.normalize(this.viewSpaceLightDirection, this.viewSpaceLightDirection)
 
-		Renderer.gl.viewport(0, 0, width, height);
+		this.gl.viewport(0, 0, width, height);
 		
-		Renderer.gl.enable(Renderer.gl.DEPTH_TEST);
+		this.gl.enable(this.gl.DEPTH_TEST);
 
 		// Clear the framebuffer
-		Renderer.gl.clearColor(0.34, 0.5, 0.74, 1.0);
-		Renderer.gl.clear(Renderer.gl.COLOR_BUFFER_BIT | Renderer.gl.DEPTH_BUFFER_BIT);
+		this.gl.clearColor(0.34, 0.5, 0.74, 1.0);
+		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
 		this.drawGameObject(this.scene, this.viewMatrix)
-		Renderer.gl.useProgram(null);
+		this.gl.useProgram(null);
 	};
 
 
@@ -271,6 +278,7 @@ export class Renderer{
 
 	addSpotlight(spotlight: Spotlight){
 		this.lights.spotlights.push(spotlight)
+		console.log(this.lights.spotlights.length)
 	}
 
 	setDirectionalLight(direction: vec3){

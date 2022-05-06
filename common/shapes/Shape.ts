@@ -2,7 +2,6 @@ import { Cube } from "./Cube"
 import { Cylinder } from "./Cylinder"
 import * as glMatrix from "../libs/gl-matrix/dist/esm/index.js"
 import { Renderer } from "../Rendering/Renderer.js"
-import { isTextured } from "../Rendering/Shaders"
 
 export abstract class Shape{
     abstract name: string
@@ -25,7 +24,7 @@ export abstract class Shape{
 	create the buffers for an object as specified in common/shapes/triangle.js
 	*/
 	protected createObjectBuffers() {
-		let gl = Renderer.gl
+		let gl = Renderer.instance.gl
 		this.vertexBuffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, this.vertices, gl.STATIC_DRAW);

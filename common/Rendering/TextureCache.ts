@@ -21,7 +21,7 @@ export class TextureCache{
     }
 
     constructor(){
-        this.limit = Renderer.gl.MAX_TEXTURE_IMAGE_UNITS
+        this.limit = Renderer.instance.gl.MAX_TEXTURE_IMAGE_UNITS
         this.elements = []
         this.images = []
     }
@@ -68,19 +68,19 @@ export class TextureCache{
             return 0
         }
 
-        textureUnit += Renderer.gl.TEXTURE0
+        textureUnit += Renderer.instance.gl.TEXTURE0
 
-        Renderer.gl.activeTexture(textureUnit);
-        let texture = Renderer.gl.createTexture();
-        Renderer.gl.bindTexture(Renderer.gl.TEXTURE_2D, texture);
-        Renderer.gl.texImage2D(Renderer.gl.TEXTURE_2D, 0, Renderer.gl.RGB, Renderer.gl.RGB, Renderer.gl.UNSIGNED_BYTE, image.image);
-        Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_WRAP_S, Renderer.gl.REPEAT);
-        Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_WRAP_T, Renderer.gl.REPEAT);
-        Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_MAG_FILTER, Renderer.gl.LINEAR);
-        Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_MIN_FILTER, Renderer.gl.LINEAR_MIPMAP_LINEAR);
-        Renderer.gl.generateMipmap(Renderer.gl.TEXTURE_2D)
+        Renderer.instance.gl.activeTexture(textureUnit);
+        let texture = Renderer.instance.gl.createTexture();
+        Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, texture);
+        Renderer.instance.gl.texImage2D(Renderer.instance.gl.TEXTURE_2D, 0, Renderer.instance.gl.RGB, Renderer.instance.gl.RGB, Renderer.instance.gl.UNSIGNED_BYTE, image.image);
+        Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_S, Renderer.instance.gl.REPEAT);
+        Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_T, Renderer.instance.gl.REPEAT);
+        Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MAG_FILTER, Renderer.instance.gl.LINEAR);
+        Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MIN_FILTER, Renderer.instance.gl.LINEAR_MIPMAP_LINEAR);
+        Renderer.instance.gl.generateMipmap(Renderer.instance.gl.TEXTURE_2D)
 
-        textureUnit -= Renderer.gl.TEXTURE0
+        textureUnit -= Renderer.instance.gl.TEXTURE0
 
         this.elements.push({
             name: name,
