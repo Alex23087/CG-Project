@@ -19,18 +19,21 @@ export interface StringIndexedBooleanArray{
 }
 
 export class Game {
-	cars: Car[]
+	car: Car
 	scene: any
+
+	cameras: Camera[]
+
 	private worldGameObject: GameObject
 
 	constructor(renderer: Renderer){
-		this.cars = []
+		this.cameras = []
 		this.initializeObjects(renderer)
 	}
 
 	addCar(name: string){
 		var newCar = new Car(name, this.scene.startPosition)
-		this.cars.push(newCar);
+		this.car = newCar;
 		return newCar;
   	}
 	
@@ -58,8 +61,8 @@ export class Game {
 		this.scene.groundObj = new Quad(quad, 10);
 
 		let groundGameObject = new GameObject("Ground", this.worldGameObject, this.scene.groundObj)
-		ShaderMaterial.create(Shaders.PhongSpotlightShader).then(groundMaterial => {
-			groundMaterial.setColor([0, 0.6, 0, 1])
+		ShaderMaterial.create(Shaders.PhongSpotlightTexturedShader).then(groundMaterial => {
+			groundMaterial.setColorTexture("../common/textures/grass_tile.png")
 			groundGameObject.material = groundMaterial
 		})
 
@@ -101,8 +104,12 @@ export class Game {
 
 		this.setScene(scene_0)
 		this.addCar("mycar")
-		renderer.currentCamera = this.cars[0].findChildWithName("ChaseCamera") as unknown as Camera
-		renderer.addObjectToScene(this.cars[0])
+
+		this.cameras.push(this.car.findChildWithName("FollowFromUpCamera") as unknown as Camera)
+		this.cameras.push(this.car.findChildWithName("ChaseCamera") as unknown as Camera)
+
+		renderer.currentCamera = this.cameras[1]
+		renderer.addObjectToScene(this.car)
 		renderer.addObjectToScene(this.worldGameObject)
 
 		for(var i = 0; i < this.scene.lamps.length; i++){

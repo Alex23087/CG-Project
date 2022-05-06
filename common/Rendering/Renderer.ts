@@ -5,11 +5,12 @@ import { Shape, TexturedShape } from "../shapes/Shape.js"
 import { GameObject } from "./GameObject.js"
 import { Spotlight } from "./Spotlight.js"
 import { ShaderMaterial } from "./ShaderMaterial.js"
+import { TextureCache } from "./TextureCache.js"
 
 type Color = [number, number, number, number]
 
 export class Renderer{
-	public static gl: WebGLRenderingContext
+	public static gl: WebGL2RenderingContext
 	wireframeEnabled = false
 
 	canvas: HTMLCanvasElement
@@ -27,11 +28,13 @@ export class Renderer{
 	private currentTime: number
 	private scene: GameObject
 
+	public static textureCache: TextureCache
+
 	public constructor(canvas: HTMLCanvasElement){
         this.canvas = canvas
             
         /* get the webgl context */
-        Renderer.gl = this.canvas.getContext("webgl");
+        Renderer.gl = this.canvas.getContext("webgl2");
 
         /* read the webgl version and log */
         var gl_version = Renderer.gl.getParameter(Renderer.gl.VERSION); 
@@ -48,6 +51,7 @@ export class Renderer{
 
 		this.currentTime = 0
 
+		Renderer.textureCache = new TextureCache()
 		
 		ShaderMaterial.create(Shaders.UniformShader).then(material => {
 			let image = new Image()
@@ -59,12 +63,12 @@ export class Renderer{
 				Renderer.gl.activeTexture(Renderer.gl.TEXTURE0);
 				this.defaultTexture = Renderer.gl.createTexture();
 				Renderer.gl.bindTexture(Renderer.gl.TEXTURE_2D, this.defaultTexture);
-				Renderer.gl.activeTexture(Renderer.gl.TEXTURE0)
 				Renderer.gl.texImage2D(Renderer.gl.TEXTURE_2D, 0, Renderer.gl.RGB, Renderer.gl.RGB, Renderer.gl.UNSIGNED_BYTE, image);
 				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_WRAP_S, Renderer.gl.REPEAT);
 				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_WRAP_T, Renderer.gl.REPEAT);
 				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_MAG_FILTER, Renderer.gl.LINEAR);
 				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_MIN_FILTER, Renderer.gl.LINEAR_MIPMAP_NEAREST);
+				Renderer.gl.generateMipmap(Renderer.gl.TEXTURE_2D)
 
 
 				this.startRendering(0)
@@ -107,16 +111,7 @@ export class Renderer{
 		}
 
 		if(Shaders.isTextured(material.shader)){
-			let tex = material.properties["texture"]
-			if(!tex){
-				tex = this.defaultTexture
-			}
-
-			//Renderer.gl.generateMipmap(Renderer.gl.TEXTURE_2D);
-
-			Renderer.gl.activeTexture(material.properties["textureUnit"] ?? 0)
-			Renderer.gl.bindTexture(material.properties["textureUnit"] ?? 0, tex)
-			Renderer.gl.uniform1i(material.shader.uSamplerLocation, material.properties["textureUnit"] ?? 0)
+			Renderer.gl.uniform1i(material.shader.uSamplerLocation, Renderer.textureCache.getTexture(material.properties["texture"]))
 
 			Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, (obj as unknown as TexturedShape).texCoordsBuffer);
 			Renderer.gl.enableVertexAttribArray(material.shader.aTexCoordsIndex);

@@ -29,7 +29,7 @@ export class FollowFromUpCamera extends GameObject implements Camera{
 		
 		let frame = this.transform.getWorldMatrix()
 
-		glMatrix.vec3.transformMat4(eye, [0, 10, 0], frame)
+		glMatrix.vec3.transformMat4(eye, [0, 30, 0], frame)
 		glMatrix.vec3.transformMat4(target, [0.0, 0.0, 0.0, 1.0], frame)
 		glMatrix.vec4.transformMat4(up, [0.0, 0.0, -1, 0.0], frame)
 		

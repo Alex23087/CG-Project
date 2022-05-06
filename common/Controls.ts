@@ -2,6 +2,7 @@ import { Renderer } from "./Rendering/Renderer.js"
 import { Car } from "./Car.js"
 import { Camera } from "./Rendering/Cameras.js"
 import { Game } from "./Game.js"
+import { GameObject } from "./Rendering/GameObject.js"
 
 //Class to implement the correct behaviour of pressing and releasing buttons
 export class Controls {
@@ -21,11 +22,11 @@ export class Controls {
     }
 
     keyPressed(key: string){
-        this.setKey(this.game.cars[0], key, true)
+        this.setKey(this.game.car, key, true)
     }
 
     keyReleased(key: string){
-        this.setKey(this.game.cars[0], key, false)
+        this.setKey(this.game.car, key, false)
     }
 
     private setKey(car: Car, key: string, value: boolean){
@@ -51,11 +52,15 @@ export class Controls {
     }
 
     private toggleCamera(){
-        //this.renderer.currentCamera = (this.renderer.currentCamera + 1) % this.renderer.cameras.length as CameraIndex
+        if((this.renderer.currentCamera as unknown as GameObject).name == (this.game.cameras[0] as unknown as GameObject).name){
+            this.renderer.currentCamera = this.game.cameras[1]
+        }else{
+            this.renderer.currentCamera = this.game.cameras[0]
+        }
     }
 
-    public setCamera(value){
-    	this.renderer.currentCamera = value;
+    public setCamera(value: number){
+    	this.renderer.currentCamera = this.game.cameras[value];
     }
 
     on_mouseMove(e: MouseEvent){

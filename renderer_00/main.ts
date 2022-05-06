@@ -29,7 +29,7 @@ window.onload = function (){
 	}
 }
 
-function update_camera(value){
+function update_camera(value: number){
 	controls.setCamera(value)
 }
 
@@ -40,7 +40,7 @@ wireframeCheckbox.onchange = function(e: Event){
 
 var cameraSelector = (document.getElementById("cameras") as HTMLSelectElement)
 cameraSelector.onchange = function (){
-	update_camera(cameraSelector.value)
+	update_camera(cameraSelector.value as unknown as number)
 }
 
 var shaderSelector = (document.getElementById("shader") as HTMLSelectElement)
