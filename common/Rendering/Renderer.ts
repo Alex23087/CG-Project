@@ -1,7 +1,7 @@
 import * as glMatrix from "../libs/gl-matrix/dist/esm/index.js"
 import * as Shaders from "./Shaders.js"
 import * as Cameras from "./Cameras.js"
-import { Shape } from "../shapes/Shape.js"
+import { Shape, TexturedShape } from "../shapes/Shape.js"
 import { GameObject } from "./GameObject.js"
 import { Spotlight } from "./Spotlight.js"
 import { ShaderMaterial } from "./ShaderMaterial.js"
@@ -9,7 +9,7 @@ import { ShaderMaterial } from "./ShaderMaterial.js"
 type Color = [number, number, number, number]
 
 export class Renderer{
-	public static gl: WebGL2RenderingContext
+	public static gl: WebGLRenderingContext
 	wireframeEnabled = false
 
 	canvas: HTMLCanvasElement
@@ -22,6 +22,7 @@ export class Renderer{
 		directional: vec3
 	}
 	private defaultMaterial: ShaderMaterial
+	private defaultTexture: WebGLTexture
 
 	private currentTime: number
 	private scene: GameObject
@@ -30,7 +31,7 @@ export class Renderer{
         this.canvas = canvas
             
         /* get the webgl context */
-        Renderer.gl = this.canvas.getContext("webgl2");
+        Renderer.gl = this.canvas.getContext("webgl");
 
         /* read the webgl version and log */
         var gl_version = Renderer.gl.getParameter(Renderer.gl.VERSION); 
@@ -49,8 +50,25 @@ export class Renderer{
 
 		
 		ShaderMaterial.create(Shaders.UniformShader).then(material => {
-			this.defaultMaterial = material
-			this.startRendering(0)
+			let image = new Image()
+			image.src = "../common/textures/street4.png"
+			image.addEventListener('load', () => {
+				this.defaultMaterial = material
+
+
+				Renderer.gl.activeTexture(Renderer.gl.TEXTURE0);
+				this.defaultTexture = Renderer.gl.createTexture();
+				Renderer.gl.bindTexture(Renderer.gl.TEXTURE_2D, this.defaultTexture);
+				Renderer.gl.activeTexture(Renderer.gl.TEXTURE0)
+				Renderer.gl.texImage2D(Renderer.gl.TEXTURE_2D, 0, Renderer.gl.RGB, Renderer.gl.RGB, Renderer.gl.UNSIGNED_BYTE, image);
+				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_WRAP_S, Renderer.gl.REPEAT);
+				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_WRAP_T, Renderer.gl.REPEAT);
+				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_MAG_FILTER, Renderer.gl.LINEAR);
+				Renderer.gl.texParameteri(Renderer.gl.TEXTURE_2D, Renderer.gl.TEXTURE_MIN_FILTER, Renderer.gl.LINEAR_MIPMAP_NEAREST);
+
+
+				this.startRendering(0)
+			})
 		})
 	}
 
@@ -88,10 +106,28 @@ export class Renderer{
 			)
 		}
 
+		if(Shaders.isTextured(material.shader)){
+			let tex = material.properties["texture"]
+			if(!tex){
+				tex = this.defaultTexture
+			}
+
+			//Renderer.gl.generateMipmap(Renderer.gl.TEXTURE_2D);
+
+			Renderer.gl.activeTexture(material.properties["textureUnit"] ?? 0)
+			Renderer.gl.bindTexture(material.properties["textureUnit"] ?? 0, tex)
+			Renderer.gl.uniform1i(material.shader.uSamplerLocation, material.properties["textureUnit"] ?? 0)
+
+			Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, (obj as unknown as TexturedShape).texCoordsBuffer);
+			Renderer.gl.enableVertexAttribArray(material.shader.aTexCoordsIndex);
+			Renderer.gl.vertexAttribPointer(material.shader.aTexCoordsIndex, 2, Renderer.gl.FLOAT, false, 0, 0)
+		}
+
 		if(Shaders.isPositionable(material.shader)){
 			Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, obj.vertexBuffer);
 			Renderer.gl.enableVertexAttribArray(material.shader.aPositionIndex);
 			Renderer.gl.vertexAttribPointer(material.shader.aPositionIndex, 3, Renderer.gl.FLOAT, false, 0, 0);
+			Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferTriangles);
 		}
 
 		if(Shaders.isNormal(material.shader)){
@@ -105,7 +141,6 @@ export class Renderer{
 		}
 
 		if(Shaders.isColorable(material.shader)){
-			Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, obj.indexBufferTriangles);
 			Renderer.gl.uniform4fv(material.shader.uColorLocation, material.properties["color"]);
 		}
 

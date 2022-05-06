@@ -7,6 +7,7 @@ export class Track extends Shape implements TexturedShape{
 	numVertices: number
 	numTriangles: number
 	texCoords: Float32Array
+	texCoordsBuffer: WebGLBuffer
 	
 	constructor(track, scale: number) {
 		super()

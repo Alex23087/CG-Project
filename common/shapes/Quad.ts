@@ -7,6 +7,7 @@ export class Quad extends Shape implements TexturedShape{
 	numVertices: number
 	numTriangles: number
 	texCoords: Float32Array
+	texCoordsBuffer: WebGLBuffer
 
 	constructor(quad: number[], scale: number) {
 		super()

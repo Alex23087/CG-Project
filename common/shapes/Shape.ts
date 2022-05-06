@@ -2,6 +2,7 @@ import { Cube } from "./Cube"
 import { Cylinder } from "./Cylinder"
 import * as glMatrix from "../libs/gl-matrix/dist/esm/index.js"
 import { Renderer } from "../Rendering/Renderer.js"
+import { isTextured } from "../Rendering/Shaders"
 
 export abstract class Shape{
     abstract name: string
@@ -34,6 +35,13 @@ export abstract class Shape{
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, this.normals, gl.STATIC_DRAW);
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+		if(Shape.isTexturedShape(this)){
+			this.texCoordsBuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordsBuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, this.texCoords, gl.STATIC_DRAW);
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+		}
 
 		this.indexBufferTriangles = gl.createBuffer();
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBufferTriangles);
@@ -124,4 +132,5 @@ export abstract class Shape{
 
 export interface TexturedShape{
 	texCoords: Float32Array
+	texCoordsBuffer: WebGLBuffer
 }

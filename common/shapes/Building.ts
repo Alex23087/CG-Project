@@ -69,6 +69,7 @@ export class TexturedFacades extends Shape implements TexturedShape{
 	numVertices: number;
 	numTriangles: number;
 	texCoords: Float32Array;
+	texCoordsBuffer: WebGLBuffer;
 
 	constructor(b, scale) {
 		super()
@@ -148,6 +149,9 @@ export class TexturedFacades extends Shape implements TexturedShape{
 
 		this.numVertices  = (nv+1)*2;
 		this.numTriangles = this.triangleIndices.length / 3;
+
+		this.computeNormals()
+		this.createObjectBuffers()
 	}
 }
 
@@ -158,6 +162,7 @@ export class TexturedRoof extends Shape implements TexturedShape{
 	numVertices: number;
 	numTriangles: number;
 	texCoords: Float32Array;
+	texCoordsBuffer: WebGLBuffer;
 
 	constructor(b, scale) {
 		super()
@@ -228,6 +233,9 @@ export class TexturedRoof extends Shape implements TexturedShape{
 
 		this.numVertices  =  nv;
 		this.numTriangles = this.triangleIndices.length / 3;
+
+		this.computeNormals()
+		this.createObjectBuffers()
 	}
 }
 

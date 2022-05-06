@@ -5,7 +5,7 @@ export abstract class Shader{
 
 	protected abstract name: string
 
-	public static async _compileProgram(shader: Shader, gl: WebGL2RenderingContext){
+	public static async _compileProgram(shader: Shader){
 		var response = await fetch('../../../common/Rendering/shaders/' + shader.name + 'Vertex.glsl')
 		var vertexShaderSource = await response.text()
 
@@ -57,7 +57,7 @@ export async function create<T extends Shader>(type: {new(): T}): Promise<T> {
 
 	if(instance == null || instance == undefined){
 		var shader = new type()
-		await Shader._compileProgram(shader, Renderer.gl)
+		await Shader._compileProgram(shader)
 		shader._bindAttribs(Renderer.gl)
 		shader._getLocations(Renderer.gl);
 		(type as any).instance = shader
@@ -113,6 +113,11 @@ interface SpotlightShader extends Shader{
 	uSpotlightIntensityLocation: WebGLUniformLocation
 }
 
+interface TexturedShader extends Shader{
+	uSamplerLocation: WebGLUniformLocation
+	aTexCoordsIndex: 2
+}
+
 export function isPositionable(object: Shader): object is PositionableShader{
 	return 'aPositionIndex' in object
 }
@@ -151,6 +156,10 @@ export function hasLightDirection(object: Shader): object is LightDirectionShade
 
 export function supportsSpotlights(object: Shader): object is SpotlightShader{
 	return 'uSpotlightPositionsLocation' in object
+}
+
+export function isTextured(object: Shader): object is TexturedShader{
+	return 'uSamplerLocation' in object
 }
 
 
@@ -240,6 +249,48 @@ export class PhongSpotlightShader extends Shader implements
 		this.uShininessLocation = gl.getUniformLocation(this.program, "uShininess")
 		this.uLightDirectionLocation = gl.getUniformLocation(this.program, "uLightDirection")
 		this.uViewMatrixLocation = gl.getUniformLocation(this.program, "uViewMatrix")
+		Shader.getSpotlightLocations(gl, this)
+	}
+}
+
+export class PhongSpotlightTexturedShader extends Shader implements
+PositionableShader, NormalShader, ShinyShader,
+MVMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, SpotlightShader, TexturedShader {
+	name: string = "PhongSpotlightTexture"
+	
+	aPositionIndex: 0 = 0
+	aNormalIndex: 1 = 1
+	aTexCoordsIndex: 2 = 2
+
+	uShininessLocation: WebGLUniformLocation
+	uSamplerLocation: WebGLUniformLocation
+
+	uModelViewMatrixLocation: WebGLUniformLocation
+	uProjectionMatrixLocation: WebGLUniformLocation
+	uViewMatrixLocation: WebGLUniformLocation
+
+	uLightDirectionLocation: WebGLUniformLocation
+
+	uSpotlightPositionsLocation: WebGLUniformLocation
+	uSpotlightDirectionsLocation: WebGLUniformLocation
+	uSpotlightAttenuationLocation: WebGLUniformLocation
+	uSpotlightCutoffLocation: WebGLUniformLocation
+	uSpotlightColorsLocation: WebGLUniformLocation
+	uSpotlightFocusLocation: WebGLUniformLocation
+	uSpotlightIntensityLocation: WebGLUniformLocation
+
+	_bindAttribs(gl: WebGLRenderingContext): void {
+		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
+		gl.bindAttribLocation(this.program, this.aNormalIndex, "aNormal")
+		gl.bindAttribLocation(this.program, this.aTexCoordsIndex, "aTexCoords")
+	}
+	_getLocations(gl: WebGLRenderingContext): void {
+		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
+		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
+		this.uShininessLocation = gl.getUniformLocation(this.program, "uShininess")
+		this.uLightDirectionLocation = gl.getUniformLocation(this.program, "uLightDirection")
+		this.uViewMatrixLocation = gl.getUniformLocation(this.program, "uViewMatrix")
+		this.uSamplerLocation = gl.getUniformLocation(this.program, "uSampler")
 		Shader.getSpotlightLocations(gl, this)
 	}
 }

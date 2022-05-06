@@ -41,7 +41,11 @@ export class Game {
 
 		this.scene.trackObj = new Track(this.scene.track, 0.2);
 
-		new GameObject("Track", this.worldGameObject, this.scene.trackObj)
+		let trackGameObject = new GameObject("Track", this.worldGameObject, this.scene.trackObj)
+		ShaderMaterial.create(Shaders.PhongSpotlightTexturedShader).then(trackMaterial => {
+			trackMaterial.setColorTexture("../common/textures/street4.png")
+			trackGameObject.material = trackMaterial
+		})
 
 		var bbox = scene.bbox;
 		var quad: number[] = [
@@ -63,12 +67,29 @@ export class Game {
 		this.scene.buildingsObjTex  = new Array(this.scene.buildings.length);
 		for (var i = 0; i < this.scene.buildings.length; ++i){  
 			this.scene.buildingsObj[i] = new Building(this.scene.buildings[i]);
-
-			new GameObject("Building " + i, this.worldGameObject, this.scene.buildingsObj[i])
-
+			
 			this.scene.buildingsObjTex[i] = new TexturedFacades(this.scene.buildings[i],0.1);
+			this.scene.buildingsObjTex[i].gameObject = new GameObject("Building " + i + " sides", this.worldGameObject, this.scene.buildingsObjTex[i])
+
 			this.scene.buildingsObjTex[i].roof = new TexturedRoof(this.scene.buildings[i],1.0);
+			this.scene.buildingsObjTex[i].roof.gameObject = new GameObject("Building " + i + " roof", this.worldGameObject, this.scene.buildingsObjTex[i].roof)
 		}
+
+		ShaderMaterial.create(Shaders.PhongSpotlightTexturedShader).then(sidesMaterial => {
+			sidesMaterial.setColorTexture("../common/textures/facade2.jpg")
+			
+			for(var i = 0; i < this.scene.buildingsObjTex.length; i++){
+				this.scene.buildingsObjTex[i].gameObject.material = sidesMaterial
+			}
+		})
+
+		ShaderMaterial.create(Shaders.PhongSpotlightTexturedShader).then(sidesMaterial => {
+			sidesMaterial.setColorTexture("../common/textures/roof.jpg")
+			
+			for(var i = 0; i < this.scene.buildingsObjTex.length; i++){
+				this.scene.buildingsObjTex[i].roof.gameObject.material = sidesMaterial
+			}
+		})
 	}
 
 	/*
