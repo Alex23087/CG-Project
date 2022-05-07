@@ -6,6 +6,7 @@ import { ShaderMaterial } from "./Rendering/ShaderMaterial.js";
 import * as Shaders from "./Rendering/Shaders.js"
 import { Spotlight } from "./Rendering/Spotlight.js";
 import { Renderer } from "./Rendering/Renderer.js";
+import { Projector } from "./Rendering/Projector.js";
 
 
 export class Car extends GameObject{
@@ -66,6 +67,9 @@ export class Car extends GameObject{
 		rightLight.cutoff = 0.95
 		rightLight.attenuation = 0.9
 		rightLight.intensity = 0.2
+
+		let leftProjector = new Projector("LeftHeadlight", this, "../common/textures/headlight.png")
+		let rightProjector = new Projector("RightHeadlight", this, "../common/textures/headlight.png")
 
 		var carHull = new GameObject("CarHull", this, Shape.cube)
 		carHull.transform.position[1] += 0.6
@@ -159,8 +163,11 @@ export class Car extends GameObject{
 		this.transform.rotation[1] = this.angle - Math.PI / 2
 		this.updateWheels()
 
-		Renderer.instance.fov = Math.PI / 4 + this.speed
-		console.log(Renderer.instance.fov)
+		if((Renderer.instance.currentCamera as unknown as GameObject).name == "LateChaseCamera"){
+			Renderer.instance.fov = Math.PI / 4
+		}else{
+			Renderer.instance.fov = Math.PI / 4 + this.speed
+		}
 	}
 
 	private updateSpeed(deltaV: number) {

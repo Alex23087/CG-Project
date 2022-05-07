@@ -6,6 +6,7 @@ import { GameObject } from "./GameObject.js"
 import { Spotlight } from "./Spotlight.js"
 import { ShaderMaterial } from "./ShaderMaterial.js"
 import { TextureCache } from "./TextureCache.js"
+import { Projector } from "./Projector.js"
 
 type Color = [number, number, number, number]
 
@@ -22,6 +23,7 @@ export class Renderer{
 	private lights: {
 		spotlights: Spotlight[]
 		directional: vec3
+		projectors: Projector[]
 	}
 	private defaultMaterial: ShaderMaterial
 	private defaultTexture: WebGLTexture
@@ -49,7 +51,8 @@ export class Renderer{
 
 		this.lights = {
 			spotlights: [],
-			directional: [0, -1, 0]
+			directional: [0, -1, 0],
+			projectors: []
 		}
 
 		this.scene = GameObject.empty("Scene")
@@ -231,6 +234,28 @@ export class Renderer{
 		this.viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional, this.viewMatrix)
 		glMatrix.vec3.normalize(this.viewSpaceLightDirection, this.viewSpaceLightDirection)
 
+		let postProcessingEnabled = false
+		var targetTexture: WebGLTexture
+		var framebuffer: WebGLFramebuffer
+		var depthBuffer: WebGLRenderbuffer
+		if(postProcessingEnabled){
+			targetTexture = this.gl.createTexture()
+			this.gl.bindTexture(this.gl.TEXTURE_2D, targetTexture)
+			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null)
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
+
+			framebuffer = this.gl.createFramebuffer()
+			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer)
+			this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, targetTexture, 0)
+
+			depthBuffer = this.gl.createRenderbuffer()
+			this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, depthBuffer)
+			this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height)
+			this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, depthBuffer)
+		}
+
 		this.gl.viewport(0, 0, width, height);
 		
 		this.gl.enable(this.gl.DEPTH_TEST);
@@ -240,8 +265,28 @@ export class Renderer{
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
 		this.drawGameObject(this.scene, this.viewMatrix)
-		this.gl.useProgram(null);
-	};
+		this.gl.useProgram(null)
+
+		if(postProcessingEnabled){
+			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
+			this.gl.activeTexture(this.gl.TEXTURE2)
+			this.gl.bindTexture(this.gl.TEXTURE_2D, targetTexture)
+			this.gl.viewport(0, 0, width, height)
+			this.gl.clearColor(0, 0, 0, 1)
+			this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
+
+			this.drawPostProcessing()
+
+			this.gl.deleteTexture(targetTexture)
+			this.gl.deleteFramebuffer(framebuffer)
+			this.gl.deleteRenderbuffer(depthBuffer)
+			this.gl.useProgram(null)
+		}
+	}
+
+	private drawPostProcessing(){
+		//TODO: Draw quad with the texture
+	}
 
 
 
@@ -284,7 +329,10 @@ export class Renderer{
 
 	addSpotlight(spotlight: Spotlight){
 		this.lights.spotlights.push(spotlight)
-		console.log(this.lights.spotlights.length)
+	}
+
+	addProjector(projector: Projector){
+		this.lights.projectors.push(projector)
 	}
 
 	setDirectionalLight(direction: vec3){

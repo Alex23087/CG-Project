@@ -11,6 +11,8 @@ type ImageElement = {
     image: HTMLImageElement
 }
 
+type WEBGLTextureWrapMode = typeof Renderer.instance.gl.REPEAT | typeof Renderer.instance.gl.CLAMP_TO_EDGE
+
 export class TextureCache{
     limit: number
     private elements: TextureCacheElement[]
@@ -26,14 +28,14 @@ export class TextureCache{
         this.images = []
     }
 
-    getTexture(name: string): number{
+    getTexture(name: string, wrap: WEBGLTextureWrapMode = Renderer.instance.gl.REPEAT): number{
         var tex = this.elements.find(e => e.name == name)
         if(!tex){
             if(this.size >= this.limit){
                 let evicted = this.evict()
-                return this.loadTexture(name, evicted.unit)
+                return this.loadTexture(name, evicted.unit, wrap)
             }else{
-                return this.loadTexture(name, this.size)
+                return this.loadTexture(name, this.size, wrap)
             }
         }
         tex.lastUsed = Date.now()
@@ -62,7 +64,7 @@ export class TextureCache{
         return this.images.find(v => v.name == name)
     }
 
-    private loadTexture(name: string, textureUnit: number): number{
+    private loadTexture(name: string, textureUnit: number, wrap: WEBGLTextureWrapMode): number{
         let image = this.getImage(name)
         if(!image){
             return 0
@@ -73,9 +75,9 @@ export class TextureCache{
         Renderer.instance.gl.activeTexture(textureUnit);
         let texture = Renderer.instance.gl.createTexture();
         Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, texture);
-        Renderer.instance.gl.texImage2D(Renderer.instance.gl.TEXTURE_2D, 0, Renderer.instance.gl.RGB, Renderer.instance.gl.RGB, Renderer.instance.gl.UNSIGNED_BYTE, image.image);
-        Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_S, Renderer.instance.gl.REPEAT);
-        Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_T, Renderer.instance.gl.REPEAT);
+        Renderer.instance.gl.texImage2D(Renderer.instance.gl.TEXTURE_2D, 0, Renderer.instance.gl.RGBA, Renderer.instance.gl.RGBA, Renderer.instance.gl.UNSIGNED_BYTE, image.image);
+        Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_S, wrap);
+        Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_T, wrap);
         Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MAG_FILTER, Renderer.instance.gl.LINEAR);
         Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MIN_FILTER, Renderer.instance.gl.LINEAR_MIPMAP_LINEAR);
         Renderer.instance.gl.generateMipmap(Renderer.instance.gl.TEXTURE_2D)
