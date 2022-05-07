@@ -5,6 +5,7 @@ import { Shape } from "./shapes/Shape.js";
 import { ShaderMaterial } from "./Rendering/ShaderMaterial.js";
 import * as Shaders from "./Rendering/Shaders.js"
 import { Spotlight } from "./Rendering/Spotlight.js";
+import { Renderer } from "./Rendering/Renderer.js";
 
 
 export class Car extends GameObject{
@@ -157,16 +158,14 @@ export class Car extends GameObject{
 		this.transform.position = this.transform.position
 		this.transform.rotation[1] = this.angle - Math.PI / 2
 		this.updateWheels()
+
+		Renderer.instance.fov = Math.PI / 4 + this.speed
+		console.log(Renderer.instance.fov)
 	}
 
 	private updateSpeed(deltaV: number) {
 		if (this.isBraking) {
 			deltaV /= (this.max_speed / this.max_back_speed);
-		}
-
-		if (this.speed > this.max_speed || this.speed < -this.max_back_speed) {
-			this.speed *= 0.9;
-			return;
 		}
 
 		if (this.isAccelerating && this.speed < 0 || this.isBraking && this.speed > 0) {
@@ -178,6 +177,14 @@ export class Car extends GameObject{
 			this.speed += deltaV;
 		} else if (this.isBraking) {
 			this.speed -= deltaV;
+		}
+
+		if (this.speed > this.max_speed){
+			this.speed = Math.max(this.speed * 0.9, this.max_speed)
+			return
+		}else if(this.speed < -this.max_back_speed) {
+			this.speed = Math.min(this.speed * 0.9, -this.max_back_speed)
+			return;
 		}
 	}
 

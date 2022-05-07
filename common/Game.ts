@@ -9,7 +9,7 @@ import { Cylinder } from "./shapes/Cylinder.js"
 import { GameObject } from "./Rendering/GameObject.js"
 import { scene_0 } from "./scenes/scene_0.js"
 import { Renderer } from "./Rendering/Renderer.js"
-import { Camera } from "./Rendering/Cameras.js"
+import { Camera, LateChaseCamera } from "./Rendering/Cameras.js"
 import { Spotlight } from "./Rendering/Spotlight.js"
 import { ShaderMaterial } from "./Rendering/ShaderMaterial.js"
 import * as Shaders from "./Rendering/Shaders.js"
@@ -107,6 +107,7 @@ export class Game {
 
 		this.cameras.push(this.car.findChildWithName("FollowFromUpCamera") as unknown as Camera)
 		this.cameras.push(this.car.findChildWithName("ChaseCamera") as unknown as Camera)
+		this.cameras.push(new LateChaseCamera(this.car, 10))
 
 		renderer.currentCamera = this.cameras[1]
 		renderer.addObjectToScene(this.car)

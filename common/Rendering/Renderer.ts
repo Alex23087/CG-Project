@@ -29,6 +29,8 @@ export class Renderer{
 	private currentTime: number
 	private scene: GameObject
 
+	public fov: number
+
 	public textureCache: TextureCache
 
 	public constructor(canvas: HTMLCanvasElement){
@@ -55,6 +57,7 @@ export class Renderer{
 		this.currentTime = 0
 
 		this.textureCache = new TextureCache()
+		this.fov = Math.PI / 4
 		
 		ShaderMaterial.create(Shaders.UniformShader).then(material => {
 			let image = new Image()
@@ -213,6 +216,9 @@ export class Renderer{
 		}
 	}
 
+	public findGameObjectWithName(name: string): GameObject{
+		return this.scene.findChildWithName(name)
+	}
 
 	private draw() {
 		var width = this.canvas.width
@@ -220,7 +226,7 @@ export class Renderer{
 		var ratio = width / height;
 		
 		// Set matrices
-		this.projectionMatrix = glMatrix.mat4.perspective(glMatrix.mat4.create(), 3.14 / 4, ratio, 1, 500)
+		this.projectionMatrix = glMatrix.mat4.perspective(glMatrix.mat4.create(), this.fov, ratio, 1, 500)
 		this.viewMatrix = this.currentCamera.inverseViewMatrix
 		this.viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional, this.viewMatrix)
 		glMatrix.vec3.normalize(this.viewSpaceLightDirection, this.viewSpaceLightDirection)

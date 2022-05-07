@@ -26,14 +26,14 @@ void main(void){
     vec3 diffuseColor = color * diffuseLight;
     
     vec3 reflectedLightDirection = -vViewSpaceLightDirection + 2.0 * dot(vViewSpaceLightDirection, vViewSpaceNormal) * vViewSpaceNormal;
-    float specularLight = max(0.0, pow(dot(vViewSpaceViewDirection, reflectedLightDirection), uShininess));
+    float specularLight = pow(max(0.0, dot(vViewSpaceViewDirection, reflectedLightDirection)), uShininess);
     vec3 specularColor = color * specularLight;
 
     vec3 spotlightColor = vec3(0.0, 0.0, 0.0);
     for(int i = 0; i < SPOTLIGHTS_COUNT; i++){
         float cosangle = dot(normalize(vViewSpacePosition - vViewSpaceSpotlightPositions[i]), vViewSpaceSpotlightDirections[i]);
 
-        vec3 tmpColor = uSpotlightColors[i] * max(uSpotlightIntensity[i] * pow(cosangle, uSpotlightFocus[i]), 0.0);
+        vec3 tmpColor = uSpotlightColors[i] * uSpotlightIntensity[i] * pow(max(0.0, cosangle), uSpotlightFocus[i]);
         if(cosangle < uSpotlightCutoff[i]){
             tmpColor *= uSpotlightAttenuation[i];
         }

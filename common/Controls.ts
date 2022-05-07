@@ -54,6 +54,8 @@ export class Controls {
     private toggleCamera(){
         if((this.renderer.currentCamera as unknown as GameObject).name == (this.game.cameras[0] as unknown as GameObject).name){
             this.renderer.currentCamera = this.game.cameras[1]
+        }else if((this.renderer.currentCamera as unknown as GameObject).name == (this.game.cameras[1] as unknown as GameObject).name){
+            this.renderer.currentCamera = this.game.cameras[2]
         }else{
             this.renderer.currentCamera = this.game.cameras[0]
         }
