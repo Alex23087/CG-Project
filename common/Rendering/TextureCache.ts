@@ -23,7 +23,7 @@ export class TextureCache{
     }
 
     constructor(){
-        this.limit = Renderer.instance.gl.MAX_TEXTURE_IMAGE_UNITS
+        this.limit = Renderer.instance.gl.MAX_TEXTURE_IMAGE_UNITS - 1
         this.elements = []
         this.images = []
     }
@@ -70,6 +70,7 @@ export class TextureCache{
             return 0
         }
 
+        textureUnit += 1
         textureUnit += Renderer.instance.gl.TEXTURE0
 
         Renderer.instance.gl.activeTexture(textureUnit);

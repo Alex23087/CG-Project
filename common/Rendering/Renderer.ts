@@ -234,7 +234,9 @@ export class Renderer{
 		this.viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional, this.viewMatrix)
 		glMatrix.vec3.normalize(this.viewSpaceLightDirection, this.viewSpaceLightDirection)
 
-		let postProcessingEnabled = false
+		this.drawPostProcessing()
+
+		let postProcessingEnabled = true
 		var targetTexture: WebGLTexture
 		var framebuffer: WebGLFramebuffer
 		var depthBuffer: WebGLRenderbuffer
@@ -243,8 +245,8 @@ export class Renderer{
 			this.gl.bindTexture(this.gl.TEXTURE_2D, targetTexture)
 			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null)
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
-			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
 			framebuffer = this.gl.createFramebuffer()
 			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer)
@@ -269,7 +271,7 @@ export class Renderer{
 
 		if(postProcessingEnabled){
 			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
-			this.gl.activeTexture(this.gl.TEXTURE2)
+			this.gl.activeTexture(this.gl.TEXTURE0)
 			this.gl.bindTexture(this.gl.TEXTURE_2D, targetTexture)
 			this.gl.viewport(0, 0, width, height)
 			this.gl.clearColor(0, 0, 0, 1)
@@ -285,7 +287,96 @@ export class Renderer{
 	}
 
 	private drawPostProcessing(){
-		//TODO: Draw quad with the texture
+		//TODO: Optimize and move somewhere else
+		let vsSource = `
+		attribute vec2 aTexCoord;
+		attribute vec2 aPosition;
+
+		varying vec2 vTexCoord;
+		 
+		void main() {
+		   vTexCoord = aTexCoord;
+		   gl_Position = vec4(aPosition, 0.0, 1.0);
+		}`
+		let fsSource = `
+		precision mediump float;
+ 
+		uniform sampler2D uTexture;
+		uniform float uAmount;
+		
+		varying vec2 vTexCoord;
+		
+		void main() {
+			vec2 iuv = (vTexCoord * 2.0) - 1.0;
+			iuv /= uAmount;
+			iuv = (iuv + 1.0) * 0.5;
+
+			float colR = texture2D(uTexture, iuv).r;
+			float colG = texture2D(uTexture, vTexCoord).g;
+
+			iuv = (vTexCoord * 2.0) - 1.0;
+			iuv /= (1.0 / uAmount);
+			iuv = (iuv + 1.0) * 0.5;
+
+			float colB = texture2D(uTexture, iuv).b;
+			//gl_FragColor = texture2D(uTexture, vTexCoord);
+			gl_FragColor = vec4(colR, colG, colB, 1.0);
+		}`
+		let gl = this.gl
+		let vs = gl.createShader(gl.VERTEX_SHADER)
+		gl.shaderSource(vs, vsSource)
+		gl.compileShader(vs)
+		let fs = gl.createShader(gl.FRAGMENT_SHADER)
+		gl.shaderSource(fs, fsSource)
+		gl.compileShader(fs)
+		let program = gl.createProgram()
+		gl.attachShader(program, vs)
+		gl.attachShader(program, fs)
+		var texCoordLocation = 1
+		var positionLocation = 0
+		gl.bindAttribLocation(program, texCoordLocation, "aTexCoord")
+		gl.bindAttribLocation(program, positionLocation, "aPosition")
+		gl.linkProgram(program)
+		if (!Renderer.instance.gl.getProgramParameter(program, Renderer.instance.gl.LINK_STATUS)) {
+			var str = "Unable to initialize the shader program.\n\n"
+			str += "VS:\n" + Renderer.instance.gl.getShaderInfoLog(vs) + "\n\n"
+			str += "FS:\n" + Renderer.instance.gl.getShaderInfoLog(fs) + "\n\n"
+			str += "PROG:\n" + Renderer.instance.gl.getProgramInfoLog(program)
+			alert(str)
+		}
+		gl.useProgram(program)
+
+ 
+		// provide texture coordinates for the rectangle.
+		var texCoordBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+			0.0,  0.0,
+			1.0,  0.0,
+			0.0,  1.0,
+			0.0,  1.0,
+			1.0,  0.0,
+			1.0,  1.0]), gl.STATIC_DRAW);
+		gl.enableVertexAttribArray(texCoordLocation);
+		gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 8, 0);
+
+		var positionBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer); 
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+			-1, -1,
+			1, -1,
+			-1, 1,
+			-1, 1,
+			1, -1,
+			1, 1,
+		]), gl.STATIC_DRAW);
+		gl.enableVertexAttribArray(positionLocation);
+		gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 8, 0);
+
+		gl.uniform1i(gl.getUniformLocation(program, "uTexture"), 0)
+		gl.uniform1f(gl.getUniformLocation(program, "uAmount"), 1 + (this.findGameObjectWithName("mycar") as any).speed / 12)
+
+		gl.drawArrays(gl.TRIANGLES, 0, 6)
 	}
 
 
