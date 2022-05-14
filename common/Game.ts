@@ -124,5 +124,14 @@ export class Game {
 		}
 
 		renderer.setDirectionalLight(this.scene.weather.sunLightDirection)
+
+		renderer.setSkybox({
+			posX: "../common/textures/cubemap/posx.jpg",
+			negX: "../common/textures/cubemap/negx.jpg",
+			posY: "../common/textures/cubemap/posy.jpg",
+			negY: "../common/textures/cubemap/negy.jpg",
+			posZ: "../common/textures/cubemap/posz.jpg",
+			negZ: "../common/textures/cubemap/negz.jpg"
+		})
 	}
 };

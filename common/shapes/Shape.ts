@@ -1,5 +1,5 @@
-import { Cube } from "./Cube"
-import { Cylinder } from "./Cylinder"
+import { Cube } from "./Cube.js"
+import { Cylinder } from "./Cylinder.js"
 import * as glMatrix from "../libs/gl-matrix/dist/esm/index.js"
 import { Renderer } from "../Rendering/Renderer.js"
 

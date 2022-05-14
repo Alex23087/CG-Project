@@ -5,7 +5,7 @@ import { Shape, TexturedShape } from "../shapes/Shape.js"
 import { GameObject } from "./GameObject.js"
 import { Spotlight } from "./Spotlight.js"
 import { ShaderMaterial } from "./ShaderMaterial.js"
-import { TextureCache } from "./TextureCache.js"
+import { CubemapNames, TextureCache } from "./TextureCache.js"
 import { Projector } from "./Projector.js"
 
 type Color = [number, number, number, number]
@@ -27,6 +27,7 @@ export class Renderer{
 	}
 	private defaultMaterial: ShaderMaterial
 	private defaultTexture: WebGLTexture
+	private skybox: GameObject | null = null
 
 	private currentTime: number
 	private scene: GameObject
@@ -125,6 +126,10 @@ export class Renderer{
 			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, (obj as unknown as TexturedShape).texCoordsBuffer);
 			this.gl.enableVertexAttribArray(material.shader.aTexCoordsIndex);
 			this.gl.vertexAttribPointer(material.shader.aTexCoordsIndex, 2, this.gl.FLOAT, false, 0, 0)
+		}
+
+		if(Shaders.isCubemapped(material.shader)){
+			this.gl.uniform1i(material.shader.uCubemapSamplerLocation, this.textureCache.getCubemapTexture(material.properties["cubemap"]))
 		}
 
 		if(Shaders.isPositionable(material.shader)){
@@ -227,20 +232,13 @@ export class Renderer{
 		var width = this.canvas.width
 		var height = this.canvas.height
 		var ratio = width / height;
-		
-		// Set matrices
-		this.projectionMatrix = glMatrix.mat4.perspective(glMatrix.mat4.create(), this.fov, ratio, 1, 500)
-		this.viewMatrix = this.currentCamera.inverseViewMatrix
-		this.viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional, this.viewMatrix)
-		glMatrix.vec3.normalize(this.viewSpaceLightDirection, this.viewSpaceLightDirection)
 
-		this.drawPostProcessing()
-
-		let postProcessingEnabled = true
+		let postProcessingEnabled = false
 		var targetTexture: WebGLTexture
 		var framebuffer: WebGLFramebuffer
 		var depthBuffer: WebGLRenderbuffer
 		if(postProcessingEnabled){
+			this.gl.activeTexture(this.gl.TEXTURE0)
 			targetTexture = this.gl.createTexture()
 			this.gl.bindTexture(this.gl.TEXTURE_2D, targetTexture)
 			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null)
@@ -259,13 +257,23 @@ export class Renderer{
 		}
 
 		this.gl.viewport(0, 0, width, height);
-		
-		this.gl.enable(this.gl.DEPTH_TEST);
 
 		// Clear the framebuffer
 		this.gl.clearColor(0.34, 0.5, 0.74, 1.0);
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+		this.viewMatrix = this.currentCamera.inverseViewMatrix
 
+		if(this.skybox){
+			this.gl.disable(this.gl.DEPTH_TEST);
+			this.projectionMatrix = glMatrix.mat4.perspective(glMatrix.mat4.create(), this.fov, ratio, 0.1, 500)
+			this.drawGameObject(this.skybox, glMatrix.mat4.create())
+		}
+
+		this.gl.enable(this.gl.DEPTH_TEST);
+		// Set matrices
+		this.projectionMatrix = glMatrix.mat4.perspective(glMatrix.mat4.create(), this.fov, ratio, 1, 500)
+		this.viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional, this.viewMatrix)
+		glMatrix.vec3.normalize(this.viewSpaceLightDirection, this.viewSpaceLightDirection)
 		this.drawGameObject(this.scene, this.viewMatrix)
 		this.gl.useProgram(null)
 
@@ -428,5 +436,17 @@ export class Renderer{
 
 	setDirectionalLight(direction: vec3){
 		this.lights.directional = direction
+	}
+
+	setSkybox(textures: CubemapNames){
+		this.skybox = new GameObject("Skybox", null, Shape.cube)
+		ShaderMaterial.create(Shaders.SkyboxShader).then(material => {
+			this.skybox.material = material
+			material.setCubemapTexture(textures)
+		})
+	}
+
+	disableSkybox(){
+		this.skybox = null
 	}
 }

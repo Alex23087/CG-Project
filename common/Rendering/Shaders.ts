@@ -118,6 +118,10 @@ interface TexturedShader extends Shader{
 	aTexCoordsIndex: 2
 }
 
+interface CubemappedShader extends Shader{
+	uCubemapSamplerLocation: WebGLUniformLocation
+}
+
 interface ProjectorShader extends Shader{
 	uProjectorSamplerLocation: WebGLUniformLocation
 	uProjectorMatrixLocation: WebGLUniformLocation
@@ -165,6 +169,10 @@ export function supportsSpotlights(object: Shader): object is SpotlightShader{
 
 export function isTextured(object: Shader): object is TexturedShader{
 	return 'uSamplerLocation' in object
+}
+
+export function isCubemapped(object: Shader): object is CubemappedShader{
+	return 'uCubemapSamplerLocation' in object
 }
 
 export function isProjectorShader(object: Shader): object is ProjectorShader{
@@ -349,4 +357,25 @@ MVMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, 
 		this.uProjectorMatrixLocation = gl.getUniformLocation(this.program, "uProjectorMatrix")
 		Shader.getSpotlightLocations(gl, this)
 	}
+}
+
+export class SkyboxShader extends Shader implements ProjectionMatrixShader, ViewMatrixShader, CubemappedShader, PositionableShader{
+	name: string ="Skybox"
+	
+	aPositionIndex: 0 = 0
+
+	uCubemapSamplerLocation: WebGLUniformLocation
+	uProjectionMatrixLocation: WebGLUniformLocation
+	uViewMatrixLocation: WebGLUniformLocation
+
+	_bindAttribs(gl: WebGLRenderingContext): void {
+		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
+	}
+	
+	_getLocations(gl: WebGLRenderingContext): void {
+		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
+		this.uViewMatrixLocation = gl.getUniformLocation(this.program, "uViewMatrix")
+		this.uCubemapSamplerLocation = gl.getUniformLocation(this.program, "uCubemapSampler")
+	}
+	
 }
