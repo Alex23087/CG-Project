@@ -166,7 +166,8 @@ export class Car extends GameObject{
 		if((Renderer.instance.currentCamera as unknown as GameObject).name == "LateChaseCamera"){
 			Renderer.instance.fov = Math.PI / 4
 		}else{
-			Renderer.instance.fov = Math.PI / 4 + this.speed
+			const alpha = Math.min(deltaT * 5, 1)
+			Renderer.instance.fov = (Renderer.instance.fov * (1-alpha)) + ((Math.PI / 4 + this.speed) * alpha)
 		}
 	}
 
@@ -187,10 +188,10 @@ export class Car extends GameObject{
 		}
 
 		if (this.speed > this.max_speed){
-			this.speed = Math.max(this.speed * 0.9, this.max_speed)
+			this.speed = this.max_speed
 			return
 		}else if(this.speed < -this.max_back_speed) {
-			this.speed = Math.min(this.speed * 0.9, -this.max_back_speed)
+			this.speed = -this.max_back_speed
 			return;
 		}
 	}

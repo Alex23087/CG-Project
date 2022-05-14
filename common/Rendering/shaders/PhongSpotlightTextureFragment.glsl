@@ -1,9 +1,12 @@
-#define SPOTLIGHTS_COUNT 12
-precision lowp float;
+#define SPOTLIGHTS_COUNT 14
+precision highp float;
 
 uniform sampler2D uSampler;
 uniform float uShininess;
 
+uniform mat4 uViewMatrix;
+uniform vec3 uSpotlightPositions[SPOTLIGHTS_COUNT];
+uniform vec3 uSpotlightDirections[SPOTLIGHTS_COUNT];
 uniform float uSpotlightAttenuation[SPOTLIGHTS_COUNT];
 uniform float uSpotlightCutoff[SPOTLIGHTS_COUNT];
 uniform vec3 uSpotlightColors[SPOTLIGHTS_COUNT];
@@ -17,9 +20,6 @@ varying vec2 vTexCoords;
 
 varying vec3 vViewSpaceLightDirection;
 
-varying vec3 vViewSpaceSpotlightPositions[SPOTLIGHTS_COUNT];
-varying vec3 vViewSpaceSpotlightDirections[SPOTLIGHTS_COUNT];
-
 void main(void){
     vec3 color = texture2D(uSampler, vTexCoords).xyz;
     float diffuseLight = max(dot(vViewSpaceLightDirection, vViewSpaceNormal), 0.0) * 0.5 + 0.5;
@@ -31,7 +31,7 @@ void main(void){
 
     vec3 spotlightColor = vec3(0.0, 0.0, 0.0);
     for(int i = 0; i < SPOTLIGHTS_COUNT; i++){
-        float cosangle = dot(normalize(vViewSpacePosition - vViewSpaceSpotlightPositions[i]), vViewSpaceSpotlightDirections[i]);
+        float cosangle = dot(normalize(vViewSpacePosition - (uViewMatrix * vec4(uSpotlightPositions[i], 1.0)).xyz), (uViewMatrix * vec4(uSpotlightDirections[i], 0.0)).xyz);
 
         vec3 tmpColor = uSpotlightColors[i] * uSpotlightIntensity[i] * pow(max(0.0, cosangle), uSpotlightFocus[i]);
         if(cosangle < uSpotlightCutoff[i]){

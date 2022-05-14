@@ -13,6 +13,7 @@ import { Camera, LateChaseCamera } from "./Rendering/Cameras.js"
 import { Spotlight } from "./Rendering/Spotlight.js"
 import { ShaderMaterial } from "./Rendering/ShaderMaterial.js"
 import * as Shaders from "./Rendering/Shaders.js"
+import { LampPost } from "./LampPost.js"
 
 export interface StringIndexedBooleanArray{
     [index: string]: boolean
@@ -114,13 +115,11 @@ export class Game {
 		renderer.addObjectToScene(this.worldGameObject)
 
 		for(var i = 0; i < this.scene.lamps.length; i++){
-			var spotlight = new Spotlight()
-			spotlight.position = this.scene.lamps[i].position
-			spotlight.position[1] = this.scene.lamps[i].height
-			spotlight.color = [0,0,0]
-			spotlight.color[i%3] = 1
-			spotlight.intensity = 0.8
-			//spotlight.focus = this.gl.
+			let post = new LampPost("LampPost " + i, null)
+			post.transform.position = this.scene.lamps[i].position
+			post.transform.position[1] = this.scene.lamps[i].height
+			
+			renderer.addObjectToScene(post)
 		}
 
 		renderer.setDirectionalLight(this.scene.weather.sunLightDirection)

@@ -34,6 +34,9 @@ export class Renderer{
 
 	public fov: number
 
+	public scale: number = 1
+	public postProcessingEnabled: boolean = true
+
 	public textureCache: TextureCache
 
 	public constructor(canvas: HTMLCanvasElement){
@@ -229,20 +232,20 @@ export class Renderer{
 	}
 
 	private draw() {
-		var width = this.canvas.width
-		var height = this.canvas.height
+		var width = this.canvas.width * this.scale
+		var height = this.canvas.height * this.scale
 		var ratio = width / height;
 
-		let postProcessingEnabled = false
 		var targetTexture: WebGLTexture
 		var framebuffer: WebGLFramebuffer
 		var depthBuffer: WebGLRenderbuffer
-		if(postProcessingEnabled){
+		if(this.postProcessingEnabled){
 			this.gl.activeTexture(this.gl.TEXTURE0)
 			targetTexture = this.gl.createTexture()
 			this.gl.bindTexture(this.gl.TEXTURE_2D, targetTexture)
 			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null)
-			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST)
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
@@ -277,11 +280,11 @@ export class Renderer{
 		this.drawGameObject(this.scene, this.viewMatrix)
 		this.gl.useProgram(null)
 
-		if(postProcessingEnabled){
+		if(this.postProcessingEnabled){
 			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
 			this.gl.activeTexture(this.gl.TEXTURE0)
 			this.gl.bindTexture(this.gl.TEXTURE_2D, targetTexture)
-			this.gl.viewport(0, 0, width, height)
+			this.gl.viewport(0, 0, width / this.scale, height / this.scale)
 			this.gl.clearColor(0, 0, 0, 1)
 			this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
 

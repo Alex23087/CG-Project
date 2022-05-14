@@ -33,7 +33,7 @@ function update_camera(value: number){
 	controls.setCamera(value)
 }
 
-var wireframeCheckbox = document.getElementById("wireframe") as HTMLInputElement
+/*var wireframeCheckbox = document.getElementById("wireframe") as HTMLInputElement
 wireframeCheckbox.onchange = function(e: Event){
 	renderer.wireframeEnabled = wireframeCheckbox.checked as unknown as boolean
 }
@@ -64,3 +64,35 @@ var shaderSelector = (document.getElementById("shader") as HTMLSelectElement)
 		break;
 	}
 }*/
+
+let scaleSlider = document.getElementById("scale") as HTMLInputElement
+let scaleValue = document.getElementById("scaleValue") as HTMLInputElement
+scaleSlider.oninput = (ev) => {
+	renderer.scale = scaleSlider.value as unknown as number
+	scaleValue.innerText = scaleSlider.value
+}
+
+var postProcessingCheckbox = document.getElementById("postprocessing") as HTMLInputElement
+postProcessingCheckbox.onchange = function(e: Event){
+	renderer.postProcessingEnabled = postProcessingCheckbox.checked as unknown as boolean
+}
+
+var skyboxCheckbox = document.getElementById("skybox") as HTMLInputElement
+skyboxCheckbox.onchange = function(e: Event){
+	if(skyboxCheckbox.checked as unknown as boolean){
+		renderer.setSkybox({
+			posX: "../common/textures/cubemap/posx.jpg",
+			negX: "../common/textures/cubemap/negx.jpg",
+			posY: "../common/textures/cubemap/posy.jpg",
+			negY: "../common/textures/cubemap/negy.jpg",
+			posZ: "../common/textures/cubemap/posz.jpg",
+			negZ: "../common/textures/cubemap/negz.jpg"
+		})
+	}else{
+		renderer.disableSkybox()
+	}
+}
+
+postProcessingCheckbox.checked = true
+skyboxCheckbox.checked = true
+scaleSlider.value = "1"
