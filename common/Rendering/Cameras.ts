@@ -138,3 +138,55 @@ export class LateChaseCamera extends GameObject implements Camera{
 		this.inverseViewMatrix = glMatrix.mat4.lookAt(glMatrix.mat4.create(), this.worldEye, this.worldTarget, [0, 1, 0])
 	}
 }
+
+export class FreeCamera extends GameObject implements Camera{
+	inverseViewMatrix: mat4
+	movement: vec3
+	private rotationDelta: vec2 = [0,0]
+	private previousMouseCoords: vec2 = [0,0]
+	private rotation: vec2 = [0,0]
+	private mousePressed: boolean = false
+
+	constructor(){
+		super("FreeCamera", null, null)
+		Renderer.instance.addObjectToScene(this)
+		this.movement = [0,0,0]
+		this.inverseViewMatrix = glMatrix.mat4.create()
+	}
+
+	mouseMoved(coords: vec2): void {
+		if(!this.mousePressed){
+			return
+		}
+		glMatrix.vec2.sub(this.rotationDelta, this.previousMouseCoords, coords)
+		this.previousMouseCoords = coords
+	}
+
+	public update(deltaT: number): void {
+		var translation = glMatrix.mat4.create()
+		glMatrix.mat4.fromTranslation(translation, this.movement)
+
+		glMatrix.mat4.mul(this.inverseViewMatrix, translation, this.inverseViewMatrix)
+
+		var rotation = glMatrix.mat4.create()
+		glMatrix.mat4.fromXRotation(rotation, this.rotationDelta[1] * 0.2)
+		glMatrix.mat4.mul(this.inverseViewMatrix, rotation, this.inverseViewMatrix)
+
+		rotation = glMatrix.mat4.create()
+		glMatrix.mat4.fromYRotation(rotation, this.rotationDelta[0] * 0.2)
+		glMatrix.mat4.mul(this.inverseViewMatrix, rotation, this.inverseViewMatrix)
+
+		this.rotationDelta = [0,0]
+	}
+
+	public mouseup(){
+		this.mousePressed = false
+	}
+
+	public mousedown(amount){
+		this.mousePressed = true
+		console.log(this.previousMouseCoords)
+		this.previousMouseCoords = amount
+		console.log(this.previousMouseCoords)
+	}
+}

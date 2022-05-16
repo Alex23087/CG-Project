@@ -20,9 +20,11 @@ window.onload = function (){
 	renderer = new Renderer(canvas)
 	game = new Game(renderer)
 	controls = new Controls(renderer, game)
-	renderer.canvas.addEventListener('mousemove', function(e: MouseEvent){controls.on_mouseMove(e)}, false);
-	renderer.canvas.addEventListener('keydown', on_keydown, false);
-	renderer.canvas.addEventListener('keyup', on_keyup, false);
+	renderer.canvas.addEventListener('mousemove', function(e: MouseEvent){controls.on_mouseMove(e)}, false)
+	renderer.canvas.addEventListener('mouseup', controls.mouseup, false)
+	renderer.canvas.addEventListener('mousedown', controls.mousedown, false)
+	renderer.canvas.addEventListener('keydown', on_keydown, false)
+	renderer.canvas.addEventListener('keyup', on_keyup, false)
 	
 	renderer.canvas.onclick = function (e) {
 		controls.onClick(e)

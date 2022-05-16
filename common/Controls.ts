@@ -1,6 +1,6 @@
 import { Renderer } from "./Rendering/Renderer.js"
 import { Car } from "./Car.js"
-import { Camera } from "./Rendering/Cameras.js"
+import { Camera, FreeCamera } from "./Rendering/Cameras.js"
 import { Game } from "./Game.js"
 import { GameObject } from "./Rendering/GameObject.js"
 
@@ -8,10 +8,12 @@ import { GameObject } from "./Rendering/GameObject.js"
 export class Controls {
     static changeCameraKeys = ['c', 'C']
     static fullscreenKeys = ['f', 'F']
-    static upKeys = ['w', 'W', "ArrowUp"]
-    static downKeys = ['s', 'S', "ArrowDown"]
+    static forwardKeys = ['w', 'W', "ArrowUp"]
+    static backwardKeys = ['s', 'S', "ArrowDown"]
     static rightKeys = ['d', 'D', "ArrowRight"]
     static leftKeys = ['a', 'A', "ArrowLeft"]
+    static upKeys = ['q', 'Q']
+    static downKeys = ['z', 'Z']
 
     renderer: Renderer
     game: Game
@@ -22,22 +24,47 @@ export class Controls {
     }
 
     keyPressed(key: string){
-        this.setKey(this.game.car, key, true)
+        this.setKey(this.game.car, key, true, (this.renderer.currentCamera as unknown as GameObject).name == "FreeCamera")
     }
 
     keyReleased(key: string){
-        this.setKey(this.game.car, key, false)
+        this.setKey(this.game.car, key, false, (this.renderer.currentCamera as unknown as GameObject).name == "FreeCamera")
     }
 
-    private setKey(car: Car, key: string, value: boolean){
-        if(Controls.upKeys.indexOf(key) >= 0){
-            car.control_keys["ArrowUp"] = value
-        } else if(Controls.downKeys.indexOf(key) >= 0){
-            car.control_keys["ArrowDown"] = value
+    private setKey(car: Car, key: string, value: boolean, passToCamera: boolean){
+        let cam = (this.renderer.currentCamera as unknown as FreeCamera)
+        if(Controls.forwardKeys.indexOf(key) >= 0){
+            if(passToCamera){
+                cam.movement[2] = value ? 1 : 0
+            }else{
+                car.control_keys["ArrowUp"] = value
+            }
+        } else if(Controls.backwardKeys.indexOf(key) >= 0){
+            if(passToCamera){
+                cam.movement[2] = value ? -1 : 0
+            }else{
+                car.control_keys["ArrowDown"] = value
+            }
         } else if(Controls.leftKeys.indexOf(key) >= 0){
-            car.control_keys["ArrowLeft"] = value
+            if(passToCamera){
+                cam.movement[0] = value ? 1 : 0
+            }else{
+                car.control_keys["ArrowLeft"] = value
+            }
         } else if(Controls.rightKeys.indexOf(key) >= 0){
-            car.control_keys["ArrowRight"] = value
+            if(passToCamera){
+                cam.movement[0] = value ? -1 : 0
+            }else{
+                car.control_keys["ArrowRight"] = value
+            }
+        } else if(Controls.upKeys.indexOf(key) >= 0){
+            if(passToCamera){
+                cam.movement[1] = value ? -1 : 0
+            }
+        } else if(Controls.downKeys.indexOf(key) >= 0){
+            if(passToCamera){
+                cam.movement[1] = value ? 1 : 0
+            }
         } else if(Controls.changeCameraKeys.indexOf(key) >= 0){
             if(value){
                 this.toggleCamera()
@@ -48,6 +75,24 @@ export class Controls {
             }
         } else {
             car.control_keys[key] = value
+        }
+    }
+
+    public mouseup(){
+        if((Renderer.instance.currentCamera as unknown as GameObject).name == "FreeCamera"){
+            (Renderer.instance.currentCamera as unknown as FreeCamera).mouseup()
+        }
+    }
+
+    public mousedown(e){
+        if((Renderer.instance.currentCamera as unknown as GameObject).name == "FreeCamera"){
+
+            let sensitivity = 6
+            var amount = [
+                ((e.clientX / Renderer.instance.canvas.width) - 0.5) * sensitivity,
+                ((e.clientY / Renderer.instance.canvas.height) - 0.5) * sensitivity
+            ];
+            (Renderer.instance.currentCamera as unknown as FreeCamera).mousedown(amount)
         }
     }
 
