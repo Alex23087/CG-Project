@@ -35,7 +35,7 @@ export class Renderer{
 	public fov: number
 
 	public scale: number = 1
-	public postProcessingEnabled: boolean = true
+	public postProcessingEnabled: boolean = false
 
 	public textureCache: TextureCache
 
@@ -186,6 +186,37 @@ export class Renderer{
 			this.gl.uniform1fv(material.shader.uSpotlightFocusLocation, focus)
 			this.gl.uniform1fv(material.shader.uSpotlightIntensityLocation, intensity)
 			this.gl.uniform3fv(material.shader.uSpotlightPositionsLocation, position)
+		}
+
+		if(Shaders.isProjectorShader(material.shader)){
+			/*		if(Shaders.isProjectorShader(material.shader)){
+			this.gl.uniform1iv(material.shader.uProjectorSamplerLocation, [
+				this.textureCache.getTexture(this.lights.projectors[0].getTexture(), this.gl.CLAMP_TO_EDGE),
+				this.textureCache.getTexture(this.lights.projectors[1].getTexture(), this.gl.CLAMP_TO_EDGE)
+			])
+
+			var projectors = []
+			for(var i = 0; i < this.lights.projectors.length; i++){
+				for(var j = 0; j < 16; j++){
+					projectors.push(this.lights.projectors[i][j])
+				}
+			}
+			this.gl.uniformMatrix4fv(material.shader.uProjectorMatrixLocation, false, projectors)
+		}
+		*/
+			this.gl.uniform1iv(material.shader.uProjectorSamplerLocation, [
+				this.textureCache.getTexture(this.lights.projectors[0].getTexture(), this.gl.CLAMP_TO_EDGE),
+				this.textureCache.getTexture(this.lights.projectors[0].getTexture(), this.gl.CLAMP_TO_EDGE)
+			])
+
+			var projectors = []
+			for(var i = 0; i < this.lights.projectors.length; i++){
+				for(var j = 0; j < 16; j++){
+					projectors.push(this.lights.projectors[i].getMatrix()[j])
+				}
+			}
+			this.gl.uniformMatrix4fv(material.shader.uProjectorMatrixLocation, false, projectors)
+			//this.gl.uniformMatrix4fv(material.shader.uProjectorMatrixLocation, false, this.lights.projectors[0].getMatrix() as Float32List)
 		}
 
 		if(this.wireframeEnabled){

@@ -8,6 +8,8 @@ export class Projector extends GameObject{
 
     constructor(name: string, parent: GameObject, texture: string){
         super(name, parent, null)
+        this.texture = texture
+        Renderer.instance.textureCache.loadImage(texture)
 
         Renderer.instance.addProjector(this)
     }
@@ -27,7 +29,7 @@ export class Projector extends GameObject{
         var worldTarget = glMatrix.vec3.create()
 		//console.log(tmp)
 		glMatrix.vec3.transformMat4(worldEye, this.transform.position, frame)
-		glMatrix.vec3.transformMat4(worldTarget, [0, 0, -1], frame)
+		glMatrix.vec3.transformMat4(worldTarget, glMatrix.vec3.add(glMatrix.vec3.create(), [0, 0, -1], this.transform.position), frame)
 		this.viewMatrix = glMatrix.mat4.lookAt(glMatrix.mat4.create(), worldEye, worldTarget, [0, 1, 0])
     }
 

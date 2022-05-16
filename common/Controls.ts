@@ -101,6 +101,8 @@ export class Controls {
             this.renderer.currentCamera = this.game.cameras[1]
         }else if((this.renderer.currentCamera as unknown as GameObject).name == (this.game.cameras[1] as unknown as GameObject).name){
             this.renderer.currentCamera = this.game.cameras[2]
+        }else if((this.renderer.currentCamera as unknown as GameObject).name == (this.game.cameras[2] as unknown as GameObject).name){
+            this.renderer.currentCamera = this.game.cameras[3]
         }else{
             this.renderer.currentCamera = this.game.cameras[0]
         }

@@ -46,7 +46,7 @@ export class Game {
 		this.scene.trackObj = new Track(this.scene.track, 0.2);
 
 		let trackGameObject = new GameObject("Track", this.worldGameObject, this.scene.trackObj)
-		ShaderMaterial.create(Shaders.PhongSpotlightTexturedShader).then(trackMaterial => {
+		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(trackMaterial => {
 			trackMaterial.setColorTexture("../common/textures/street4.png")
 			trackGameObject.material = trackMaterial
 		})
@@ -62,7 +62,7 @@ export class Game {
 		this.scene.groundObj = new Quad(quad, 10);
 
 		let groundGameObject = new GameObject("Ground", this.worldGameObject, this.scene.groundObj)
-		ShaderMaterial.create(Shaders.PhongSpotlightTexturedShader).then(groundMaterial => {
+		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(groundMaterial => {
 			groundMaterial.setColorTexture("../common/textures/grass_tile.png")
 			groundGameObject.material = groundMaterial
 		})
@@ -79,7 +79,7 @@ export class Game {
 			this.scene.buildingsObjTex[i].roof.gameObject = new GameObject("Building " + i + " roof", this.worldGameObject, this.scene.buildingsObjTex[i].roof)
 		}
 
-		ShaderMaterial.create(Shaders.PhongSpotlightTexturedShader).then(sidesMaterial => {
+		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(sidesMaterial => {
 			sidesMaterial.setColorTexture("../common/textures/facade2.jpg")
 			
 			for(var i = 0; i < this.scene.buildingsObjTex.length; i++){
@@ -87,7 +87,7 @@ export class Game {
 			}
 		})
 
-		ShaderMaterial.create(Shaders.PhongSpotlightTexturedShader).then(sidesMaterial => {
+		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(sidesMaterial => {
 			sidesMaterial.setColorTexture("../common/textures/roof.jpg")
 			
 			for(var i = 0; i < this.scene.buildingsObjTex.length; i++){
@@ -111,7 +111,7 @@ export class Game {
 		this.cameras.push(new LateChaseCamera(this.car, 10))
 		this.cameras.push(new FreeCamera())
 
-		renderer.currentCamera = this.cameras[3]
+		renderer.currentCamera = this.cameras[1]
 		renderer.addObjectToScene(this.car)
 		renderer.addObjectToScene(this.worldGameObject)
 
