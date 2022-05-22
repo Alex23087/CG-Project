@@ -19,12 +19,14 @@ export class Car extends GameObject{
 	isRotatingRight: boolean = false
 	isAccelerating: boolean = false
 	isBraking: boolean = false
-	wheelsAngle: number;
-	speed: number;
-	angle: number;
-	direction: vec3;
-	control_keys: StringIndexedBooleanArray;
-	lastAnimationTime: number;
+	wheelsAngle: number
+	speed: number
+	angle: number
+	direction: vec3
+	control_keys: StringIndexedBooleanArray
+	lastAnimationTime: number
+
+	private audioTrack: AudioBufferSourceNode
 
 	wheels: {
 		frontLeft: GameObject
@@ -46,6 +48,8 @@ export class Car extends GameObject{
 		this.lastAnimationTime = -1.0;
 
 		this.createChildren()
+
+		this.playAudio("../../common/vrooooooooom.mp3").then(at => this.audioTrack = at)
 	}
 
 	private createChildren(){
@@ -172,6 +176,8 @@ export class Car extends GameObject{
 			const alpha = Math.min(deltaT * 5, 1)
 			Renderer.instance.fov = (Renderer.instance.fov * (1-alpha)) + ((Math.PI / 4 + this.speed) * alpha)
 		}
+
+		this.updatePitch()
 	}
 
 	private updateSpeed(deltaV: number) {
@@ -210,5 +216,25 @@ export class Car extends GameObject{
 		this.wheels.frontRight.transform.rotation[0] -= rotation
 		this.wheels.rearLeft.transform.rotation[0] -= rotation
 		this.wheels.rearRight.transform.rotation[0] -= rotation
+	}
+
+	private async playAudio(filepath: string){
+		const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+		const audioCtx: AudioContext = new AudioContext()
+		const response = await fetch(filepath)
+		const arrayBuffer = await response.arrayBuffer()
+		const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
+		const audioTrack = audioCtx.createBufferSource()
+		audioTrack.buffer = audioBuffer
+		audioTrack.connect(audioCtx.destination)
+		audioTrack.start()
+		audioTrack.loop = true
+		return audioTrack
+	}
+
+	private updatePitch(){
+		if(this.audioTrack){
+			this.audioTrack.playbackRate.value = Math.abs(this.speed)/2.5 + 0.75
+		}
 	}
 }
