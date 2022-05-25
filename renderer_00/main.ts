@@ -74,9 +74,14 @@ scaleSlider.oninput = (ev) => {
 	scaleValue.innerText = scaleSlider.value
 }
 
-var postProcessingCheckbox = document.getElementById("postprocessing") as HTMLInputElement
+var postProcessingCheckbox = document.getElementById("chromaticAberration") as HTMLInputElement
 postProcessingCheckbox.onchange = function(e: Event){
 	renderer.postProcessingEnabled = postProcessingCheckbox.checked as unknown as boolean
+}
+
+var quantizeCheckbox = document.getElementById("quantize") as HTMLInputElement
+quantizeCheckbox.onchange = function(e: Event){
+	renderer.quantize = quantizeCheckbox.checked as unknown as boolean
 }
 
 var skyboxCheckbox = document.getElementById("skybox") as HTMLInputElement

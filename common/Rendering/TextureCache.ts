@@ -170,6 +170,15 @@ export class TextureCache{
             Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_T, wrap);
             Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MAG_FILTER, Renderer.instance.gl.LINEAR);
             Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MIN_FILTER, Renderer.instance.gl.LINEAR_MIPMAP_LINEAR);
+            var ext = (
+                Renderer.instance.gl.getExtension('EXT_texture_filter_anisotropic') ||
+                Renderer.instance.gl.getExtension('MOZ_EXT_texture_filter_anisotropic') ||
+                Renderer.instance.gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic')
+              )
+              if (ext){
+                var max = Renderer.instance.gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT)
+                Renderer.instance.gl.texParameterf(Renderer.instance.gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, max)
+            }
             Renderer.instance.gl.generateMipmap(Renderer.instance.gl.TEXTURE_2D)
             image.texture = texture
         }

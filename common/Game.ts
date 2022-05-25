@@ -10,10 +10,10 @@ import { GameObject } from "./Rendering/GameObject.js"
 import { scene_0 } from "./scenes/scene_0.js"
 import { Renderer } from "./Rendering/Renderer.js"
 import { Camera, FreeCamera, LateChaseCamera } from "./Rendering/Cameras.js"
-import { Spotlight } from "./Rendering/Spotlight.js"
 import { ShaderMaterial } from "./Rendering/ShaderMaterial.js"
 import * as Shaders from "./Rendering/Shaders.js"
 import { LampPost } from "./LampPost.js"
+import { Billboard } from "./Billboard.js"
 
 export interface StringIndexedBooleanArray{
     [index: string]: boolean
@@ -60,6 +60,7 @@ export class Game {
 		];
 
 		this.scene.groundObj = new Quad(quad, 10);
+		Shape.quad = new Quad(quad, 10);
 
 		let groundGameObject = new GameObject("Ground", this.worldGameObject, this.scene.groundObj)
 		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(groundMaterial => {
@@ -133,5 +134,13 @@ export class Game {
 			posZ: "../common/textures/cubemap/posz.jpg",
 			negZ: "../common/textures/cubemap/negz.jpg"
 		})
+
+		let banner = new Billboard("Banner", "../common/textures/billboard_1.jpg")
+		banner.transform.position[0] = 2
+		this.worldGameObject.addChild(banner)
+
+		let banner2 = new Billboard("Banner2", "../common/textures/billboard_2.png")
+		banner.transform.position[0] = 5
+		this.worldGameObject.addChild(banner2)
 	}
-};
+}

@@ -2,6 +2,7 @@ import { Cube } from "./Cube.js"
 import { Cylinder } from "./Cylinder.js"
 import * as glMatrix from "../libs/gl-matrix/dist/esm/index.js"
 import { Renderer } from "../Rendering/Renderer.js"
+import { Quad } from "./Quad.js"
 
 export abstract class Shape{
     abstract name: string
@@ -18,6 +19,7 @@ export abstract class Shape{
 
 	static cube: Cube
 	static cylinder: Cylinder
+	static quad: Quad
 
 
 	/*

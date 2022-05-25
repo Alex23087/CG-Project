@@ -1,10 +1,11 @@
-import { Shape } from "./Shape.js"
+import { Shape, TexturedShape } from "./Shape.js"
 ///// CUBE DEFINTION
 /////
 ///// Cube is defined to be centered at the origin of the coordinate reference system. 
 ///// Cube size is assumed to be 2.0 x 2.0 x 2.0 .
-export class Cube extends Shape {
+export class Cube extends Shape implements TexturedShape {
 	name = "cube"
+	texCoordsBuffer: WebGLBuffer
 	
 	// vertices definition
 	////////////////////////////////////////////////////////////
@@ -17,6 +18,17 @@ export class Cube extends Shape {
 		 1.0, -1.0, -1.0,
 		-1.0,  1.0, -1.0,
 		 1.0,  1.0, -1.0
+	])
+
+	texCoords = new Float32Array([
+		0, 1,
+		1, 1,
+		0, 0,
+		1, 0,
+		1, 1,
+		0, 1,
+		1, 0,
+		0, 0
 	])
 
 	// triangles definition
