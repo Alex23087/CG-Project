@@ -35,7 +35,7 @@ export class Renderer{
 	public fov: number
 
 	public scale: number = 1
-	public postProcessingEnabled: boolean = true
+	public postProcessingEnabled: boolean = false
 	public quantize: boolean = false
 
 	public textureCache: TextureCache
@@ -69,7 +69,7 @@ export class Renderer{
 		
 		ShaderMaterial.create(Shaders.UniformShader).then(material => {
 			let image = new Image()
-			image.src = "../common/textures/street4.png"
+			image.src = "../../Assets/Textures/street4.png"
 			image.addEventListener('load', () => {
 				this.defaultMaterial = material
 

@@ -1,12 +1,12 @@
-import { ChaseCamera, FollowFromUpCamera } from "./Rendering/Cameras.js";
-import { StringIndexedBooleanArray } from "./Game.js";
-import { GameObject } from "./Rendering/GameObject.js";
-import { Shape } from "./shapes/Shape.js";
-import { ShaderMaterial } from "./Rendering/ShaderMaterial.js";
-import * as Shaders from "./Rendering/Shaders.js"
-import { Spotlight } from "./Rendering/Spotlight.js";
-import { Renderer } from "./Rendering/Renderer.js";
-import { Projector } from "./Rendering/Projector.js";
+import { ChaseCamera, FollowFromUpCamera } from "../../common/Rendering/Cameras.js";
+import { StringIndexedBooleanArray } from "../Game.js";
+import { GameObject } from "../../common/Rendering/GameObject.js";
+import { Shape } from "../../common/shapes/Shape.js";
+import { ShaderMaterial } from "../../common/Rendering/ShaderMaterial.js";
+import * as Shaders from "../../common/Rendering/Shaders.js"
+import { Spotlight } from "../../common/Rendering/Spotlight.js";
+import { Renderer } from "../../common/Rendering/Renderer.js";
+import { Projector } from "../../common/Rendering/Projector.js";
 
 
 export class Car extends GameObject{
@@ -49,7 +49,7 @@ export class Car extends GameObject{
 
 		this.createChildren()
 
-		this.playAudio("../../common/vrooooooooom.mp3").then(at => this.audioTrack = at)
+		this.playAudio("../../Assets/Sounds/vrooooooooom.mp3").then(at => this.audioTrack = at)
 	}
 
 	private createChildren(){
@@ -72,10 +72,10 @@ export class Car extends GameObject{
 		rightLight.attenuation = 0.9
 		rightLight.intensity = 0.2
 
-		let leftProjector = new Projector("LeftHeadlight", this, "/common/textures/headlight.png")
+		let leftProjector = new Projector("LeftHeadlight", this, "../../Assets/Textures/headlight.png")
 		leftProjector.transform.rotation[0] = -Math.PI / 16
 		leftProjector.transform.position[0] = -0.5
-		let rightProjector = new Projector("RightHeadlight", this, "/common/textures/headlight.png")
+		let rightProjector = new Projector("RightHeadlight", this, "../../Assets/Textures/headlight.png")
 		rightProjector.transform.rotation[0] = -Math.PI / 16
 
 		var carHull = new GameObject("CarHull", this, Shape.cube)

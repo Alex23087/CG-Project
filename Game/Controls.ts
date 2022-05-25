@@ -1,8 +1,8 @@
-import { Renderer } from "./Rendering/Renderer.js"
-import { Car } from "./Car.js"
-import { Camera, FreeCamera } from "./Rendering/Cameras.js"
+import { Renderer } from "../common/Rendering/Renderer.js"
+import { Car } from "./GameObjects/Car.js"
+import { Camera, FreeCamera } from "../common/Rendering/Cameras.js"
 import { Game } from "./Game.js"
-import { GameObject } from "./Rendering/GameObject.js"
+import { GameObject } from "../common/Rendering/GameObject.js"
 
 //Class to implement the correct behaviour of pressing and releasing buttons
 export class Controls {

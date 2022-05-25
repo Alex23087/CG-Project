@@ -1,7 +1,6 @@
-import { Controls } from "../common/Controls.js"
-import { Game } from "../common/Game.js"
+import { Controls } from "../Game/Controls.js"
+import { Game } from "../Game/Game.js"
 import { Renderer } from "../common/Rendering/Renderer.js"
-import * as Shaders from "../common/Rendering/Shaders.js"
 
 var renderer: Renderer
 var controls: Controls
@@ -88,18 +87,18 @@ var skyboxCheckbox = document.getElementById("skybox") as HTMLInputElement
 skyboxCheckbox.onchange = function(e: Event){
 	if(skyboxCheckbox.checked as unknown as boolean){
 		renderer.setSkybox({
-			posX: "../common/textures/cubemap/posx.jpg",
-			negX: "../common/textures/cubemap/negx.jpg",
-			posY: "../common/textures/cubemap/posy.jpg",
-			negY: "../common/textures/cubemap/negy.jpg",
-			posZ: "../common/textures/cubemap/posz.jpg",
-			negZ: "../common/textures/cubemap/negz.jpg"
+			posX: "../../Assets/Textures/cubemap/posx.jpg",
+			negX: "../../Assets/Textures/cubemap/negx.jpg",
+			posY: "../../Assets/Textures/cubemap/posy.jpg",
+			negY: "../../Assets/Textures/cubemap/negy.jpg",
+			posZ: "../../Assets/Textures/cubemap/posz.jpg",
+			negZ: "../../Assets/Textures/cubemap/negz.jpg"
 		})
 	}else{
 		renderer.disableSkybox()
 	}
 }
 
-postProcessingCheckbox.checked = true
+postProcessingCheckbox.checked = false
 skyboxCheckbox.checked = true
 scaleSlider.value = "1"

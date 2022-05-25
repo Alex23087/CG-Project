@@ -1,19 +1,19 @@
-import { Car } from "./Car.js"
-import { Track } from "./shapes/Track.js"
-import { Quad } from "./shapes/Quad.js"
-import { Building, TexturedFacades, TexturedRoof } from "./shapes/Building.js"
+import { Car } from "./GameObjects/Car.js"
+import { Track } from "../common/shapes/Track.js"
+import { Quad } from "../common/shapes/Quad.js"
+import { Building, TexturedFacades, TexturedRoof } from "../common/shapes/Building.js"
 import { Parser } from "./Parser.js"
-import { Shape } from "./shapes/Shape.js"
-import { Cube } from "./shapes/Cube.js"
-import { Cylinder } from "./shapes/Cylinder.js"
-import { GameObject } from "./Rendering/GameObject.js"
-import { scene_0 } from "./scenes/scene_0.js"
-import { Renderer } from "./Rendering/Renderer.js"
-import { Camera, FreeCamera, LateChaseCamera } from "./Rendering/Cameras.js"
-import { ShaderMaterial } from "./Rendering/ShaderMaterial.js"
-import * as Shaders from "./Rendering/Shaders.js"
-import { LampPost } from "./LampPost.js"
-import { Billboard } from "./Billboard.js"
+import { Shape } from "../common/shapes/Shape.js"
+import { Cube } from "../common/shapes/Cube.js"
+import { Cylinder } from "../common/shapes/Cylinder.js"
+import { GameObject } from "../common/Rendering/GameObject.js"
+import { scene_0 } from "../common/scenes/scene_0.js"
+import { Renderer } from "../common/Rendering/Renderer.js"
+import { Camera, FreeCamera, LateChaseCamera } from "../common/Rendering/Cameras.js"
+import { ShaderMaterial } from "../common/Rendering/ShaderMaterial.js"
+import * as Shaders from "../common/Rendering/Shaders.js"
+import { LampPost } from "./GameObjects/LampPost.js"
+import { Billboard } from "./GameObjects/Billboard.js"
 
 export interface StringIndexedBooleanArray{
     [index: string]: boolean
@@ -47,7 +47,7 @@ export class Game {
 
 		let trackGameObject = new GameObject("Track", this.worldGameObject, this.scene.trackObj)
 		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(trackMaterial => {
-			trackMaterial.setColorTexture("../common/textures/street4.png")
+			trackMaterial.setColorTexture("../../Assets/Textures/street4.png")
 			trackGameObject.material = trackMaterial
 		})
 
@@ -64,7 +64,7 @@ export class Game {
 
 		let groundGameObject = new GameObject("Ground", this.worldGameObject, this.scene.groundObj)
 		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(groundMaterial => {
-			groundMaterial.setColorTexture("../common/textures/grass_tile.png")
+			groundMaterial.setColorTexture("../../Assets/Textures/grass_tile.png")
 			groundGameObject.material = groundMaterial
 		})
 
@@ -81,7 +81,7 @@ export class Game {
 		}
 
 		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(sidesMaterial => {
-			sidesMaterial.setColorTexture("../common/textures/facade2.jpg")
+			sidesMaterial.setColorTexture("../../Assets/Textures/facade2.jpg")
 			
 			for(var i = 0; i < this.scene.buildingsObjTex.length; i++){
 				this.scene.buildingsObjTex[i].gameObject.material = sidesMaterial
@@ -89,7 +89,7 @@ export class Game {
 		})
 
 		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(sidesMaterial => {
-			sidesMaterial.setColorTexture("../common/textures/roof.jpg")
+			sidesMaterial.setColorTexture("../../Assets/Textures/roof.jpg")
 			
 			for(var i = 0; i < this.scene.buildingsObjTex.length; i++){
 				this.scene.buildingsObjTex[i].roof.gameObject.material = sidesMaterial
@@ -127,19 +127,19 @@ export class Game {
 		renderer.setDirectionalLight(this.scene.weather.sunLightDirection)
 
 		renderer.setSkybox({
-			posX: "../common/textures/cubemap/posx.jpg",
-			negX: "../common/textures/cubemap/negx.jpg",
-			posY: "../common/textures/cubemap/posy.jpg",
-			negY: "../common/textures/cubemap/negy.jpg",
-			posZ: "../common/textures/cubemap/posz.jpg",
-			negZ: "../common/textures/cubemap/negz.jpg"
+			posX: "../../Assets/Textures/cubemap/posx.jpg",
+			negX: "../../Assets/Textures/cubemap/negx.jpg",
+			posY: "../../Assets/Textures/cubemap/posy.jpg",
+			negY: "../../Assets/Textures/cubemap/negy.jpg",
+			posZ: "../../Assets/Textures/cubemap/posz.jpg",
+			negZ: "../../Assets/Textures/cubemap/negz.jpg"
 		})
 
-		let banner = new Billboard("Banner", "../common/textures/billboard_1.jpg")
+		let banner = new Billboard("Banner", "../../Assets/Textures/billboard_1.jpg")
 		banner.transform.position[0] = 2
 		this.worldGameObject.addChild(banner)
 
-		let banner2 = new Billboard("Banner2", "../common/textures/billboard_2.png")
+		let banner2 = new Billboard("Banner2", "../../Assets/Textures/billboard_2.png")
 		banner.transform.position[0] = 5
 		this.worldGameObject.addChild(banner2)
 	}

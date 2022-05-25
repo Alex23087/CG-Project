@@ -153,7 +153,8 @@ export class TextureCache{
     private loadTexture(name: string, textureUnit: number, wrap: WEBGLTextureWrapMode): number{
         let image = this.getImage(name)
         if(!image){
-            return 0
+            //TODO: create empty texture
+            return 1
         }
 
         textureUnit += 1

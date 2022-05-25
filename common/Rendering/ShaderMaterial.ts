@@ -1,6 +1,6 @@
 import { Renderer } from "./Renderer.js"
 import * as Shaders from "./Shaders.js"
-import { CubemapNames, TextureCache } from "./TextureCache.js"
+import { CubemapNames } from "./TextureCache.js"
 
 export class ShaderMaterial{
     public shader: Shaders.Shader

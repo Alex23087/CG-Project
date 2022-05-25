@@ -1,7 +1,7 @@
-import { GameObject } from "./Rendering/GameObject.js"
-import { ShaderMaterial } from "./Rendering/ShaderMaterial.js"
-import { Shape } from "./shapes/Shape.js"
-import * as Shaders from "./Rendering/Shaders.js"
+import { GameObject } from "../../common/Rendering/GameObject.js"
+import { ShaderMaterial } from "../../common/Rendering/ShaderMaterial.js"
+import { Shape } from "../../common/shapes/Shape.js"
+import * as Shaders from "../../common/Rendering/Shaders.js"
 
 export class Billboard extends GameObject{
 	constructor(name: string, texture: string){
