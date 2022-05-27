@@ -1,6 +1,6 @@
 import { Renderer } from "./Renderer.js"
 import * as Shaders from "./Shaders.js"
-import { CubemapNames } from "./TextureCache.js"
+import { CubemapNames } from "./TextureManager.js"
 
 export class ShaderMaterial{
     public shader: Shaders.Shader
@@ -33,11 +33,11 @@ export class ShaderMaterial{
 
     public setColorTexture(textureURL: string){
         this.properties["texture"] = textureURL
-        Renderer.instance.textureCache.loadImage(textureURL)
+        Renderer.instance.textureManager.loadImage(textureURL)
     }
 
     public setCubemapTexture(cubemap: CubemapNames){
         this.properties["cubemap"] = cubemap.posX
-        Renderer.instance.textureCache.loadCubemap(cubemap)
+        Renderer.instance.textureManager.loadCubemap(cubemap)
     }
 }

@@ -1,4 +1,4 @@
-import { Renderer } from "./Renderer.js"
+import { Dimension, Renderer } from "./Renderer.js"
 
 type TextureCacheElement = {
     name: string
@@ -8,7 +8,7 @@ type TextureCacheElement = {
 
 type ImageElement = {
     name: string
-    image: HTMLImageElement | CubemapImages,
+    image: HTMLImageElement | CubemapImages | null,
     texture: WebGLTexture | null
 }
 
@@ -32,7 +32,7 @@ type CubemapImages = {
 
 type WEBGLTextureWrapMode = typeof Renderer.instance.gl.REPEAT | typeof Renderer.instance.gl.CLAMP_TO_EDGE
 
-export class TextureCache{
+export class TextureManager{
     limit: number
     private elements: TextureCacheElement[]
     private images: ImageElement[]
@@ -47,18 +47,27 @@ export class TextureCache{
         this.images = []
     }
 
-    getTexture(name: string, wrap: WEBGLTextureWrapMode = Renderer.instance.gl.REPEAT): number{
+    getTextureUnit(name: string, wrap: WEBGLTextureWrapMode = Renderer.instance.gl.REPEAT, size: Dimension = {x: 0, y: 0}): number{
         var tex = this.elements.find(e => e.name == name)
         if(!tex){
             if(this.size >= this.limit){
                 let evicted = this.evict()
-                return this.loadTexture(name, evicted.unit, wrap)
+                return this.loadTexture(name, evicted.unit, wrap, size)
             }else{
-                return this.loadTexture(name, this.size, wrap)
+                return this.loadTexture(name, this.size, wrap, size)
             }
         }
         tex.lastUsed = Date.now()
         return tex.unit
+    }
+
+    getTextureData(name: string){
+        let img = this.images.find(v => v.name == name)
+        if(!img){
+            return null
+        }else{
+            return img.texture
+        }
     }
 
     getCubemapTexture(name: string): number{
@@ -150,38 +159,49 @@ export class TextureCache{
         return this.images.find(v => v.name == name)
     }
 
-    private loadTexture(name: string, textureUnit: number, wrap: WEBGLTextureWrapMode): number{
-        let image = this.getImage(name)
-        if(!image){
-            //TODO: create empty texture
-            return 1
-        }
-
+    private loadTexture(name: string, textureUnit: number, wrap: WEBGLTextureWrapMode, size: Dimension): number{
         textureUnit += 1
         textureUnit += Renderer.instance.gl.TEXTURE0
 
-        Renderer.instance.gl.activeTexture(textureUnit);
-        if(image.texture){
-            Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, image.texture)
-        }else{
-            let texture = Renderer.instance.gl.createTexture();
-            Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, texture);
-            Renderer.instance.gl.texImage2D(Renderer.instance.gl.TEXTURE_2D, 0, Renderer.instance.gl.RGBA, Renderer.instance.gl.RGBA, Renderer.instance.gl.UNSIGNED_BYTE, image.image as HTMLImageElement);
-            Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_S, wrap);
-            Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_T, wrap);
-            Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MAG_FILTER, Renderer.instance.gl.LINEAR);
-            Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MIN_FILTER, Renderer.instance.gl.LINEAR_MIPMAP_LINEAR);
-            var ext = (
-                Renderer.instance.gl.getExtension('EXT_texture_filter_anisotropic') ||
-                Renderer.instance.gl.getExtension('MOZ_EXT_texture_filter_anisotropic') ||
-                Renderer.instance.gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic')
-              )
-              if (ext){
-                var max = Renderer.instance.gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT)
-                Renderer.instance.gl.texParameterf(Renderer.instance.gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, max)
+        let image = this.getImage(name)
+        if(image){ //Image exists, load it into texture unit
+            Renderer.instance.gl.activeTexture(textureUnit);
+            if(image.texture){
+                Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, image.texture)
+            }else{
+                let texture = Renderer.instance.gl.createTexture();
+                Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, texture);
+                Renderer.instance.gl.texImage2D(Renderer.instance.gl.TEXTURE_2D, 0, Renderer.instance.gl.RGBA, Renderer.instance.gl.RGBA, Renderer.instance.gl.UNSIGNED_BYTE, image.image as HTMLImageElement);
+                Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_S, wrap);
+                Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_T, wrap);
+                Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MAG_FILTER, Renderer.instance.gl.LINEAR);
+                Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MIN_FILTER, Renderer.instance.gl.LINEAR_MIPMAP_LINEAR);
+                var ext = (
+                    Renderer.instance.gl.getExtension('EXT_texture_filter_anisotropic') ||
+                    Renderer.instance.gl.getExtension('MOZ_EXT_texture_filter_anisotropic') ||
+                    Renderer.instance.gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic')
+                )
+                if (ext){
+                    var max = Renderer.instance.gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT)
+                    Renderer.instance.gl.texParameterf(Renderer.instance.gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, max)
+                }
+                Renderer.instance.gl.generateMipmap(Renderer.instance.gl.TEXTURE_2D)
+                image.texture = texture
             }
-            Renderer.instance.gl.generateMipmap(Renderer.instance.gl.TEXTURE_2D)
-            image.texture = texture
+        }else{ //Image doesn't exist, create new empty texture
+            if(size.x == 0 || size.y == 0){ //Invalid dimensions, return first texture
+                return 0
+            }
+			Renderer.instance.gl.activeTexture(textureUnit)
+			let texture = Renderer.instance.gl.createTexture()
+			Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, texture)
+			Renderer.instance.gl.texImage2D(Renderer.instance.gl.TEXTURE_2D, 0, Renderer.instance.gl.RGBA, size.x, size.y, 0, Renderer.instance.gl.RGBA, Renderer.instance.gl.UNSIGNED_BYTE, null)
+			Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MIN_FILTER, Renderer.instance.gl.NEAREST)
+			Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MAG_FILTER, Renderer.instance.gl.NEAREST)
+			Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_S, wrap)
+			Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_T, wrap)
+
+            this.images.push({name: name, image: null, texture: texture})
         }
 
         textureUnit -= Renderer.instance.gl.TEXTURE0
@@ -251,5 +271,12 @@ export class TextureCache{
             }
         })
         return this.elements.splice(this.elements.findIndex(e => e.lastUsed == evicted.lastUsed), 1)[0]
+    }
+
+    removeTexture(name: string){
+        this.elements.splice(this.elements.findIndex(e => e.name == name), 1)
+        let img = this.images.findIndex(e => e.name == name)
+        Renderer.instance.gl.deleteTexture(this.images[img].texture)
+        this.images.splice(img, 1)
     }
 }

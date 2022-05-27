@@ -9,7 +9,7 @@ export class Projector extends GameObject{
     constructor(name: string, parent: GameObject, texture: string){
         super(name, parent, null)
         this.texture = texture
-        Renderer.instance.textureCache.loadImage(texture)
+        Renderer.instance.textureManager.loadImage(texture)
 
         Renderer.instance.addProjector(this)
     }

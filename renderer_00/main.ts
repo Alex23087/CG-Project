@@ -24,7 +24,7 @@ window.onload = function (){
 	renderer.canvas.addEventListener('mousedown', controls.mousedown, false)
 	renderer.canvas.addEventListener('keydown', on_keydown, false)
 	renderer.canvas.addEventListener('keyup', on_keyup, false)
-	
+
 	renderer.canvas.onclick = function (e) {
 		controls.onClick(e)
 	}
@@ -69,7 +69,7 @@ var shaderSelector = (document.getElementById("shader") as HTMLSelectElement)
 let scaleSlider = document.getElementById("scale") as HTMLInputElement
 let scaleValue = document.getElementById("scaleValue") as HTMLInputElement
 scaleSlider.oninput = (ev) => {
-	renderer.scale = scaleSlider.value as unknown as number
+	renderer.setScale(scaleSlider.value as unknown as number)
 	scaleValue.innerText = scaleSlider.value
 }
 

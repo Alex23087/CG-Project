@@ -5,10 +5,16 @@ import { Shape, TexturedShape } from "../shapes/Shape.js"
 import { GameObject } from "./GameObject.js"
 import { Spotlight } from "./Spotlight.js"
 import { ShaderMaterial } from "./ShaderMaterial.js"
-import { CubemapNames, TextureCache } from "./TextureCache.js"
+import { CubemapNames, TextureManager } from "./TextureManager.js"
 import { Projector } from "./Projector.js"
+import { Framebuffer } from "./Framebuffer.js"
+import { PostProcessingShader } from "./PostProcessingShader.js"
 
-type Color = [number, number, number, number]
+export type Color = [number, number, number, number]
+export type Dimension = {
+	x: number,
+	y: number
+}
 
 export class Renderer{
 	public static instance: Renderer
@@ -16,7 +22,7 @@ export class Renderer{
 	wireframeEnabled = false
 
 	canvas: HTMLCanvasElement
-    canvasDefaultSize: {x: number, y: number} = {x: 800, y: 450}
+    canvasDefaultSize: Dimension = {x: 800, y: 450}
 
 	currentCamera: Cameras.Camera
 
@@ -34,11 +40,20 @@ export class Renderer{
 
 	public fov: number
 
-	public scale: number = 1
+	private scale: number = 1
+	private viewportSize: Dimension
 	public postProcessingEnabled: boolean = false
 	public quantize: boolean = false
 
-	public textureCache: TextureCache
+	public textureManager: TextureManager
+	private postProcessingFrameBuffer: Framebuffer | null = null
+	private defaultFrameBuffer: Framebuffer
+	private postProcessingShader: PostProcessingShader
+
+	private fullscreenQuad: {
+		texcoordBuffer: WebGLBuffer,
+		positionBuffer: WebGLBuffer
+	}
 
 	public constructor(canvas: HTMLCanvasElement){
         this.canvas = canvas
@@ -64,8 +79,13 @@ export class Renderer{
 
 		this.currentTime = 0
 
-		this.textureCache = new TextureCache()
+		this.textureManager = new TextureManager()
 		this.fov = Math.PI / 4
+
+		this.computeViewportSize()
+		this.defaultFrameBuffer = this.makeDefaultFramebuffer()
+		this.postProcessingShader = new PostProcessingShader()
+		this.initFullscreenQuad()
 		
 		ShaderMaterial.create(Shaders.UniformShader).then(material => {
 			let image = new Image()
@@ -125,7 +145,7 @@ export class Renderer{
 		}
 
 		if(Shaders.isTextured(material.shader)){
-			this.gl.uniform1i(material.shader.uSamplerLocation, this.textureCache.getTexture(material.properties["texture"]))
+			this.gl.uniform1i(material.shader.uSamplerLocation, this.textureManager.getTextureUnit(material.properties["texture"]))
 
 			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, (obj as unknown as TexturedShape).texCoordsBuffer);
 			this.gl.enableVertexAttribArray(material.shader.aTexCoordsIndex);
@@ -133,7 +153,7 @@ export class Renderer{
 		}
 
 		if(Shaders.isCubemapped(material.shader)){
-			this.gl.uniform1i(material.shader.uCubemapSamplerLocation, this.textureCache.getCubemapTexture(material.properties["cubemap"]))
+			this.gl.uniform1i(material.shader.uCubemapSamplerLocation, this.textureManager.getCubemapTexture(material.properties["cubemap"]))
 		}
 
 		if(Shaders.isPositionable(material.shader)){
@@ -190,34 +210,17 @@ export class Renderer{
 		}
 
 		if(Shaders.isProjectorShader(material.shader)){
-			/*		if(Shaders.isProjectorShader(material.shader)){
-			this.gl.uniform1iv(material.shader.uProjectorSamplerLocation, [
-				this.textureCache.getTexture(this.lights.projectors[0].getTexture(), this.gl.CLAMP_TO_EDGE),
-				this.textureCache.getTexture(this.lights.projectors[1].getTexture(), this.gl.CLAMP_TO_EDGE)
-			])
 
 			var projectors = []
-			for(var i = 0; i < this.lights.projectors.length; i++){
-				for(var j = 0; j < 16; j++){
-					projectors.push(this.lights.projectors[i][j])
-				}
-			}
-			this.gl.uniformMatrix4fv(material.shader.uProjectorMatrixLocation, false, projectors)
-		}
-		*/
-			this.gl.uniform1iv(material.shader.uProjectorSamplerLocation, [
-				this.textureCache.getTexture(this.lights.projectors[0].getTexture(), this.gl.CLAMP_TO_EDGE),
-				this.textureCache.getTexture(this.lights.projectors[0].getTexture(), this.gl.CLAMP_TO_EDGE)
-			])
-
-			var projectors = []
+			var textures = []
 			for(var i = 0; i < this.lights.projectors.length; i++){
 				for(var j = 0; j < 16; j++){
 					projectors.push(this.lights.projectors[i].getMatrix()[j])
+					textures.push(this.textureManager.getTextureUnit(this.lights.projectors[i].getTexture(), this.gl.CLAMP_TO_EDGE))
 				}
 			}
+			this.gl.uniform1iv(material.shader.uProjectorSamplerLocation, textures)
 			this.gl.uniformMatrix4fv(material.shader.uProjectorMatrixLocation, false, projectors)
-			//this.gl.uniformMatrix4fv(material.shader.uProjectorMatrixLocation, false, this.lights.projectors[0].getMatrix() as Float32List)
 		}
 
 		if(this.wireframeEnabled){
@@ -264,38 +267,17 @@ export class Renderer{
 	}
 
 	private draw() {
-		var width = this.canvas.width * this.scale
-		var height = this.canvas.height * this.scale
-		var ratio = width / height;
-
-		var targetTexture: WebGLTexture
-		var framebuffer: WebGLFramebuffer
-		var depthBuffer: WebGLRenderbuffer
 		if(this.postProcessingEnabled){
-			this.gl.activeTexture(this.gl.TEXTURE0)
-			targetTexture = this.gl.createTexture()
-			this.gl.bindTexture(this.gl.TEXTURE_2D, targetTexture)
-			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null)
-			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST)
-			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-			framebuffer = this.gl.createFramebuffer()
-			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer)
-			this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, targetTexture, 0)
-
-			depthBuffer = this.gl.createRenderbuffer()
-			this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, depthBuffer)
-			this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height)
-			this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, depthBuffer)
+			if(this.postProcessingFrameBuffer == null){
+				this.postProcessingFrameBuffer = new Framebuffer("Postprocessing framebuffer", this.viewportSize)
+			}
+			this.postProcessingFrameBuffer.bind()
 		}
+		
+		this.gl.viewport(0, 0, this.viewportSize.x, this.viewportSize.y);
+		this.defaultFrameBuffer.clear()
 
-		this.gl.viewport(0, 0, width, height);
-
-		// Clear the framebuffer
-		this.gl.clearColor(0.34, 0.5, 0.74, 1.0);
-		this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+		var ratio = this.viewportSize.x / this.viewportSize.y
 		this.viewMatrix = this.currentCamera.inverseViewMatrix
 
 		if(this.skybox){
@@ -313,123 +295,31 @@ export class Renderer{
 		this.gl.useProgram(null)
 
 		if(this.postProcessingEnabled){
-			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
-			this.gl.activeTexture(this.gl.TEXTURE0)
-			this.gl.bindTexture(this.gl.TEXTURE_2D, targetTexture)
-			this.gl.viewport(0, 0, width / this.scale, height / this.scale)
-			this.gl.clearColor(0, 0, 0, 1)
-			this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
+			this.defaultFrameBuffer.bind()
+			this.defaultFrameBuffer.clear()
+			this.gl.viewport(0, 0, this.viewportSize.x / this.scale, this.viewportSize.y / this.scale)
 
-			this.drawPostProcessing()
+			this.drawFullscreenQuad(this.postProcessingShader)
 
-			this.gl.deleteTexture(targetTexture)
-			this.gl.deleteFramebuffer(framebuffer)
-			this.gl.deleteRenderbuffer(depthBuffer)
 			this.gl.useProgram(null)
 		}
 	}
 
-	private drawPostProcessing(){
-		//TODO: Optimize and move somewhere else
-		let vsSource = `
-		attribute vec2 aTexCoord;
-		attribute vec2 aPosition;
-
-		varying vec2 vTexCoord;
-		 
-		void main() {
-		   vTexCoord = aTexCoord;
-		   gl_Position = vec4(aPosition, 0.0, 1.0);
-		}`
-		let fsSource = `
-		precision mediump float;
- 
-		uniform sampler2D uTexture;
-		uniform float uAmount;
-		uniform int uQuantize;
-		
-		varying vec2 vTexCoord;
-
-		vec3 rgb2hsv(vec3 c)
-		{
-			vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-			vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
-			vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
-
-			float d = q.x - min(q.w, q.y);
-			float e = 1.0e-10;
-			return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-		}
-
-		vec3 hsv2rgb(vec3 c)
-		{
-			vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-			vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-			return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-		}
-		
-		void main() {
-			vec2 iuv = (vTexCoord * 2.0) - 1.0;
-			iuv /= uAmount;
-			iuv = (iuv + 1.0) * 0.5;
-
-			float colR = texture2D(uTexture, iuv).r;
-			float colG = texture2D(uTexture, vTexCoord).g;
-
-			iuv = (vTexCoord * 2.0) - 1.0;
-			iuv /= (1.0 / uAmount);
-			iuv = (iuv + 1.0) * 0.5;
-
-			float colB = texture2D(uTexture, iuv).b;
-			//gl_FragColor = texture2D(uTexture, vTexCoord);
-			gl_FragColor = vec4(colR, colG, colB, 1.0);
-
-			if(uQuantize == 1){
-				vec3 color_resolution = vec3(1024.0, 1024.0, 8.0);
-				vec3 color_bands = floor(rgb2hsv(gl_FragColor.rgb) * color_resolution) / (color_resolution - 1.0);
-				gl_FragColor = vec4(min(hsv2rgb(color_bands), 1.0), gl_FragColor.a);
-			}
-		}`
+	private initFullscreenQuad(){
 		let gl = this.gl
-		let vs = gl.createShader(gl.VERTEX_SHADER)
-		gl.shaderSource(vs, vsSource)
-		gl.compileShader(vs)
-		let fs = gl.createShader(gl.FRAGMENT_SHADER)
-		gl.shaderSource(fs, fsSource)
-		gl.compileShader(fs)
-		let program = gl.createProgram()
-		gl.attachShader(program, vs)
-		gl.attachShader(program, fs)
-		var texCoordLocation = 1
-		var positionLocation = 0
-		gl.bindAttribLocation(program, texCoordLocation, "aTexCoord")
-		gl.bindAttribLocation(program, positionLocation, "aPosition")
-		gl.linkProgram(program)
-		if (!Renderer.instance.gl.getProgramParameter(program, Renderer.instance.gl.LINK_STATUS)) {
-			var str = "Unable to initialize the shader program.\n\n"
-			str += "VS:\n" + Renderer.instance.gl.getShaderInfoLog(vs) + "\n\n"
-			str += "FS:\n" + Renderer.instance.gl.getShaderInfoLog(fs) + "\n\n"
-			str += "PROG:\n" + Renderer.instance.gl.getProgramInfoLog(program)
-			alert(str)
-		}
-		gl.useProgram(program)
 
- 
-		// provide texture coordinates for the rectangle.
-		var texCoordBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+		var texCoordBuffer = gl.createBuffer()
+		gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer)
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
 			0.0,  0.0,
 			1.0,  0.0,
 			0.0,  1.0,
 			0.0,  1.0,
 			1.0,  0.0,
-			1.0,  1.0]), gl.STATIC_DRAW);
-		gl.enableVertexAttribArray(texCoordLocation);
-		gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 8, 0);
+			1.0,  1.0]), gl.STATIC_DRAW)
 
-		var positionBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer); 
+		var positionBuffer = gl.createBuffer()
+		gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
 			-1, -1,
 			1, -1,
@@ -437,13 +327,30 @@ export class Renderer{
 			-1, 1,
 			1, -1,
 			1, 1,
-		]), gl.STATIC_DRAW);
-		gl.enableVertexAttribArray(positionLocation);
-		gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 8, 0);
+		]), gl.STATIC_DRAW)
 
-		gl.uniform1i(gl.getUniformLocation(program, "uTexture"), 0)
-		gl.uniform1f(gl.getUniformLocation(program, "uAmount"), 1 + (this.findGameObjectWithName("mycar") as any).speed / 12)
-		gl.uniform1i(gl.getUniformLocation(program, "uQuantize"), this.quantize == true ? 1 : 0)
+		this.fullscreenQuad = {
+			texcoordBuffer: texCoordBuffer,
+			positionBuffer: positionBuffer
+		}
+	}
+
+	private drawFullscreenQuad(shader: PostProcessingShader){
+		let gl = this.gl
+		gl.useProgram(shader.program)
+
+ 
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.fullscreenQuad.texcoordBuffer)
+		gl.enableVertexAttribArray(shader.texCoordLocation)
+		gl.vertexAttribPointer(shader.texCoordLocation, 2, gl.FLOAT, false, 8, 0)
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.fullscreenQuad.positionBuffer)
+		gl.enableVertexAttribArray(shader.positionLocation)
+		gl.vertexAttribPointer(shader.positionLocation, 2, gl.FLOAT, false, 8, 0)
+
+		gl.uniform1i(gl.getUniformLocation(shader.program, "uTexture"), this.postProcessingFrameBuffer.getTexture())
+		gl.uniform1f(gl.getUniformLocation(shader.program, "uAmount"), 1 + (this.findGameObjectWithName("mycar") as any).speed / 12)
+		gl.uniform1i(gl.getUniformLocation(shader.program, "uQuantize"), this.quantize == true ? 1 : 0)
 
 		gl.drawArrays(gl.TRIANGLES, 0, 6)
 	}
@@ -470,18 +377,36 @@ export class Renderer{
         if (!document.fullscreenElement) {
             this.canvas.requestFullscreen();
             this.canvas.onresize = () => {
-                this.canvas.width = this.canvas.clientWidth
-                this.canvas.height = this.canvas.clientHeight
+				this.resizeViewport({x: this.canvas.clientWidth, y: this.canvas.clientHeight})
             }
             window.addEventListener('resize', this.canvas.onresize)
         } else {
           if (document.exitFullscreen) {
             document.exitFullscreen();
-            this.canvas.width = this.canvasDefaultSize.x
-            this.canvas.height = this.canvasDefaultSize.y
+			this.resizeViewport(this.canvasDefaultSize)
           }
         }
     }
+
+	private resizeViewport(size: Dimension){
+		this.canvas.width = size.x
+		this.canvas.height = size.y
+		this.computeViewportSize()
+	}
+
+	public setScale(scale: number){
+		this.scale = scale
+		this.computeViewportSize()
+	}
+
+	private computeViewportSize(){
+		this.viewportSize = {
+			x: this.canvas.width * this.scale,
+			y: this.canvas.height * this.scale
+		}
+
+		this.postProcessingFrameBuffer?.resize(this.viewportSize)
+	}
 
 	addObjectToScene(go: GameObject){
 		this.scene.addChild(go)
@@ -509,5 +434,19 @@ export class Renderer{
 
 	disableSkybox(){
 		this.skybox = null
+	}
+
+	private makeDefaultFramebuffer(){
+		let defaultFB = new Framebuffer("Default framebuffer", this.viewportSize)
+		defaultFB.resize = () => {}
+
+        this.textureManager.removeTexture(defaultFB.texture)
+        this.gl.deleteFramebuffer(defaultFB.framebuffer)
+        this.gl.deleteRenderbuffer(defaultFB.depthbuffer)
+
+		defaultFB.clearColor = [0.34, 0.5, 0.74, 1.0]
+		defaultFB.bind = defaultFB.unbind
+
+		return defaultFB
 	}
 }
