@@ -63,8 +63,8 @@ export class Renderer{
 	private projectionMatrix: mat4
 	private viewSpaceLightDirection: mat4
 
-	public showShadowMap: boolean = true
-	public varianceShadowMapping: boolean = false
+	public showShadowMap: boolean = false
+	public shadowMappingMode: number = 1
 
 	public constructor(canvas: HTMLCanvasElement){
         this.canvas = canvas
@@ -263,7 +263,8 @@ export class Renderer{
 		if(Shaders.isShadowMapped(material.shader)){
 			this.gl.uniform1i(material.shader.uShadowMapLocation, this.lights.directional.framebuffer.getTexture())
 			this.gl.uniformMatrix4fv(material.shader.uLightMatrixLocation, false, this.lights.directional.getLightMatrix() as Float32List)
-			this.gl.uniform1i(material.shader.uVarianceShadowMapLocation, this.varianceShadowMapping ? 1 : 0)
+			this.gl.uniform1i(material.shader.uShadowMappingModeLocation, this.shadowMappingMode)
+			this.gl.uniform2fv(material.shader.uShadowMapSizeLocation, [this.lights.directional.framebuffer.size.x, this.lights.directional.framebuffer.size.y])
 		}
 
 		if(this.wireframeEnabled){

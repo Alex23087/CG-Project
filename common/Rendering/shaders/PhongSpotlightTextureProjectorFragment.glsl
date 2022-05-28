@@ -20,7 +20,8 @@ uniform sampler2D uProjectorShadowSampler[PROJECTOR_COUNT];
 
 uniform sampler2D uShadowMap;
 uniform mat4 uLightMatrix;
-uniform int uVarianceShadowMap;
+uniform int uShadowMappingMode;
+uniform vec2 uShadowMapSize;
 
 varying vec3 vViewSpaceNormal;
 varying vec3 vViewSpaceViewDirection;
@@ -34,7 +35,6 @@ void main(void){
 
     vec4 lightSpaceCoordinates = uLightMatrix * vPosition;
     lightSpaceCoordinates = lightSpaceCoordinates * 0.5 + 0.5;
-    float shadowDepth = texture2D(uShadowMap, lightSpaceCoordinates.xy).z;
 
     float diffuseLight = max(dot(vViewSpaceLightDirection, vViewSpaceNormal), 0.0) * 0.5 + 0.5;
 
@@ -45,19 +45,37 @@ void main(void){
     vec3 specularColor = color * specularLight;
 
 
-    if(uVarianceShadowMap == 1){
+    if(uShadowMappingMode == 2){
         float firstMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).x;
         float secondMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).y;
         float variance = secondMoment - (firstMoment * firstMoment);
         float shadow = (variance * variance) / ((variance * variance) + (texture2D(uShadowMap, lightSpaceCoordinates.xy).z - firstMoment));
         diffuseColor *= shadow;
         specularColor *= shadow;
-    }else{
+    }else if(uShadowMappingMode == 0){
+        float shadowDepth = texture2D(uShadowMap, lightSpaceCoordinates.xy).z;
         float bias = clamp(0.005 * tan(acos(dot(vViewSpaceNormal, vViewSpaceLightDirection))), 0.00001, 0.01);
-        if(shadowDepth < lightSpaceCoordinates.z - bias){
+        if(shadowDepth < lightSpaceCoordinates.z - bias || dot(vViewSpaceNormal, vViewSpaceLightDirection) <= 0.0){
             diffuseColor *= 0.5;
             specularColor *= 0.0;
         }
+    }else if(uShadowMappingMode == 1){
+        float bias = clamp(0.005 * tan(acos(dot(vViewSpaceNormal, vViewSpaceLightDirection))), 0.00001, 0.01);
+        bias = 0.0;
+        float lightamount = 1.0;
+        vec2 delta = 1.0 / uShadowMapSize;
+        for (int i=0; i<=7; i++) {
+            for (int j=0; j<=7; j++) {
+                vec2 offset = lightSpaceCoordinates.xy + vec2(i-1, j-1) * delta;
+                float shadowDepth = texture2D(uShadowMap, offset).z;
+
+                if(shadowDepth < lightSpaceCoordinates.z - bias){
+                    lightamount -= 0.5/49.0;
+                }
+            }
+        }
+        diffuseColor *= lightamount;
+        specularColor *= lightamount;
     }
 
 

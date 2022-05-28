@@ -104,12 +104,13 @@ shadowmapCheckbox.onchange = function(e: Event){
 	renderer.showShadowMap = shadowmapCheckbox.checked as unknown as boolean
 }
 
-var varianceShadowMappingCheckbox = document.getElementById("varianceshadowmapping") as HTMLInputElement
-varianceShadowMappingCheckbox.onchange = function(e: Event){
-	renderer.varianceShadowMapping = varianceShadowMappingCheckbox.checked as unknown as boolean
+var shadowMappingModePicker = document.getElementById("shadowmappingmode") as HTMLSelectElement
+shadowMappingModePicker.onchange = function (){
+	renderer.shadowMappingMode = shadowMappingModePicker.value as unknown as number
 }
 
 chromaticAberrationCheckbox.checked = false
 skyboxCheckbox.checked = true
 scaleSlider.value = "1"
 cameraSelector.value = "1"
+shadowMappingModePicker.value = "1"

@@ -135,7 +135,8 @@ interface ProjectorShader extends Shader{
 interface ShadowMapShader extends Shader{
 	uShadowMapLocation: WebGLUniformLocation
 	uLightMatrixLocation: WebGLUniformLocation
-	uVarianceShadowMapLocation: WebGLUniformLocation
+	uShadowMappingModeLocation: WebGLUniformLocation
+	uShadowMapSizeLocation: WebGLUniformLocation
 }
 
 export function isPositionable(object: Shader): object is PositionableShader{
@@ -364,7 +365,8 @@ MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, Lig
 
 	uShadowMapLocation: WebGLUniformLocation
 	uLightMatrixLocation: WebGLUniformLocation
-	uVarianceShadowMapLocation: WebGLUniformLocation
+	uShadowMappingModeLocation: WebGLUniformLocation
+	uShadowMapSizeLocation: WebGLUniformLocation
 
 	_bindAttribs(gl: WebGLRenderingContext): void {
 		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
@@ -384,7 +386,8 @@ MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, Lig
 		this.uProjectorMatrixLocation = gl.getUniformLocation(this.program, "uProjectorMatrix")
 		this.uShadowMapLocation = gl.getUniformLocation(this.program, "uShadowMap")
 		this.uLightMatrixLocation = gl.getUniformLocation(this.program, "uLightMatrix")
-		this.uVarianceShadowMapLocation = gl.getUniformLocation(this.program, "uVarianceShadowMap")
+		this.uShadowMappingModeLocation = gl.getUniformLocation(this.program, "uShadowMappingMode")
+		this.uShadowMapSizeLocation = gl.getUniformLocation(this.program, "uShadowMapSize")
 		Shader.getSpotlightLocations(gl, this)
 	}
 }
