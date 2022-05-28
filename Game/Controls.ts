@@ -17,10 +17,12 @@ export class Controls {
 
     renderer: Renderer
     game: Game
+    cameraSelector: HTMLSelectElement
 
-    public constructor(renderer: Renderer, game: Game){
+    public constructor(renderer: Renderer, game: Game, cameraSelector: HTMLSelectElement){
         this.renderer = renderer
         this.game = game
+        this.cameraSelector = cameraSelector
     }
 
     keyPressed(key: string){
@@ -98,18 +100,19 @@ export class Controls {
 
     private toggleCamera(){
         if((this.renderer.currentCamera as unknown as GameObject).name == (this.game.cameras[0] as unknown as GameObject).name){
-            this.renderer.currentCamera = this.game.cameras[1]
+            this.setCamera(1)
         }else if((this.renderer.currentCamera as unknown as GameObject).name == (this.game.cameras[1] as unknown as GameObject).name){
-            this.renderer.currentCamera = this.game.cameras[2]
+            this.setCamera(2)
         }else if((this.renderer.currentCamera as unknown as GameObject).name == (this.game.cameras[2] as unknown as GameObject).name){
-            this.renderer.currentCamera = this.game.cameras[3]
+            this.setCamera(3)
         }else{
-            this.renderer.currentCamera = this.game.cameras[0]
+            this.setCamera(0)
         }
     }
 
     public setCamera(value: number){
-    	this.renderer.currentCamera = this.game.cameras[value];
+    	this.renderer.currentCamera = this.game.cameras[value]
+        this.cameraSelector.value = value as unknown as string
     }
 
     on_mouseMove(e: MouseEvent){

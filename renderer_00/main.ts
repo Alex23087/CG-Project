@@ -14,11 +14,16 @@ function on_keydown(e: KeyboardEvent){
 	controls.keyPressed(e.key);
 }
 
+var cameraSelector = (document.getElementById("cameras") as HTMLSelectElement)
+cameraSelector.onchange = function (){
+	update_camera(cameraSelector.value as unknown as number)
+}
+
 window.onload = function (){
 	canvas = document.getElementById("OUTPUT-CANVAS") as HTMLCanvasElement;
 	renderer = new Renderer(canvas)
 	game = new Game(renderer)
-	controls = new Controls(renderer, game)
+	controls = new Controls(renderer, game, cameraSelector)
 	renderer.canvas.addEventListener('mousemove', function(e: MouseEvent){controls.on_mouseMove(e)}, false)
 	renderer.canvas.addEventListener('mouseup', controls.mouseup, false)
 	renderer.canvas.addEventListener('mousedown', controls.mousedown, false)
@@ -37,11 +42,6 @@ function update_camera(value: number){
 /*var wireframeCheckbox = document.getElementById("wireframe") as HTMLInputElement
 wireframeCheckbox.onchange = function(e: Event){
 	renderer.wireframeEnabled = wireframeCheckbox.checked as unknown as boolean
-}
-
-var cameraSelector = (document.getElementById("cameras") as HTMLSelectElement)
-cameraSelector.onchange = function (){
-	update_camera(cameraSelector.value as unknown as number)
 }
 
 var shaderSelector = (document.getElementById("shader") as HTMLSelectElement)
@@ -73,9 +73,9 @@ scaleSlider.oninput = (ev) => {
 	scaleValue.innerText = scaleSlider.value
 }
 
-var postProcessingCheckbox = document.getElementById("chromaticAberration") as HTMLInputElement
-postProcessingCheckbox.onchange = function(e: Event){
-	renderer.postProcessingEnabled = postProcessingCheckbox.checked as unknown as boolean
+var chromaticAberrationCheckbox = document.getElementById("chromaticAberration") as HTMLInputElement
+chromaticAberrationCheckbox.onchange = function(e: Event){
+	renderer.postProcessingEnabled = chromaticAberrationCheckbox.checked as unknown as boolean
 }
 
 var quantizeCheckbox = document.getElementById("quantize") as HTMLInputElement
@@ -99,6 +99,7 @@ skyboxCheckbox.onchange = function(e: Event){
 	}
 }
 
-postProcessingCheckbox.checked = false
+chromaticAberrationCheckbox.checked = false
 skyboxCheckbox.checked = true
 scaleSlider.value = "1"
+cameraSelector.value = "1"

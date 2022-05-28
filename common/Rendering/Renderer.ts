@@ -9,6 +9,9 @@ import { CubemapNames, TextureManager } from "./TextureManager.js"
 import { Projector } from "./Projector.js"
 import { Framebuffer } from "./Framebuffer.js"
 import { PostProcessingShader } from "./PostProcessingShader.js"
+import { Cube } from "../shapes/Cube.js"
+import { Cylinder } from "../shapes/Cylinder.js"
+import { Quad } from "../shapes/Quad.js"
 
 export type Color = [number, number, number, number]
 export type Dimension = {
@@ -31,6 +34,7 @@ export class Renderer{
 		directional: vec3
 		projectors: Projector[]
 	}
+
 	private defaultMaterial: ShaderMaterial
 	private defaultTexture: WebGLTexture
 	private skybox: GameObject | null = null
@@ -49,11 +53,12 @@ export class Renderer{
 	private postProcessingFrameBuffer: Framebuffer | null = null
 	private defaultFrameBuffer: Framebuffer
 	private postProcessingShader: PostProcessingShader
+	private postProcessingQuad: GameObject
 
-	private fullscreenQuad: {
-		texcoordBuffer: WebGLBuffer,
-		positionBuffer: WebGLBuffer
-	}
+	private viewMatrix: mat4
+	private projectionMatrix: mat4
+	private viewSpaceLightDirection: mat4
+
 
 	public constructor(canvas: HTMLCanvasElement){
         this.canvas = canvas
@@ -75,6 +80,8 @@ export class Renderer{
 			projectors: []
 		}
 
+		this.initializeShapes()
+
 		this.scene = GameObject.empty("Scene")
 
 		this.currentTime = 0
@@ -85,14 +92,14 @@ export class Renderer{
 		this.computeViewportSize()
 		this.defaultFrameBuffer = this.makeDefaultFramebuffer()
 		this.postProcessingShader = new PostProcessingShader()
-		this.initFullscreenQuad()
+		this.postProcessingFrameBuffer = new Framebuffer("Postprocessing framebuffer", this.viewportSize)
+		this.postProcessingQuad = new GameObject("PostProcessing quad", null, Shape.quad)
 		
 		ShaderMaterial.create(Shaders.UniformShader).then(material => {
 			let image = new Image()
 			image.src = "../../Assets/Textures/street4.png"
 			image.addEventListener('load', () => {
 				this.defaultMaterial = material
-
 
 				this.gl.activeTexture(this.gl.TEXTURE0);
 				this.defaultTexture = this.gl.createTexture();
@@ -104,15 +111,21 @@ export class Renderer{
 				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
 				this.gl.generateMipmap(this.gl.TEXTURE_2D)
 
-
 				this.startRendering(0)
 			})
 		})
 	}
 
-	private viewMatrix: mat4
-	private projectionMatrix: mat4
-	private viewSpaceLightDirection: mat4
+	private initializeShapes(){
+		Shape.cube = new Cube()
+		Shape.cylinder = new Cylinder(10)
+		Shape.quad = new Quad([
+			-1, -1, 0,
+				1, -1, 0,
+				1,  1, 0,
+			-1,  1, 0
+		], 1)
+	}
 
 	private drawObject(modelMatrix: mat4, obj: Shape, material: ShaderMaterial | null){
 		if(!material){
@@ -244,10 +257,9 @@ export class Renderer{
 			this.gl.disableVertexAttribArray(material.shader.aPositionIndex);
 			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
 		}
-	};
+	}
 
-
-	private drawGameObject(gameObject: GameObject, parentMatrix: mat4){
+	private drawGameObject(gameObject: GameObject, parentMatrix: mat4 = this.viewMatrix){
 		var modelMatrix = gameObject.transform.applyLocalTransform(
 			glMatrix.mat4.create(),
 			parentMatrix
@@ -266,101 +278,69 @@ export class Renderer{
 		return this.scene.findChildWithName(name)
 	}
 
-	private draw() {
-		if(this.postProcessingEnabled){
-			if(this.postProcessingFrameBuffer == null){
-				this.postProcessingFrameBuffer = new Framebuffer("Postprocessing framebuffer", this.viewportSize)
-			}
-			this.postProcessingFrameBuffer.bind()
+	private drawFB(framebuffer: Framebuffer, camera: Cameras.Camera, gameObject: GameObject, clear: boolean = true, setup: () => void = () => {}){
+		framebuffer.bind()
+		this.gl.viewport(0, 0, this.viewportSize.x, this.viewportSize.y)
+		if(clear){
+			framebuffer.clear()
 		}
-		
-		this.gl.viewport(0, 0, this.viewportSize.x, this.viewportSize.y);
-		this.defaultFrameBuffer.clear()
-
 		var ratio = this.viewportSize.x / this.viewportSize.y
-		this.viewMatrix = this.currentCamera.inverseViewMatrix
+		
+		this.viewMatrix = camera.viewMatrix
+		this.projectionMatrix = camera.projectionMatrix(this.fov, ratio)
 
-		if(this.skybox){
-			this.gl.disable(this.gl.DEPTH_TEST);
-			this.projectionMatrix = glMatrix.mat4.perspective(glMatrix.mat4.create(), this.fov, ratio, 0.1, 500)
-			this.drawGameObject(this.skybox, glMatrix.mat4.create())
-		}
+		setup()
 
-		this.gl.enable(this.gl.DEPTH_TEST);
-		// Set matrices
-		this.projectionMatrix = glMatrix.mat4.perspective(glMatrix.mat4.create(), this.fov, ratio, 1, 500)
-		this.viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional, this.viewMatrix)
-		glMatrix.vec3.normalize(this.viewSpaceLightDirection, this.viewSpaceLightDirection)
-		this.drawGameObject(this.scene, this.viewMatrix)
+		this.drawGameObject(gameObject)
+
 		this.gl.useProgram(null)
-
-		if(this.postProcessingEnabled){
-			this.defaultFrameBuffer.bind()
-			this.defaultFrameBuffer.clear()
-			this.gl.viewport(0, 0, this.viewportSize.x / this.scale, this.viewportSize.y / this.scale)
-
-			this.drawFullscreenQuad(this.postProcessingShader)
-
-			this.gl.useProgram(null)
-		}
-	}
-
-	private initFullscreenQuad(){
-		let gl = this.gl
-
-		var texCoordBuffer = gl.createBuffer()
-		gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-			0.0,  0.0,
-			1.0,  0.0,
-			0.0,  1.0,
-			0.0,  1.0,
-			1.0,  0.0,
-			1.0,  1.0]), gl.STATIC_DRAW)
-
-		var positionBuffer = gl.createBuffer()
-		gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-			-1, -1,
-			1, -1,
-			-1, 1,
-			-1, 1,
-			1, -1,
-			1, 1,
-		]), gl.STATIC_DRAW)
-
-		this.fullscreenQuad = {
-			texcoordBuffer: texCoordBuffer,
-			positionBuffer: positionBuffer
-		}
 	}
 
 	private drawFullscreenQuad(shader: PostProcessingShader){
 		let gl = this.gl
+
+		this.defaultFrameBuffer.bind()
+		this.defaultFrameBuffer.clear()
+		this.gl.viewport(0, 0, this.viewportSize.x / this.scale, this.viewportSize.y / this.scale)
+
 		gl.useProgram(shader.program)
 
  
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.fullscreenQuad.texcoordBuffer)
+		gl.bindBuffer(gl.ARRAY_BUFFER, (this.postProcessingQuad.shape as unknown as TexturedShape).texCoordsBuffer)
 		gl.enableVertexAttribArray(shader.texCoordLocation)
-		gl.vertexAttribPointer(shader.texCoordLocation, 2, gl.FLOAT, false, 8, 0)
+		gl.vertexAttribPointer(shader.texCoordLocation, 2, gl.FLOAT, false, 0, 0)
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.fullscreenQuad.positionBuffer)
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.postProcessingQuad.shape.vertexBuffer)
 		gl.enableVertexAttribArray(shader.positionLocation)
-		gl.vertexAttribPointer(shader.positionLocation, 2, gl.FLOAT, false, 8, 0)
+		gl.vertexAttribPointer(shader.positionLocation, 3, gl.FLOAT, false, 0, 0)
+
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.postProcessingQuad.shape.indexBufferTriangles);
 
 		gl.uniform1i(gl.getUniformLocation(shader.program, "uTexture"), this.postProcessingFrameBuffer.getTexture())
 		gl.uniform1f(gl.getUniformLocation(shader.program, "uAmount"), 1 + (this.findGameObjectWithName("mycar") as any).speed / 12)
 		gl.uniform1i(gl.getUniformLocation(shader.program, "uQuantize"), this.quantize == true ? 1 : 0)
+		gl.uniform1i(gl.getUniformLocation(shader.program, "uAberration"), this.postProcessingEnabled == true ? 1 : 0)
 
-		gl.drawArrays(gl.TRIANGLES, 0, 6)
+		gl.drawElements(gl.TRIANGLES, this.postProcessingQuad.shape.triangleIndices.length, gl.UNSIGNED_SHORT, 0)
+
+		gl.useProgram(null)
 	}
 
-
+	private updateViewSpaceLightDirection(){
+		this.viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional, this.viewMatrix)
+		glMatrix.vec3.normalize(this.viewSpaceLightDirection, this.viewSpaceLightDirection)
+	}
 
 	startRendering = (time: number) => {
 		this.updateGameObjects(this.scene, time - this.currentTime)
 		if(this.currentCamera){
-			this.draw();
+			
+			if(this.skybox){
+				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.skybox, true, () => {this.gl.disable(this.gl.DEPTH_TEST)})
+			}
+			this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)})
+			
+			this.drawFullscreenQuad(this.postProcessingShader)
 		}
 		this.currentTime = time
 		window.requestAnimationFrame(this.startRendering)
@@ -448,5 +428,14 @@ export class Renderer{
 		defaultFB.bind = defaultFB.unbind
 
 		return defaultFB
+	}
+
+	private patchFramebufferForSkybox(framebuffer: Framebuffer){
+		(framebuffer as any).clear2 = framebuffer.clear
+		framebuffer.clear = () => {
+			if(!this.skybox){
+				(framebuffer as any).clear2()
+			}
+		}
 	}
 }

@@ -59,8 +59,7 @@ export class Game {
 			bbox[0], bbox[1] - 0.01, bbox[2],
 		];
 
-		this.scene.groundObj = new Quad(quad, 10);
-		Shape.quad = new Quad(quad, 10);
+		this.scene.groundObj = new Quad(quad, 10)
 
 		let groundGameObject = new GameObject("Ground", this.worldGameObject, this.scene.groundObj)
 		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(groundMaterial => {
@@ -101,9 +100,6 @@ export class Game {
 	initialize the object in the scene
 	*/
 	private initializeObjects(renderer: Renderer) {
-		Shape.cube = new Cube()
-		Shape.cylinder = new Cylinder(10)
-
 		this.setScene(scene_0)
 		this.addCar("mycar")
 

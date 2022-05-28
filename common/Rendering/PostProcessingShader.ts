@@ -22,6 +22,7 @@ export class PostProcessingShader {
 		uniform sampler2D uTexture;
 		uniform float uAmount;
 		uniform int uQuantize;
+		uniform int uAberration;
 		
 		varying vec2 vTexCoord;
 
@@ -44,20 +45,23 @@ export class PostProcessingShader {
 		}
 		
 		void main() {
-			vec2 iuv = (vTexCoord * 2.0) - 1.0;
-			iuv /= uAmount;
-			iuv = (iuv + 1.0) * 0.5;
+			if(uAberration == 1){
+				vec2 iuv = (vTexCoord * 2.0) - 1.0;
+				iuv /= uAmount;
+				iuv = (iuv + 1.0) * 0.5;
 
-			float colR = texture2D(uTexture, iuv).r;
-			float colG = texture2D(uTexture, vTexCoord).g;
+				float colR = texture2D(uTexture, iuv).r;
+				float colG = texture2D(uTexture, vTexCoord).g;
 
-			iuv = (vTexCoord * 2.0) - 1.0;
-			iuv /= (1.0 / uAmount);
-			iuv = (iuv + 1.0) * 0.5;
+				iuv = (vTexCoord * 2.0) - 1.0;
+				iuv /= (1.0 / uAmount);
+				iuv = (iuv + 1.0) * 0.5;
 
-			float colB = texture2D(uTexture, iuv).b;
-			//gl_FragColor = texture2D(uTexture, vTexCoord);
-			gl_FragColor = vec4(colR, colG, colB, 1.0);
+				float colB = texture2D(uTexture, iuv).b;
+				gl_FragColor = vec4(colR, colG, colB, 1.0);
+			}else{
+				gl_FragColor = texture2D(uTexture, vTexCoord);
+			}
 
 			if(uQuantize == 1){
 				vec3 color_resolution = vec3(1024.0, 1024.0, 8.0);
