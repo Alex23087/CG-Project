@@ -132,6 +132,11 @@ interface ProjectorShader extends Shader{
 	uProjectorMatrixLocation: WebGLUniformLocation
 }
 
+interface ShadowMapShader extends Shader{
+	uShadowMapLocation: WebGLUniformLocation
+	uLightMatrixLocation: WebGLUniformLocation
+}
+
 export function isPositionable(object: Shader): object is PositionableShader{
 	return 'aPositionIndex' in object
 }
@@ -186,6 +191,10 @@ export function isCubemapped(object: Shader): object is CubemappedShader{
 
 export function isProjectorShader(object: Shader): object is ProjectorShader{
 	return 'uProjectorSamplerLocation' in object
+}
+
+export function isShadowMapped(object: Shader): object is ShadowMapShader{
+	return 'uShadowMapLocation' in object
 }
 
 
@@ -323,23 +332,23 @@ MVMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, 
 
 export class PhongSpotlightTexturedProjectorShader extends Shader implements
 PositionableShader, NormalShader, ShinyShader,
-MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, SpotlightShader, TexturedShader, ProjectorShader {
+MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, SpotlightShader, TexturedShader, ProjectorShader, ShadowMapShader {
 	name: string = "PhongSpotlightTextureProjector"
 	
 	aPositionIndex: 0 = 0
 	aNormalIndex: 1 = 1
 	aTexCoordsIndex: 2 = 2
-
+	
 	uShininessLocation: WebGLUniformLocation
 	uSamplerLocation: WebGLUniformLocation
-
+	
 	uModelMatrixLocation: WebGLUniformLocation
 	uModelViewMatrixLocation: WebGLUniformLocation
 	uProjectionMatrixLocation: WebGLUniformLocation
 	uViewMatrixLocation: WebGLUniformLocation
 
 	uLightDirectionLocation: WebGLUniformLocation
-
+	
 	uSpotlightPositionsLocation: WebGLUniformLocation
 	uSpotlightDirectionsLocation: WebGLUniformLocation
 	uSpotlightAttenuationLocation: WebGLUniformLocation
@@ -347,10 +356,13 @@ MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, Lig
 	uSpotlightColorsLocation: WebGLUniformLocation
 	uSpotlightFocusLocation: WebGLUniformLocation
 	uSpotlightIntensityLocation: WebGLUniformLocation
-
+	
 	uProjectorSamplerLocation: WebGLUniformLocation
 	uProjectorShadowSamplerLocation: WebGLUniformLocation
 	uProjectorMatrixLocation: WebGLUniformLocation
+
+	uShadowMapLocation: WebGLUniformLocation
+	uLightMatrixLocation: WebGLUniformLocation
 
 	_bindAttribs(gl: WebGLRenderingContext): void {
 		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
@@ -368,6 +380,8 @@ MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, Lig
 		this.uProjectorSamplerLocation = gl.getUniformLocation(this.program, "uProjectorSampler")
 		this.uProjectorShadowSamplerLocation = gl.getUniformLocation(this.program, "uProjectorShadowSampler")
 		this.uProjectorMatrixLocation = gl.getUniformLocation(this.program, "uProjectorMatrix")
+		this.uShadowMapLocation = gl.getUniformLocation(this.program, "uShadowMap")
+		this.uLightMatrixLocation = gl.getUniformLocation(this.program, "uLightMatrix")
 		Shader.getSpotlightLocations(gl, this)
 	}
 }

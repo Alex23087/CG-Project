@@ -62,9 +62,13 @@ export class Game {
 		this.scene.groundObj = new Quad(quad, 10)
 
 		let groundGameObject = new GameObject("Ground", this.worldGameObject, this.scene.groundObj)
+		let undergroundGameObject = new GameObject("Underground", this.worldGameObject, this.scene.groundObj)
+		undergroundGameObject.transform.position[1] -= 0.5
+		undergroundGameObject.transform.rotation[0] += Math.PI
 		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(groundMaterial => {
 			groundMaterial.setColorTexture("../../Assets/Textures/grass_tile.png")
 			groundGameObject.material = groundMaterial
+			undergroundGameObject.material = groundMaterial
 		})
 
 		this.scene.buildingsObj  = new Array(this.scene.buildings.length);

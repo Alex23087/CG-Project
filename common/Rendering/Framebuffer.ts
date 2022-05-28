@@ -5,6 +5,7 @@ export class Framebuffer{
     depthbuffer: WebGLRenderbuffer
     texture: string
     clearColor: Color = [0, 0, 0, 1]
+    private size: Dimension
 
     constructor(name: string, size: Dimension){
         this.texture = name
@@ -40,6 +41,7 @@ export class Framebuffer{
         Renderer.instance.gl.renderbufferStorage(Renderer.instance.gl.RENDERBUFFER, Renderer.instance.gl.DEPTH_COMPONENT16, size.x, size.y)
         Renderer.instance.gl.framebufferRenderbuffer(Renderer.instance.gl.FRAMEBUFFER, Renderer.instance.gl.DEPTH_ATTACHMENT, Renderer.instance.gl.RENDERBUFFER, this.depthbuffer)
         this.unbind()
+        this.size = size
     }
 
     bind(){
@@ -48,5 +50,9 @@ export class Framebuffer{
 
     unbind(){
         Renderer.instance.gl.bindFramebuffer(Renderer.instance.gl.FRAMEBUFFER, null)
+    }
+
+    setViewport(){
+        Renderer.instance.gl.viewport(0, 0, this.size.x, this.size.y)
     }
 }

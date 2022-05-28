@@ -12,6 +12,7 @@ import { PostProcessingShader } from "./PostProcessingShader.js"
 import { Cube } from "../shapes/Cube.js"
 import { Cylinder } from "../shapes/Cylinder.js"
 import { Quad } from "../shapes/Quad.js"
+import { DirectionalLight } from "./DirectionalLight.js"
 
 export type Color = [number, number, number, number]
 export type Dimension = {
@@ -31,7 +32,7 @@ export class Renderer{
 
 	private lights: {
 		spotlights: Spotlight[]
-		directional: vec3
+		directional: DirectionalLight
 		projectors: Projector[]
 	}
 
@@ -75,12 +76,6 @@ export class Renderer{
         var GLSL_version = this.gl.getParameter(this.gl.SHADING_LANGUAGE_VERSION)
         console.log("GLSL version: " + GLSL_version);
 
-		this.lights = {
-			spotlights: [],
-			directional: [0, -1, 0],
-			projectors: []
-		}
-
 		this.initializeShapes()
 
 		this.scene = GameObject.empty("Scene")
@@ -91,6 +86,12 @@ export class Renderer{
 		this.fov = Math.PI / 4
 
 		this.computeViewportSize()
+
+		this.lights = {
+			spotlights: [],
+			directional: new DirectionalLight([0, -1, 0], {x: this.viewportSize.x * 8, y: this.viewportSize.y * 8}), //{x: this.viewportSize.x * 4, y: this.viewportSize.y * 4}
+			projectors: []
+		}
 		this.defaultFrameBuffer = this.makeDefaultFramebuffer()
 		this.postProcessingShader = new PostProcessingShader()
 		this.postProcessingFrameBuffer = new Framebuffer("Postprocessing framebuffer", this.viewportSize)
@@ -126,8 +127,8 @@ export class Renderer{
 		Shape.cylinder = new Cylinder(10)
 		Shape.quad = new Quad([
 			-1, -1, 0,
-				1, -1, 0,
-				1,  1, 0,
+			1, -1, 0,
+			1,  1, 0,
 			-1,  1, 0
 		], 1)
 	}
@@ -148,7 +149,7 @@ export class Renderer{
 		}
 
 		if(Shaders.hasLightDirection(material.shader)){
-			this.gl.uniform3fv(material.shader.uLightDirectionLocation, this.lights.directional as Float32List)
+			this.gl.uniform3fv(material.shader.uLightDirectionLocation, this.lights.directional.direction as Float32List)
 		}
 
 		if(Shaders.hasViewSpaceLightDirection(material.shader)){
@@ -254,6 +255,11 @@ export class Renderer{
 			this.gl.uniformMatrix4fv(material.shader.uProjectorMatrixLocation, false, projectors)
 		}
 
+		if(Shaders.isShadowMapped(material.shader)){
+			this.gl.uniform1i(material.shader.uShadowMapLocation, this.lights.directional.framebuffer.getTexture())
+			this.gl.uniformMatrix4fv(material.shader.uLightMatrixLocation, false, this.lights.directional.getLightMatrix() as Float32List)
+		}
+
 		if(this.wireframeEnabled){
 			this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
 			this.gl.polygonOffset(1.0, 1.0);
@@ -298,7 +304,8 @@ export class Renderer{
 
 	private drawFB(framebuffer: Framebuffer, camera: Cameras.Camera, gameObject: GameObject, clear: boolean = true, setup: () => void = () => {}, overrideMaterial: ShaderMaterial | null = null){
 		framebuffer.bind()
-		this.gl.viewport(0, 0, this.viewportSize.x, this.viewportSize.y)
+		//this.gl.viewport(0, 0, this.viewportSize.x, this.viewportSize.y)
+		framebuffer.setViewport()
 		if(clear){
 			framebuffer.clear()
 		}
@@ -345,7 +352,7 @@ export class Renderer{
 	}
 
 	private updateViewSpaceLightDirection(){
-		this.viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional, this.viewMatrix)
+		this.viewSpaceLightDirection = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), this.lights.directional.direction, this.viewMatrix)
 		glMatrix.vec3.normalize(this.viewSpaceLightDirection, this.viewSpaceLightDirection)
 	}
 
@@ -362,7 +369,12 @@ export class Renderer{
 				this.drawFB(this.lights.projectors[i].framebuffer, this.lights.projectors[i].camera, this.scene, true, () => {this.gl.enable(this.gl.DEPTH_TEST)}, this.depthMaterial)
 			}
 
+			this.drawFB(this.lights.directional.framebuffer, this.lights.directional.camera, this.scene, true, () => {this.gl.enable(this.gl.CULL_FACE); this.gl.cullFace(this.gl.FRONT)}, this.depthMaterial)
+			this.gl.disable(this.gl.CULL_FACE)
+			this.gl.cullFace(this.gl.BACK)
+
 			this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.postProcessingFrameBuffer)
+			//this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.lights.directional.framebuffer)			
 		}
 		this.currentTime = time
 		window.requestAnimationFrame(this.startRendering)
@@ -423,7 +435,7 @@ export class Renderer{
 	}
 
 	setDirectionalLight(direction: vec3){
-		this.lights.directional = direction
+		this.lights.directional.setDirection(direction)
 	}
 
 	setSkybox(textures: CubemapNames){
