@@ -49,6 +49,7 @@ void main(void){
     vec3 projectorFinalLight = vec3(0.0, 0.0, 0.0);
     for(int i = 0; i < PROJECTOR_COUNT; i++){
         vec2 projectorTextureCoordinates = (uProjectorMatrix[i] * vec4(vPosition, 1.0)).xy;
+        projectorTextureCoordinates += vec2(0.5, 0.0);
         if(projectorTextureCoordinates.x >= 0.0 && projectorTextureCoordinates.x <= 1.0 && projectorTextureCoordinates.y >= 0.0 && projectorTextureCoordinates.y <= 1.0){
             vec4 currentProjectorLight = texture2D(uProjectorSampler[i], projectorTextureCoordinates);
             projectorFinalLight += currentProjectorLight.rgb * currentProjectorLight.a;

@@ -36,6 +36,7 @@ export class Renderer{
 	}
 
 	private defaultMaterial: ShaderMaterial
+	private depthMaterial: ShaderMaterial
 	private defaultTexture: WebGLTexture
 	private skybox: GameObject | null = null
 
@@ -111,7 +112,11 @@ export class Renderer{
 				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
 				this.gl.generateMipmap(this.gl.TEXTURE_2D)
 
-				this.startRendering(0)
+				ShaderMaterial.create(Shaders.DepthShader).then(material => {
+					this.depthMaterial = material
+
+					this.startRendering(0)
+				})
 			})
 		})
 	}
@@ -259,18 +264,18 @@ export class Renderer{
 		}
 	}
 
-	private drawGameObject(gameObject: GameObject, parentMatrix: mat4 = this.viewMatrix){
+	private drawGameObject(gameObject: GameObject, parentMatrix: mat4 = this.viewMatrix, overrideMaterial: ShaderMaterial | null = null){
 		var modelMatrix = gameObject.transform.applyLocalTransform(
 			glMatrix.mat4.create(),
 			parentMatrix
 		)
 
 		if(gameObject.shape){			
-			this.drawObject(modelMatrix, gameObject.shape, gameObject.material)
+			this.drawObject(modelMatrix, gameObject.shape, overrideMaterial ? overrideMaterial : gameObject.material)
 		}
 
 		for(var i = 0; i < gameObject.children.length; i++){
-			this.drawGameObject(gameObject.children[i], modelMatrix)
+			this.drawGameObject(gameObject.children[i], modelMatrix, overrideMaterial)
 		}
 	}
 
@@ -278,7 +283,7 @@ export class Renderer{
 		return this.scene.findChildWithName(name)
 	}
 
-	private drawFB(framebuffer: Framebuffer, camera: Cameras.Camera, gameObject: GameObject, clear: boolean = true, setup: () => void = () => {}){
+	private drawFB(framebuffer: Framebuffer, camera: Cameras.Camera, gameObject: GameObject, clear: boolean = true, setup: () => void = () => {}, overrideMaterial: ShaderMaterial | null = null){
 		framebuffer.bind()
 		this.gl.viewport(0, 0, this.viewportSize.x, this.viewportSize.y)
 		if(clear){
@@ -291,16 +296,16 @@ export class Renderer{
 
 		setup()
 
-		this.drawGameObject(gameObject)
+		this.drawGameObject(gameObject, this.viewMatrix, overrideMaterial)
 
 		this.gl.useProgram(null)
 	}
 
-	private drawFullscreenQuad(shader: PostProcessingShader){
+	private drawFullscreenQuad(shader: PostProcessingShader, destinationFramebuffer: Framebuffer, previousFramebuffer: Framebuffer){
 		let gl = this.gl
 
-		this.defaultFrameBuffer.bind()
-		this.defaultFrameBuffer.clear()
+		destinationFramebuffer.bind()
+		destinationFramebuffer.clear()
 		this.gl.viewport(0, 0, this.viewportSize.x / this.scale, this.viewportSize.y / this.scale)
 
 		gl.useProgram(shader.program)
@@ -316,7 +321,7 @@ export class Renderer{
 
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.postProcessingQuad.shape.indexBufferTriangles);
 
-		gl.uniform1i(gl.getUniformLocation(shader.program, "uTexture"), this.postProcessingFrameBuffer.getTexture())
+		gl.uniform1i(gl.getUniformLocation(shader.program, "uTexture"), previousFramebuffer.getTexture())
 		gl.uniform1f(gl.getUniformLocation(shader.program, "uAmount"), 1 + (this.findGameObjectWithName("mycar") as any).speed / 12)
 		gl.uniform1i(gl.getUniformLocation(shader.program, "uQuantize"), this.quantize == true ? 1 : 0)
 		gl.uniform1i(gl.getUniformLocation(shader.program, "uAberration"), this.postProcessingEnabled == true ? 1 : 0)
@@ -339,8 +344,12 @@ export class Renderer{
 				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.skybox, true, () => {this.gl.disable(this.gl.DEPTH_TEST)})
 			}
 			this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)})
+
+			for(var i = 0; i < this.lights.projectors.length; i++){
+				this.drawFB(this.lights.projectors[i].framebuffer, this.lights.projectors[i].camera, this.scene, true, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)}, this.depthMaterial)
+			}
 			
-			this.drawFullscreenQuad(this.postProcessingShader)
+			this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.postProcessingFrameBuffer)
 		}
 		this.currentTime = time
 		window.requestAnimationFrame(this.startRendering)

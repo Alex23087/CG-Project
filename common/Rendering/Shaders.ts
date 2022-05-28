@@ -379,3 +379,20 @@ export class SkyboxShader extends Shader implements ProjectionMatrixShader, View
 	}
 	
 }
+
+export class DepthShader extends Shader implements PositionableShader, MVMatrixShader, ProjectionMatrixShader{
+	protected name: string = "Depth"
+
+	aPositionIndex: 0 = 0
+
+	uModelViewMatrixLocation: WebGLUniformLocation
+	uProjectionMatrixLocation: WebGLUniformLocation
+
+	public _bindAttribs(gl: WebGLRenderingContext): void {
+		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
+	}
+	public _getLocations(gl: WebGLRenderingContext): void {
+		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
+		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
+	}
+}

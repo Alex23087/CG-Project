@@ -74,9 +74,11 @@ export class Car extends GameObject{
 
 		let leftProjector = new Projector("LeftHeadlight", this, "../../Assets/Textures/headlight.png")
 		leftProjector.transform.rotation[0] = -Math.PI / 16
-		leftProjector.transform.position[0] = -0.5
 		let rightProjector = new Projector("RightHeadlight", this, "../../Assets/Textures/headlight.png")
 		rightProjector.transform.rotation[0] = -Math.PI / 16
+
+		leftProjector.transform.position = [-0.2, 0.2, -0.5]
+		rightProjector.transform.position = [0.2, 0.2, -0.5]
 
 		var carHull = new GameObject("CarHull", this, Shape.cube)
 		carHull.transform.position[1] += 0.6

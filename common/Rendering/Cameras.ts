@@ -45,7 +45,7 @@ export class FollowFromUpCamera extends GameObject implements Camera{
 	}
 
 	projectionMatrix(fov: number, ratio: number): mat4 {
-		return glMatrix.mat4.perspective(glMatrix.mat4.create(), fov, ratio, 0.1, 500)
+		return glMatrix.mat4.perspective(glMatrix.mat4.create(), fov, ratio, 0.1, 200)
 	}
 }
 
@@ -92,7 +92,7 @@ export class ChaseCamera extends GameObject implements Camera{
 	}
 
 	projectionMatrix(fov: number, ratio: number): mat4 {
-		return glMatrix.mat4.perspective(glMatrix.mat4.create(), fov, ratio, 0.1, 500)
+		return glMatrix.mat4.perspective(glMatrix.mat4.create(), fov, ratio, 0.1, 200)
 	}
 }
 
@@ -148,7 +148,7 @@ export class LateChaseCamera extends GameObject implements Camera{
 	}
 
 	projectionMatrix(fov: number, ratio: number): mat4 {
-		return glMatrix.mat4.perspective(glMatrix.mat4.create(), fov, ratio, 0.1, 500)
+		return glMatrix.mat4.perspective(glMatrix.mat4.create(), fov, ratio, 0.1, 200)
 	}
 }
 
@@ -204,6 +204,6 @@ export class FreeCamera extends GameObject implements Camera{
 	}
 
 	projectionMatrix(fov: number, ratio: number): mat4 {
-		return glMatrix.mat4.perspective(glMatrix.mat4.create(), fov, ratio, 0.1, 500)
+		return glMatrix.mat4.perspective(glMatrix.mat4.create(), fov, ratio, 0.1, 200)
 	}
 }
