@@ -14,6 +14,7 @@ import { Cylinder } from "../shapes/Cylinder.js"
 import { Quad } from "../shapes/Quad.js"
 import { DirectionalLight } from "./DirectionalLight.js"
 import { GaussianBlurShader } from "./GaussianBlurShader.js"
+import { Cone } from "../shapes/Cone.js"
 
 export type Color = [number, number, number, number]
 export type Dimension = {
@@ -63,7 +64,7 @@ export class Renderer{
 	private projectionMatrix: mat4
 	private viewSpaceLightDirection: mat4
 
-	public showShadowMap: boolean = false
+	public showShadowMap: boolean = true
 	public shadowMappingMode: number = 1
 
 	public constructor(canvas: HTMLCanvasElement){
@@ -136,6 +137,7 @@ export class Renderer{
 			1,  1, 0,
 			-1,  1, 0
 		], 1)
+		Shape.cone = new Cone(20)
 	}
 
 	private drawObject(modelMatrix: mat4, obj: Shape, material: ShaderMaterial | null){

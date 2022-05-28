@@ -46,16 +46,21 @@ void main(void){
 
 
     if(uShadowMappingMode == 2){
-        float firstMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).x;
-        float secondMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).y;
-        float variance = secondMoment - (firstMoment * firstMoment);
-        float shadow = (variance * variance) / ((variance * variance) + (texture2D(uShadowMap, lightSpaceCoordinates.xy).z - firstMoment));
-        diffuseColor *= shadow;
-        specularColor *= shadow;
+        float shadowDepth = texture2D(uShadowMap, lightSpaceCoordinates.xy).z;
+        float bias = clamp(0.005 * tan(acos(dot(vViewSpaceNormal, vViewSpaceLightDirection))), 0.00001, 0.01);
+        bias = 0.0;
+        if(shadowDepth < lightSpaceCoordinates.z - bias || dot(vViewSpaceNormal, vViewSpaceLightDirection) < 0.0){
+            float firstMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).x;
+            float secondMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).y;
+            float variance = secondMoment - (firstMoment * firstMoment);
+            float shadow = variance / (variance  + (lightSpaceCoordinates.z - firstMoment)) * 0.5;
+            diffuseColor *= shadow + 0.5;
+            specularColor *= shadow + 0.5;
+        }
     }else if(uShadowMappingMode == 0){
         float shadowDepth = texture2D(uShadowMap, lightSpaceCoordinates.xy).z;
         float bias = clamp(0.005 * tan(acos(dot(vViewSpaceNormal, vViewSpaceLightDirection))), 0.00001, 0.01);
-        if(shadowDepth < lightSpaceCoordinates.z - bias || dot(vViewSpaceNormal, vViewSpaceLightDirection) <= 0.0){
+        if(shadowDepth < lightSpaceCoordinates.z - bias || dot(vViewSpaceNormal, vViewSpaceLightDirection) < 0.0){
             diffuseColor *= 0.5;
             specularColor *= 0.0;
         }

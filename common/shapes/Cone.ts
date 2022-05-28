@@ -4,7 +4,7 @@ import { Shape } from "./Shape.js"
 ///// Resolution is the number of faces used to tesselate the cone.
 ///// Cone is defined to be centered at the origin of the coordinate reference system, and lying on the XZ plane.
 ///// Cone height is assumed to be 2.0. Cone radius is assumed to be 1.0 .
-class Cone extends Shape {
+export class Cone extends Shape {
 	triangleIndices: Uint16Array
 	numVertices: number
 	numTriangles: number

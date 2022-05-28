@@ -14,6 +14,7 @@ import { ShaderMaterial } from "../common/Rendering/ShaderMaterial.js"
 import * as Shaders from "../common/Rendering/Shaders.js"
 import { LampPost } from "./GameObjects/LampPost.js"
 import { Billboard } from "./GameObjects/Billboard.js"
+import { Tree } from "./GameObjects/Tree.js"
 
 export interface StringIndexedBooleanArray{
     [index: string]: boolean
@@ -41,6 +42,8 @@ export class Game {
   	setScene(scene){
 		this.scene = new Parser.Race(scene)
 
+		console.log(this.scene)
+
 		this.worldGameObject = GameObject.empty("World")
 
 		this.scene.trackObj = new Track(this.scene.track, 0.2);
@@ -63,7 +66,7 @@ export class Game {
 
 		let groundGameObject = new GameObject("Ground", this.worldGameObject, this.scene.groundObj)
 		let undergroundGameObject = new GameObject("Underground", this.worldGameObject, this.scene.groundObj)
-		undergroundGameObject.transform.position[1] -= 0.5
+		undergroundGameObject.transform.position[1] -= 2
 		undergroundGameObject.transform.rotation[0] += Math.PI
 		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(groundMaterial => {
 			groundMaterial.setColorTexture("../../Assets/Textures/grass_tile.png")
@@ -81,6 +84,11 @@ export class Game {
 
 			this.scene.buildingsObjTex[i].roof = new TexturedRoof(this.scene.buildings[i],1.0);
 			this.scene.buildingsObjTex[i].roof.gameObject = new GameObject("Building " + i + " roof", this.worldGameObject, this.scene.buildingsObjTex[i].roof)
+		}
+
+		for(var i = 0; i < this.scene._trees.length; i ++){
+			let tree = new Tree("Tree " + i, this.worldGameObject)
+			tree.transform.position = this.scene._trees[i].position
 		}
 
 		ShaderMaterial.create(Shaders.PhongSpotlightTexturedProjectorShader).then(sidesMaterial => {

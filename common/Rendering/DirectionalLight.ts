@@ -18,9 +18,9 @@ export class DirectionalLight{
 
     public setDirection(direction: vec3){
         this.direction = direction
-        let worldEye = [80,40,80]
+        let worldEye = [50,100,50]
         var dir = glMatrix.vec3.sub(glMatrix.vec3.create(), worldEye, direction)
-        this.camera.viewMatrix = glMatrix.mat4.lookAt(glMatrix.mat4.create(), worldEye, dir, [-0.5, 1.3, 4])
+        this.camera.viewMatrix = glMatrix.mat4.lookAt(glMatrix.mat4.create(), worldEye, dir, [0.5, 0, 0])
     }
 
     public getLightMatrix(){
@@ -32,6 +32,6 @@ class DirectionalLightCamera implements Camera{
     viewMatrix: mat4
     mouseMoved(coords: vec2): void {}
     projectionMatrix(fov: number, ratio: number): mat4 {
-        return glMatrix.mat4.ortho(glMatrix.mat4.create(), -50, 190, -150, 120, 0, 200)
+        return glMatrix.mat4.ortho(glMatrix.mat4.create(), -80, 100, -120, 100, 0, 220)
     }
 }
