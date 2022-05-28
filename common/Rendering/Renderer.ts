@@ -13,6 +13,7 @@ import { Cube } from "../shapes/Cube.js"
 import { Cylinder } from "../shapes/Cylinder.js"
 import { Quad } from "../shapes/Quad.js"
 import { DirectionalLight } from "./DirectionalLight.js"
+import { GaussianBlurShader } from "./GaussianBlurShader.js"
 
 export type Color = [number, number, number, number]
 export type Dimension = {
@@ -55,12 +56,15 @@ export class Renderer{
 	private postProcessingFrameBuffer: Framebuffer | null = null
 	private defaultFrameBuffer: Framebuffer
 	private postProcessingShader: PostProcessingShader
+	private gaussianBlurShader: GaussianBlurShader
 	private postProcessingQuad: GameObject
 
 	private viewMatrix: mat4
 	private projectionMatrix: mat4
 	private viewSpaceLightDirection: mat4
 
+	public showShadowMap: boolean = true
+	public varianceShadowMapping: boolean = false
 
 	public constructor(canvas: HTMLCanvasElement){
         this.canvas = canvas
@@ -94,6 +98,7 @@ export class Renderer{
 		}
 		this.defaultFrameBuffer = this.makeDefaultFramebuffer()
 		this.postProcessingShader = new PostProcessingShader()
+		this.gaussianBlurShader = new GaussianBlurShader()
 		this.postProcessingFrameBuffer = new Framebuffer("Postprocessing framebuffer", this.viewportSize)
 		this.postProcessingQuad = new GameObject("PostProcessing quad", null, Shape.quad)
 		
@@ -258,6 +263,7 @@ export class Renderer{
 		if(Shaders.isShadowMapped(material.shader)){
 			this.gl.uniform1i(material.shader.uShadowMapLocation, this.lights.directional.framebuffer.getTexture())
 			this.gl.uniformMatrix4fv(material.shader.uLightMatrixLocation, false, this.lights.directional.getLightMatrix() as Float32List)
+			this.gl.uniform1i(material.shader.uVarianceShadowMapLocation, this.varianceShadowMapping ? 1 : 0)
 		}
 
 		if(this.wireframeEnabled){
@@ -321,12 +327,12 @@ export class Renderer{
 		this.gl.useProgram(null)
 	}
 
-	private drawFullscreenQuad(shader: PostProcessingShader, destinationFramebuffer: Framebuffer, previousFramebuffer: Framebuffer){
+	private drawFullscreenQuad(shader: PostProcessingShader | GaussianBlurShader, destinationFramebuffer: Framebuffer, previousFramebuffer: Framebuffer){
 		let gl = this.gl
 
 		destinationFramebuffer.bind()
 		destinationFramebuffer.clear()
-		this.gl.viewport(0, 0, this.viewportSize.x / this.scale, this.viewportSize.y / this.scale)
+		destinationFramebuffer.setViewport()
 
 		gl.useProgram(shader.program)
 
@@ -342,9 +348,15 @@ export class Renderer{
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.postProcessingQuad.shape.indexBufferTriangles);
 
 		gl.uniform1i(gl.getUniformLocation(shader.program, "uTexture"), previousFramebuffer.getTexture())
-		gl.uniform1f(gl.getUniformLocation(shader.program, "uAmount"), 1 + (this.findGameObjectWithName("mycar") as any).speed / 12)
-		gl.uniform1i(gl.getUniformLocation(shader.program, "uQuantize"), this.quantize == true ? 1 : 0)
-		gl.uniform1i(gl.getUniformLocation(shader.program, "uAberration"), this.postProcessingEnabled == true ? 1 : 0)
+		if(shader instanceof PostProcessingShader){
+			this.gl.viewport(0, 0, this.viewportSize.x / this.scale, this.viewportSize.y / this.scale)
+			gl.uniform1f(gl.getUniformLocation(shader.program, "uAmount"), 1 + (this.findGameObjectWithName("mycar") as any).speed / 12)
+			gl.uniform1i(gl.getUniformLocation(shader.program, "uQuantize"), this.quantize == true ? 1 : 0)
+			gl.uniform1i(gl.getUniformLocation(shader.program, "uAberration"), this.postProcessingEnabled == true ? 1 : 0)
+		}else if(shader instanceof GaussianBlurShader){
+			gl.uniform2fv(gl.getUniformLocation(shader.program, "uSize"), [previousFramebuffer.size.x, previousFramebuffer.size.y])
+			gl.uniformMatrix3fv(gl.getUniformLocation(shader.program, "uKernel"), false, [0.0625, 0.125, 0.0625, 0.125, 0.25, 0.125, 0.0625, 0.125, 0.0625])
+		}
 
 		gl.drawElements(gl.TRIANGLES, this.postProcessingQuad.shape.triangleIndices.length, gl.UNSIGNED_SHORT, 0)
 
@@ -369,12 +381,19 @@ export class Renderer{
 				this.drawFB(this.lights.projectors[i].framebuffer, this.lights.projectors[i].camera, this.scene, true, () => {this.gl.enable(this.gl.DEPTH_TEST)}, this.depthMaterial)
 			}
 
-			this.drawFB(this.lights.directional.framebuffer, this.lights.directional.camera, this.scene, true, () => {this.gl.enable(this.gl.CULL_FACE); this.gl.cullFace(this.gl.FRONT)}, this.depthMaterial)
+			this.drawFB(this.lights.directional.blurFramebuffer, this.lights.directional.camera, this.scene, true, () => {
+				this.gl.enable(this.gl.CULL_FACE)
+				this.gl.cullFace(this.gl.FRONT)
+			}, this.depthMaterial)
 			this.gl.disable(this.gl.CULL_FACE)
 			this.gl.cullFace(this.gl.BACK)
 
+			this.drawFullscreenQuad(this.gaussianBlurShader, this.lights.directional.framebuffer, this.lights.directional.blurFramebuffer)
+
 			this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.postProcessingFrameBuffer)
-			//this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.lights.directional.framebuffer)			
+			if(this.showShadowMap){
+				this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.lights.directional.framebuffer)			
+			}
 		}
 		this.currentTime = time
 		window.requestAnimationFrame(this.startRendering)

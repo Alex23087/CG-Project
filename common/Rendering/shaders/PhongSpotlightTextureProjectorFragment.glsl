@@ -20,6 +20,7 @@ uniform sampler2D uProjectorShadowSampler[PROJECTOR_COUNT];
 
 uniform sampler2D uShadowMap;
 uniform mat4 uLightMatrix;
+uniform int uVarianceShadowMap;
 
 varying vec3 vViewSpaceNormal;
 varying vec3 vViewSpaceViewDirection;
@@ -32,7 +33,8 @@ void main(void){
     vec3 color = texture2D(uSampler, vTexCoords).xyz;
 
     vec4 lightSpaceCoordinates = uLightMatrix * vPosition;
-    float shadowDepth = texture2D(uShadowMap, lightSpaceCoordinates.xy * 0.5 + 0.5).z;
+    lightSpaceCoordinates = lightSpaceCoordinates * 0.5 + 0.5;
+    float shadowDepth = texture2D(uShadowMap, lightSpaceCoordinates.xy).z;
 
     float diffuseLight = max(dot(vViewSpaceLightDirection, vViewSpaceNormal), 0.0) * 0.5 + 0.5;
 
@@ -43,11 +45,21 @@ void main(void){
     vec3 specularColor = color * specularLight;
 
 
-    float bias = clamp(0.005 * tan(acos(dot(vViewSpaceNormal, vViewSpaceLightDirection))), 0.00001, 0.01);
-    if(shadowDepth < lightSpaceCoordinates.z * 0.5 + 0.5 - bias){
-        diffuseColor *= 0.5;
-        specularColor *= 0.0;
+    if(uVarianceShadowMap == 1){
+        float firstMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).x;
+        float secondMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).y;
+        float variance = secondMoment - (firstMoment * firstMoment);
+        float shadow = (variance * variance) / ((variance * variance) + (texture2D(uShadowMap, lightSpaceCoordinates.xy).z - firstMoment));
+        diffuseColor *= shadow;
+        specularColor *= shadow;
+    }else{
+        float bias = clamp(0.005 * tan(acos(dot(vViewSpaceNormal, vViewSpaceLightDirection))), 0.00001, 0.01);
+        if(shadowDepth < lightSpaceCoordinates.z - bias){
+            diffuseColor *= 0.5;
+            specularColor *= 0.0;
+        }
     }
+
 
     vec3 spotlightColor = vec3(0.0, 0.0, 0.0);
     for(int i = 0; i < SPOTLIGHTS_COUNT; i++){
@@ -78,6 +90,6 @@ void main(void){
     }
 
     gl_FragColor = vec4(diffuseColor + specularColor + spotlightColor + projectorFinalLight, 1.0);
-    //gl_FragColor = vec4(texture2D(uShadowMap, lightSpaceCoordinates.xy * 0.5 + 0.5).z - lightSpaceCoordinates.z * 0.5 + 0.5, 0.0, 0.0, 1.0);
-    //gl_FragColor = lightSpaceCoordinates * 0.5, + 0.5;
+    //gl_FragColor = vec4(texture2D(uShadowMap, lightSpaceCoordinates.xy).z - lightSpaceCoordinates.z, 0.0, 0.0, 1.0);
+    //gl_FragColor = lightSpaceCoordinates;
 }

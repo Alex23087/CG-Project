@@ -5,7 +5,7 @@ export class Framebuffer{
     depthbuffer: WebGLRenderbuffer
     texture: string
     clearColor: Color = [0, 0, 0, 1]
-    private size: Dimension
+    size: Dimension
 
     constructor(name: string, size: Dimension){
         this.texture = name

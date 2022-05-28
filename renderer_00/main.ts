@@ -99,6 +99,16 @@ skyboxCheckbox.onchange = function(e: Event){
 	}
 }
 
+var shadowmapCheckbox = document.getElementById("shadowmap") as HTMLInputElement
+shadowmapCheckbox.onchange = function(e: Event){
+	renderer.showShadowMap = shadowmapCheckbox.checked as unknown as boolean
+}
+
+var varianceShadowMappingCheckbox = document.getElementById("varianceshadowmapping") as HTMLInputElement
+varianceShadowMappingCheckbox.onchange = function(e: Event){
+	renderer.varianceShadowMapping = varianceShadowMappingCheckbox.checked as unknown as boolean
+}
+
 chromaticAberrationCheckbox.checked = false
 skyboxCheckbox.checked = true
 scaleSlider.value = "1"
