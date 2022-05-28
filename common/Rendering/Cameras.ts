@@ -198,9 +198,7 @@ export class FreeCamera extends GameObject implements Camera{
 
 	public mousedown(amount){
 		this.mousePressed = true
-		console.log(this.previousMouseCoords)
 		this.previousMouseCoords = amount
-		console.log(this.previousMouseCoords)
 	}
 
 	projectionMatrix(fov: number, ratio: number): mat4 {

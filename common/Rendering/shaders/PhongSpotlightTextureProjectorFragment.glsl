@@ -16,12 +16,13 @@ uniform float uSpotlightIntensity[SPOTLIGHTS_COUNT];
 
 uniform mat4 uProjectorMatrix[PROJECTOR_COUNT];
 uniform sampler2D uProjectorSampler[PROJECTOR_COUNT];
+uniform sampler2D uProjectorShadowSampler[PROJECTOR_COUNT];
 
 varying vec3 vViewSpaceNormal;
 varying vec3 vViewSpaceViewDirection;
 varying vec3 vViewSpacePosition;
 varying vec2 vTexCoords;
-varying vec3 vPosition;
+varying vec4 vPosition;
 varying vec3 vViewSpaceLightDirection;
 
 void main(void){
@@ -48,30 +49,18 @@ void main(void){
 
     vec3 projectorFinalLight = vec3(0.0, 0.0, 0.0);
     for(int i = 0; i < PROJECTOR_COUNT; i++){
-        vec2 projectorTextureCoordinates = (uProjectorMatrix[i] * vec4(vPosition, 1.0)).xy;
-        projectorTextureCoordinates += vec2(0.5, 0.0);
-        if(projectorTextureCoordinates.x >= 0.0 && projectorTextureCoordinates.x <= 1.0 && projectorTextureCoordinates.y >= 0.0 && projectorTextureCoordinates.y <= 1.0){
-            vec4 currentProjectorLight = texture2D(uProjectorSampler[i], projectorTextureCoordinates);
-            projectorFinalLight += currentProjectorLight.rgb * currentProjectorLight.a;
+        vec4 projectorSpaceCoordinates = (uProjectorMatrix[i] * vPosition);
+        projectorSpaceCoordinates = projectorSpaceCoordinates / projectorSpaceCoordinates.w;
+        projectorSpaceCoordinates += vec4(0.5, 0.0, 0.0, 0.0);
+        if(projectorSpaceCoordinates.x >= 0.0 && projectorSpaceCoordinates.x <= 1.0 && projectorSpaceCoordinates.y >= 0.0 && projectorSpaceCoordinates.y <= 1.0){
+            vec4 currentProjectorLight = texture2D(uProjectorSampler[i], projectorSpaceCoordinates.xy);
+
+            float depth = texture2D(uProjectorShadowSampler[i], projectorSpaceCoordinates.xy).z;
+            if(depth > projectorSpaceCoordinates.z){
+                projectorFinalLight += currentProjectorLight.rgb * currentProjectorLight.a;
+            }
         }
     }
 
     gl_FragColor = vec4(diffuseColor + specularColor + spotlightColor + projectorFinalLight, 1.0);
 }
-
-/*
-
-
-
-    vec3 projectorFinalLight = vec3(0.0, 0.0, 0.0);
-    for(int i = 0; i < PROJECTOR_COUNT; i++){
-        vec2 projectorTextureCoordinates = (uProjectorMatrix[i] * vec4(vPosition, 1.0)).xy;
-        if(projectorTextureCoordinates.x >= 0.0 && projectorTextureCoordinates.x <= 1.0 && projectorTextureCoordinates.y >= 0.0 && projectorTextureCoordinates.y <= 1.0){
-            vec4 currentProjectorLight = texture2D(uProjectorSampler[i], projectorTextureCoordinates);
-            projectorFinalLight += currentProjectorLight.rgb * currentProjectorLight.a;
-        }
-    }
-
-    gl_FragColor = vec4(diffuseColor + specularColor + spotlightColor + projectorFinalLight, 1.0);
-
-    */

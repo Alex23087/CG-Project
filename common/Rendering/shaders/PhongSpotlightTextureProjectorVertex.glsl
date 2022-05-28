@@ -1,4 +1,5 @@
 uniform mat4 uModelViewMatrix;
+uniform mat4 uModelMatrix;
 uniform mat4 uProjectionMatrix;
 uniform mat4 uViewMatrix;
 
@@ -15,7 +16,7 @@ varying vec3 vViewSpaceViewDirection;
 varying vec3 vViewSpacePosition;
 
 varying vec3 vViewSpaceLightDirection;
-varying vec3 vPosition;
+varying vec4 vPosition;
 
 void main(void){
     vec4 vspos = uModelViewMatrix * vec4(aPosition, 1.0);
@@ -26,5 +27,5 @@ void main(void){
 
     vViewSpaceLightDirection = (uViewMatrix * vec4(uLightDirection, 0.0)).xyz;
     vTexCoords = aTexCoords.xy;
-    vPosition = aPosition;
+    vPosition = uModelMatrix * vec4(aPosition, 1.0);
 }

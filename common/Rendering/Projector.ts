@@ -37,6 +37,8 @@ export class Projector extends GameObject{
 		glMatrix.vec3.transformMat4(worldEye, this.transform.position, frame)
 		glMatrix.vec3.transformMat4(worldTarget, glMatrix.vec3.add(glMatrix.vec3.create(), [0, 0, -1], this.transform.position), frame)
 		this.camera.viewMatrix = glMatrix.mat4.lookAt(glMatrix.mat4.create(), worldEye, worldTarget, [0, 1, 0])
+
+        //glMatrix.mat4.mul(this.camera.viewMatrix, this.camera.projectionMatrix(Math.PI, 1), this.camera.viewMatrix)
     }
 
     getMatrix(): mat4{
@@ -48,6 +50,6 @@ class ProjectorCamera implements Camera{
     viewMatrix: mat4
     mouseMoved(coords: vec2): void {}
     projectionMatrix(fov: number, ratio: number): mat4 {
-		return glMatrix.mat4.perspective(glMatrix.mat4.create(), fov, ratio, 1, 100)
+		return glMatrix.mat4.perspective(glMatrix.mat4.create(), Math.PI / 2, 1, 0.1, 100)
     }
 }

@@ -192,6 +192,7 @@ export class TextureManager{
             if(size.x == 0 || size.y == 0){ //Invalid dimensions, return first texture
                 return 0
             }
+            //alert("Creating texture " + name)
 			Renderer.instance.gl.activeTexture(textureUnit)
 			let texture = Renderer.instance.gl.createTexture()
 			Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, texture)

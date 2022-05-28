@@ -156,8 +156,17 @@ export class Renderer{
 		}
 
 		if(Shaders.hasMVMatrix(material.shader)){
+			let modelViewMatrix = glMatrix.mat4.create()
+			glMatrix.mat4.mul(modelViewMatrix, this.viewMatrix, modelMatrix)
 			this.gl.uniformMatrix4fv(
 				material.shader.uModelViewMatrixLocation, false,
+				modelViewMatrix as Float32List
+			)
+		}
+
+		if(Shaders.hasModelMatrix(material.shader)){
+			this.gl.uniformMatrix4fv(
+				material.shader.uModelMatrixLocation, false,
 				modelMatrix as Float32List
 			)
 		}
@@ -228,16 +237,20 @@ export class Renderer{
 		}
 
 		if(Shaders.isProjectorShader(material.shader)){
-
 			var projectors = []
 			var textures = []
+			var shadowMaps = []
 			for(var i = 0; i < this.lights.projectors.length; i++){
+				let projectorMatrix = this.lights.projectors[i].getMatrix()
+				//glMatrix.mat4.mul(projectorMatrix, this.lights.projectors[i].camera.projectionMatrix(0, 0), projectorMatrix)
 				for(var j = 0; j < 16; j++){
-					projectors.push(this.lights.projectors[i].getMatrix()[j])
+					projectors.push(projectorMatrix[j])
 					textures.push(this.textureManager.getTextureUnit(this.lights.projectors[i].getTexture(), this.gl.CLAMP_TO_EDGE))
+					shadowMaps.push(this.lights.projectors[i].framebuffer.getTexture())
 				}
 			}
 			this.gl.uniform1iv(material.shader.uProjectorSamplerLocation, textures)
+			this.gl.uniform1iv(material.shader.uProjectorShadowSamplerLocation, shadowMaps)
 			this.gl.uniformMatrix4fv(material.shader.uProjectorMatrixLocation, false, projectors)
 		}
 
@@ -264,7 +277,7 @@ export class Renderer{
 		}
 	}
 
-	private drawGameObject(gameObject: GameObject, parentMatrix: mat4 = this.viewMatrix, overrideMaterial: ShaderMaterial | null = null){
+	private drawGameObject(gameObject: GameObject, parentMatrix: mat4 = glMatrix.mat4.create(), overrideMaterial: ShaderMaterial | null = null){
 		var modelMatrix = gameObject.transform.applyLocalTransform(
 			glMatrix.mat4.create(),
 			parentMatrix
@@ -296,7 +309,7 @@ export class Renderer{
 
 		setup()
 
-		this.drawGameObject(gameObject, this.viewMatrix, overrideMaterial)
+		this.drawGameObject(gameObject, glMatrix.mat4.create(), overrideMaterial)
 
 		this.gl.useProgram(null)
 	}
@@ -346,9 +359,9 @@ export class Renderer{
 			this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)})
 
 			for(var i = 0; i < this.lights.projectors.length; i++){
-				this.drawFB(this.lights.projectors[i].framebuffer, this.lights.projectors[i].camera, this.scene, true, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)}, this.depthMaterial)
+				this.drawFB(this.lights.projectors[i].framebuffer, this.lights.projectors[i].camera, this.scene, true, () => {this.gl.enable(this.gl.DEPTH_TEST)}, this.depthMaterial)
 			}
-			
+
 			this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.postProcessingFrameBuffer)
 		}
 		this.currentTime = time

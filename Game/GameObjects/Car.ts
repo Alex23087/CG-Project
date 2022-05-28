@@ -62,7 +62,7 @@ export class Car extends GameObject{
 		leftLight.direction = [0, -0.5, -1]
 		leftLight.cutoff = 0.95
 		leftLight.attenuation = 0.9
-		leftLight.intensity = 0.2
+		leftLight.intensity = 0
 
 		let rightLight = new Spotlight()
 		rightLight.parent = this.transform
@@ -70,7 +70,7 @@ export class Car extends GameObject{
 		rightLight.direction = [0, -0.5, -1]
 		rightLight.cutoff = 0.95
 		rightLight.attenuation = 0.9
-		rightLight.intensity = 0.2
+		rightLight.intensity = 0
 
 		let leftProjector = new Projector("LeftHeadlight", this, "../../Assets/Textures/headlight.png")
 		leftProjector.transform.rotation[0] = -Math.PI / 16

@@ -87,6 +87,10 @@ interface MVMatrixShader extends Shader{
 	uModelViewMatrixLocation: WebGLUniformLocation
 }
 
+interface ModelMatrixShader extends Shader{
+	uModelMatrixLocation: WebGLUniformLocation
+}
+
 interface ProjectionMatrixShader extends Shader{
 	uProjectionMatrixLocation: WebGLUniformLocation
 }
@@ -124,6 +128,7 @@ interface CubemappedShader extends Shader{
 
 interface ProjectorShader extends Shader{
 	uProjectorSamplerLocation: WebGLUniformLocation
+	uProjectorShadowSamplerLocation: WebGLUniformLocation
 	uProjectorMatrixLocation: WebGLUniformLocation
 }
 
@@ -145,6 +150,10 @@ export function isShiny(object: Shader): object is ShinyShader{
 
 export function hasMVMatrix(object: Shader): object is MVMatrixShader{
 	return 'uModelViewMatrixLocation' in object
+}
+
+export function hasModelMatrix(object: Shader): object is ModelMatrixShader{
+	return 'uModelMatrixLocation' in object
 }
 
 export function hasProjectionMatrix(object: Shader): object is ProjectionMatrixShader{
@@ -314,7 +323,7 @@ MVMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, 
 
 export class PhongSpotlightTexturedProjectorShader extends Shader implements
 PositionableShader, NormalShader, ShinyShader,
-MVMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, SpotlightShader, TexturedShader, ProjectorShader {
+MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, SpotlightShader, TexturedShader, ProjectorShader {
 	name: string = "PhongSpotlightTextureProjector"
 	
 	aPositionIndex: 0 = 0
@@ -324,6 +333,7 @@ MVMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, 
 	uShininessLocation: WebGLUniformLocation
 	uSamplerLocation: WebGLUniformLocation
 
+	uModelMatrixLocation: WebGLUniformLocation
 	uModelViewMatrixLocation: WebGLUniformLocation
 	uProjectionMatrixLocation: WebGLUniformLocation
 	uViewMatrixLocation: WebGLUniformLocation
@@ -339,6 +349,7 @@ MVMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, 
 	uSpotlightIntensityLocation: WebGLUniformLocation
 
 	uProjectorSamplerLocation: WebGLUniformLocation
+	uProjectorShadowSamplerLocation: WebGLUniformLocation
 	uProjectorMatrixLocation: WebGLUniformLocation
 
 	_bindAttribs(gl: WebGLRenderingContext): void {
@@ -348,12 +359,14 @@ MVMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, 
 	}
 	_getLocations(gl: WebGLRenderingContext): void {
 		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
+		this.uModelMatrixLocation = gl.getUniformLocation(this.program, "uModelMatrix")
 		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
 		this.uShininessLocation = gl.getUniformLocation(this.program, "uShininess")
 		this.uLightDirectionLocation = gl.getUniformLocation(this.program, "uLightDirection")
 		this.uViewMatrixLocation = gl.getUniformLocation(this.program, "uViewMatrix")
 		this.uSamplerLocation = gl.getUniformLocation(this.program, "uSampler")
 		this.uProjectorSamplerLocation = gl.getUniformLocation(this.program, "uProjectorSampler")
+		this.uProjectorShadowSamplerLocation = gl.getUniformLocation(this.program, "uProjectorShadowSampler")
 		this.uProjectorMatrixLocation = gl.getUniformLocation(this.program, "uProjectorMatrix")
 		Shader.getSpotlightLocations(gl, this)
 	}
@@ -380,12 +393,13 @@ export class SkyboxShader extends Shader implements ProjectionMatrixShader, View
 	
 }
 
-export class DepthShader extends Shader implements PositionableShader, MVMatrixShader, ProjectionMatrixShader{
+export class DepthShader extends Shader implements PositionableShader, ModelMatrixShader, ViewMatrixShader, ProjectionMatrixShader{
 	protected name: string = "Depth"
 
 	aPositionIndex: 0 = 0
 
-	uModelViewMatrixLocation: WebGLUniformLocation
+	uModelMatrixLocation: WebGLUniformLocation
+	uViewMatrixLocation: WebGLUniformLocation
 	uProjectionMatrixLocation: WebGLUniformLocation
 
 	public _bindAttribs(gl: WebGLRenderingContext): void {
@@ -393,6 +407,7 @@ export class DepthShader extends Shader implements PositionableShader, MVMatrixS
 	}
 	public _getLocations(gl: WebGLRenderingContext): void {
 		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
-		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
+		this.uModelMatrixLocation = gl.getUniformLocation(this.program, "uModelMatrix")
+		this.uViewMatrixLocation = gl.getUniformLocation(this.program, "uViewMatrix")
 	}
 }
