@@ -109,8 +109,16 @@ shadowMappingModePicker.onchange = function (){
 	renderer.shadowMappingMode = parseInt(shadowMappingModePicker.value)
 }
 
+var wireframePicker = document.getElementById("wireframe") as HTMLSelectElement
+wireframePicker.onchange = function (){
+	renderer.wireframeMode = parseInt(wireframePicker.value)
+}
+
 chromaticAberrationCheckbox.checked = false
+quantizeCheckbox.checked = false
 skyboxCheckbox.checked = true
 scaleSlider.value = "1"
 cameraSelector.value = "1"
 shadowMappingModePicker.value = "1"
+wireframePicker.value = "0"
+framebufferPicker.value = "0"

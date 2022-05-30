@@ -25,7 +25,8 @@ export type Dimension = {
 export class Renderer{
 	public static instance: Renderer
 	public gl: WebGL2RenderingContext
-	wireframeEnabled = false
+	private wireframeEnabled = false
+	wireframeMode: number = 0
 
 	canvas: HTMLCanvasElement
     canvasDefaultSize: Dimension = {x: 800, y: 450}
@@ -272,10 +273,9 @@ export class Renderer{
 		if(this.wireframeEnabled){
 			this.gl.enable(this.gl.POLYGON_OFFSET_FILL);
 			this.gl.polygonOffset(1.0, 1.0);
+		}else{
+			this.gl.drawElements(this.gl.TRIANGLES, obj.triangleIndices.length, this.gl.UNSIGNED_SHORT, 0);
 		}
-
-
-		this.gl.drawElements(this.gl.TRIANGLES, obj.triangleIndices.length, this.gl.UNSIGNED_SHORT, 0);
 
 
 		if(this.wireframeEnabled && Shaders.isColorable(material.shader)){
@@ -374,11 +374,17 @@ export class Renderer{
 	startRendering = (time: number) => {
 		this.updateGameObjects(this.scene, time - this.currentTime)
 		if(this.currentCamera){
-			
 			if(this.skybox){
 				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.skybox, true, () => {this.gl.disable(this.gl.DEPTH_TEST)})
 			}
-			this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)})
+			if(this.wireframeMode != 1){
+				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)})
+			}
+			if(this.wireframeMode != 0){
+				this.wireframeEnabled = true
+				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, this.wireframeMode == 1 && !this.skybox, () => {this.gl.disable(this.gl.DEPTH_TEST)}, this.defaultMaterial)
+				this.wireframeEnabled = false
+			}
 
 			for(var i = 0; i < this.lights.projectors.length; i++){
 				this.drawFB(this.lights.projectors[i].framebuffer, this.lights.projectors[i].camera, this.scene, true, () => {this.gl.enable(this.gl.DEPTH_TEST)}, this.depthMaterial)
