@@ -1,6 +1,7 @@
 import { Controls } from "../Game/Controls.js"
 import { Game } from "../Game/Game.js"
 import { Renderer } from "../common/Rendering/Renderer.js"
+import * as Globals from "../Game/Globals.js"
 
 var renderer: Renderer
 var controls: Controls
@@ -33,38 +34,36 @@ window.onload = function (){
 	renderer.canvas.onclick = function (e) {
 		controls.onClick(e)
 	}
+
+	switch(Globals.renderer){
+		case 0:{
+			renderer.wireframeMode = 2
+			wireframePicker.value = "2"
+		}
+		case 1:
+		case 2:{
+			renderer.disableSkybox()
+			renderer.shadowMappingMode = 3
+
+			chromaticAberrationCheckbox.checked = false
+			quantizeCheckbox.checked = false
+			skyboxCheckbox.checked = false
+			scaleSlider.value = "1"
+			cameraSelector.value = "1"
+			shadowMappingModePicker.value = "3"
+			framebufferPicker.value = "0"
+			break
+		}
+		case 3:{
+			renderer.chromaticAberration = true
+			chromaticAberrationCheckbox.checked = true
+		}
+	}
 }
 
 function update_camera(value: number){
 	controls.setCamera(value)
 }
-
-/*var wireframeCheckbox = document.getElementById("wireframe") as HTMLInputElement
-wireframeCheckbox.onchange = function(e: Event){
-	renderer.wireframeEnabled = wireframeCheckbox.checked as unknown as boolean
-}
-
-var shaderSelector = (document.getElementById("shader") as HTMLSelectElement)
-/*shaderSelector.onchange = function (){
-	switch(shaderSelector.value){
-		default:
-		case "0":
-			Shaders.Shader.create(Shaders.UniformShader, renderer.gl).then( shader => {
-				renderer.shader = shader
-			})
-		break;
-		case "1":
-			Shaders.Shader.create(Shaders.PhongShader, renderer.gl).then( shader => {
-				renderer.shader = shader
-			})
-		break;
-		case "2":
-			Shaders.Shader.create(Shaders.PhongSpotlightShader, renderer.gl).then( shader => {
-				renderer.shader = shader
-			})
-		break;
-	}
-}*/
 
 let scaleSlider = document.getElementById("scale") as HTMLInputElement
 let scaleValue = document.getElementById("scaleValue") as HTMLInputElement
@@ -75,7 +74,7 @@ scaleSlider.oninput = (ev) => {
 
 var chromaticAberrationCheckbox = document.getElementById("chromaticAberration") as HTMLInputElement
 chromaticAberrationCheckbox.onchange = function(e: Event){
-	renderer.postProcessingEnabled = chromaticAberrationCheckbox.checked as unknown as boolean
+	renderer.chromaticAberration = chromaticAberrationCheckbox.checked as unknown as boolean
 }
 
 var quantizeCheckbox = document.getElementById("quantize") as HTMLInputElement

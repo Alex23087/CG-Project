@@ -81,14 +81,25 @@
          </li>
          </ol>
          You can use the texture in <code>common/textures/headlights.png</code>.<br>
-         <img src="common/textures/headlight.png" width="300px" border="1"> <br>	
+         <img src="Assets/Textures/headlight.png" width="300px" border="1"> <br>	
          <b> note </b>: the image is a RGBA image, where the A component is the transparency. At the center is is 255 (fully opaque) and then it decreases to 0 at the circle border.<br>
          Use the A channel to blend the texture color of the headlight in the final result.
         </li>
       </ol> 
       
     </p>
-
+<a href="renderer_03/index.html"> <b> Renderer_03 </b> </a>
+<p>
+	<ol>
+	<li> The headlight of the car added in Renderer_02 do not just project on the first surface in front of the car but in the whole frustum of the headlight. Use Shadow Mapping to fix this behaviour.
+	A basic shadow mapping with a small bias will be sufficient. 
+	</li>
+	<li>
+	Add a camera  like the chasing camera of Renderer_00 that can be controlled by the user.
+	The user control consists of changing the position of the point of view with the keyboard and the view direction with the mouse.
+	</li>
+	</ol>
+</p>
   </body>
 </html>
 

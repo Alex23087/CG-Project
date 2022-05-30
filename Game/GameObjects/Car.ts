@@ -1,12 +1,13 @@
-import { ChaseCamera, FollowFromUpCamera } from "../../common/Rendering/Cameras.js";
-import { StringIndexedBooleanArray } from "../Game.js";
-import { GameObject } from "../../common/Rendering/GameObject.js";
-import { Shape } from "../../common/shapes/Shape.js";
-import { ShaderMaterial } from "../../common/Rendering/ShaderMaterial.js";
+import { ChaseCamera, FollowFromUpCamera } from "../../common/Rendering/Cameras.js"
+import { StringIndexedBooleanArray } from "../Game.js"
+import { GameObject } from "../../common/Rendering/GameObject.js"
+import { Shape } from "../../common/shapes/Shape.js"
+import { ShaderMaterial } from "../../common/Rendering/ShaderMaterial.js"
 import * as Shaders from "../../common/Rendering/Shaders.js"
-import { Spotlight } from "../../common/Rendering/Spotlight.js";
-import { Renderer } from "../../common/Rendering/Renderer.js";
-import { Projector } from "../../common/Rendering/Projector.js";
+import { Spotlight } from "../../common/Rendering/Spotlight.js"
+import { Renderer } from "../../common/Rendering/Renderer.js"
+import { Projector } from "../../common/Rendering/Projector.js"
+import * as Globals from "../Globals.js"
 
 
 export class Car extends GameObject{
@@ -123,19 +124,39 @@ export class Car extends GameObject{
 			rearRight: rearRightWheel
 		}
 
-		ShaderMaterial.create(Shaders.PhongSpotlightShader).then(wheelMaterial => {
-			wheelMaterial.setColor([0.1, 0.1, 0.1, 1])
+		switch(Globals.renderer){
+			case 0:{
+				ShaderMaterial.create(Shaders.UniformShader).then(wheelMaterial => {
+					wheelMaterial.setColor([0.1, 0.1, 0.1, 1])
+		
+					this.wheels.frontLeft.material = wheelMaterial
+					this.wheels.frontRight.material = wheelMaterial
+					this.wheels.rearLeft.material = wheelMaterial
+					this.wheels.rearRight.material = wheelMaterial
+				})
+		
+				ShaderMaterial.create(Shaders.UniformShader).then(carMaterial => {
+					carMaterial.setColor([1, 0, 0, 1])
+					carHull.material = carMaterial
+				})
+				break
+			}
+			default:{
+				ShaderMaterial.create(Shaders.PhongSpotlightShader).then(wheelMaterial => {
+					wheelMaterial.setColor([0.1, 0.1, 0.1, 1])
 
-			this.wheels.frontLeft.material = wheelMaterial
-			this.wheels.frontRight.material = wheelMaterial
-			this.wheels.rearLeft.material = wheelMaterial
-			this.wheels.rearRight.material = wheelMaterial
-		})
+					this.wheels.frontLeft.material = wheelMaterial
+					this.wheels.frontRight.material = wheelMaterial
+					this.wheels.rearLeft.material = wheelMaterial
+					this.wheels.rearRight.material = wheelMaterial
+				})
 
-		ShaderMaterial.create(Shaders.PhongSpotlightShader).then(carMaterial => {
-			carMaterial.setColor([1, 0, 0, 1])
-			carHull.material = carMaterial
-		})
+				ShaderMaterial.create(Shaders.PhongSpotlightShader).then(carMaterial => {
+					carMaterial.setColor([1, 0, 0, 1])
+					carHull.material = carMaterial
+				})
+			}
+		}
 	}
 
 	update(deltaT: number) {
@@ -218,9 +239,12 @@ export class Car extends GameObject{
 	}
 
 	private updateWheels(){
+		if(Globals.renderer == 0){
+			return
+		}
 		var frontAngle = this.wheelsAngle
-		this.wheels.frontLeft.transform.rotation[1] = frontAngle
-		this.wheels.frontRight.transform.rotation[1] = frontAngle
+		this.wheels.frontLeft.transform.rotation[1] = frontAngle * 2
+		this.wheels.frontRight.transform.rotation[1] = frontAngle * 2
 
 		var rotation = this.speed
 

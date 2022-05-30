@@ -114,9 +114,15 @@ void main(void){
 
         if(projectorSpaceCoordinates.x >= 0.0 && projectorSpaceCoordinates.x <= 1.0 && projectorSpaceCoordinates.y >= 0.0 && projectorSpaceCoordinates.y <= 1.0){
             vec4 currentProjectorLight = texture2D(uProjectorSampler[i], projectorSpaceCoordinates.xy);
-            float depth = texture2D(uProjectorShadowSampler[i], projectorSpaceCoordinates.xy).z;
-            if(depth + 0.005 > projectorSpaceCoordinates.z){
+
+
+            if(uShadowMappingMode == 3){
                 projectorFinalLight += currentProjectorLight.rgb * currentProjectorLight.a * uProjectorIntensity[i];
+            }else{
+                float depth = texture2D(uProjectorShadowSampler[i], projectorSpaceCoordinates.xy).z;
+                if(depth + 0.005 > projectorSpaceCoordinates.z){
+                    projectorFinalLight += currentProjectorLight.rgb * currentProjectorLight.a * uProjectorIntensity[i];
+                }
             }
         }
 

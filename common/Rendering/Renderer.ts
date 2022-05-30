@@ -51,7 +51,7 @@ export class Renderer{
 
 	private scale: number = 1
 	private viewportSize: Dimension
-	public postProcessingEnabled: boolean = false
+	public chromaticAberration: boolean = false
 	public quantize: boolean = false
 
 	public textureManager: TextureManager
@@ -357,7 +357,7 @@ export class Renderer{
 			this.gl.viewport(0, 0, this.viewportSize.x / this.scale, this.viewportSize.y / this.scale)
 			gl.uniform1f(gl.getUniformLocation(shader.program, "uAmount"), 1 + (this.findGameObjectWithName("mycar") as any).speed / 12)
 			gl.uniform1i(gl.getUniformLocation(shader.program, "uQuantize"), this.quantize == true ? 1 : 0)
-			gl.uniform1i(gl.getUniformLocation(shader.program, "uAberration"), this.postProcessingEnabled == true ? 1 : 0)
+			gl.uniform1i(gl.getUniformLocation(shader.program, "uAberration"), this.chromaticAberration == true ? 1 : 0)
 		}else if(shader instanceof GaussianBlurShader){
 			gl.uniform2fv(gl.getUniformLocation(shader.program, "uSize"), [previousFramebuffer.size.x, previousFramebuffer.size.y])
 			gl.uniformMatrix3fv(gl.getUniformLocation(shader.program, "uKernel"), false, [0.0625, 0.125, 0.0625, 0.125, 0.25, 0.125, 0.0625, 0.125, 0.0625])
@@ -383,28 +383,20 @@ export class Renderer{
 				})
 			}
 			if(this.wireframeMode != 1){
-				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)})
+				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {
+					this.updateViewSpaceLightDirection()
+					this.gl.enable(this.gl.DEPTH_TEST)
+					this.gl.enable(this.gl.CULL_FACE)
+					this.gl.cullFace(this.gl.BACK)
+				})
 			}
 			if(this.wireframeMode != 0){
 				this.wireframeEnabled = true
-				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, this.wireframeMode == 1 && !this.skybox, () => {this.gl.disable(this.gl.DEPTH_TEST)}, this.defaultMaterial)
+				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, this.wireframeMode == 1 && !this.skybox, () => {
+					this.gl.disable(this.gl.DEPTH_TEST)
+				}, this.defaultMaterial)
 				this.wireframeEnabled = false
 			}
-			if(this.wireframeMode != 1){
-				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)})
-			}
-			if(this.wireframeMode != 0){
-				this.wireframeEnabled = true
-				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, this.wireframeMode == 1 && !this.skybox, () => {this.gl.disable(this.gl.DEPTH_TEST)}, this.defaultMaterial)
-				this.wireframeEnabled = false
-			}
-
-			this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {
-				this.updateViewSpaceLightDirection()
-				this.gl.enable(this.gl.DEPTH_TEST)
-				this.gl.enable(this.gl.CULL_FACE)
-				this.gl.cullFace(this.gl.BACK)
-			})
 
 			let ground = this.findGameObjectWithName("Ground")
 			for(var i = 0; i < this.lights.projectors.length; i++){

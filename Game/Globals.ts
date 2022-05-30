@@ -1,0 +1,1 @@
+export let renderer: number = 3
