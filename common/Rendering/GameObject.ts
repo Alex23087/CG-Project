@@ -35,6 +35,11 @@ export class GameObject{
         for(var i = 0; i < this.children.length; i++){
             if(this.children[i].name == name){
                 return this.children[i]
+            }else{
+                let obj = this.children[i].findChildWithName(name)
+                if(obj){
+                    return obj
+                }
             }
         }
         return null

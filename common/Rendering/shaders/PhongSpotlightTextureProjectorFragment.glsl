@@ -21,6 +21,7 @@ uniform float uSpotlightIntensity[SPOTLIGHTS_COUNT];
 uniform mat4 uProjectorMatrix[PROJECTOR_COUNT];
 uniform sampler2D uProjectorSampler[PROJECTOR_COUNT];
 uniform sampler2D uProjectorShadowSampler[PROJECTOR_COUNT];
+uniform float uProjectorIntensity[PROJECTOR_COUNT];
 
 uniform sampler2D uShadowMap;
 uniform mat4 uLightMatrix;
@@ -113,17 +114,9 @@ void main(void){
 
         if(projectorSpaceCoordinates.x >= 0.0 && projectorSpaceCoordinates.x <= 1.0 && projectorSpaceCoordinates.y >= 0.0 && projectorSpaceCoordinates.y <= 1.0){
             vec4 currentProjectorLight = texture2D(uProjectorSampler[i], projectorSpaceCoordinates.xy);
-
-            if(true){
-                float depth = texture2D(uProjectorShadowSampler[i], projectorSpaceCoordinates.xy).z;
-                if(depth + 0.005 > projectorSpaceCoordinates.z){
-                    projectorFinalLight += currentProjectorLight.rgb * sin(pow(currentProjectorLight.a, 2.0));
-                }
-            }else if(uShadowMappingMode == 1){
-                float lightamount = computePCFLight(uProjectorShadowSampler[i], vec2(1024, 1024), projectorSpaceCoordinates, 0.0001, 0.0);
-                if(lightamount > 0.0){
-                    projectorFinalLight += currentProjectorLight.rgb * currentProjectorLight.a * lightamount;
-                }
+            float depth = texture2D(uProjectorShadowSampler[i], projectorSpaceCoordinates.xy).z;
+            if(depth + 0.005 > projectorSpaceCoordinates.z){
+                projectorFinalLight += currentProjectorLight.rgb * currentProjectorLight.a * uProjectorIntensity[i];
             }
         }
 

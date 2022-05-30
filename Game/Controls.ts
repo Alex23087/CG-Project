@@ -14,6 +14,7 @@ export class Controls {
     static leftKeys = ['a', 'A', "ArrowLeft"]
     static upKeys = ['q', 'Q']
     static downKeys = ['z', 'Z']
+    static headlightKeys = ['h', 'H']
 
     renderer: Renderer
     game: Game
@@ -74,6 +75,10 @@ export class Controls {
         } else if(Controls.fullscreenKeys.indexOf(key) >= 0){
             if(value){
                 this.renderer.toggleFullscreen()
+            }
+        } else if(Controls.headlightKeys.indexOf(key) >= 0){
+            if(value){
+                this.game.car.toggleHeadlights()
             }
         } else {
             car.control_keys[key] = value

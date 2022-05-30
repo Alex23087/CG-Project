@@ -130,6 +130,7 @@ interface ProjectorShader extends Shader{
 	uProjectorSamplerLocation: WebGLUniformLocation
 	uProjectorShadowSamplerLocation: WebGLUniformLocation
 	uProjectorMatrixLocation: WebGLUniformLocation
+	uProjectorIntensityLocation: WebGLUniformLocation
 }
 
 interface ShadowMapShader extends Shader{
@@ -348,7 +349,7 @@ MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, Lig
 	uModelViewMatrixLocation: WebGLUniformLocation
 	uProjectionMatrixLocation: WebGLUniformLocation
 	uViewMatrixLocation: WebGLUniformLocation
-
+	
 	uLightDirectionLocation: WebGLUniformLocation
 	
 	uSpotlightPositionsLocation: WebGLUniformLocation
@@ -362,7 +363,8 @@ MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, Lig
 	uProjectorSamplerLocation: WebGLUniformLocation
 	uProjectorShadowSamplerLocation: WebGLUniformLocation
 	uProjectorMatrixLocation: WebGLUniformLocation
-
+	uProjectorIntensityLocation: WebGLUniformLocation
+	
 	uShadowMapLocation: WebGLUniformLocation
 	uLightMatrixLocation: WebGLUniformLocation
 	uShadowMappingModeLocation: WebGLUniformLocation
@@ -384,6 +386,7 @@ MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, Lig
 		this.uProjectorSamplerLocation = gl.getUniformLocation(this.program, "uProjectorSampler")
 		this.uProjectorShadowSamplerLocation = gl.getUniformLocation(this.program, "uProjectorShadowSampler")
 		this.uProjectorMatrixLocation = gl.getUniformLocation(this.program, "uProjectorMatrix")
+		this.uProjectorIntensityLocation = gl.getUniformLocation(this.program, "uProjectorIntensity")
 		this.uShadowMapLocation = gl.getUniformLocation(this.program, "uShadowMap")
 		this.uLightMatrixLocation = gl.getUniformLocation(this.program, "uLightMatrix")
 		this.uShadowMappingModeLocation = gl.getUniformLocation(this.program, "uShadowMappingMode")

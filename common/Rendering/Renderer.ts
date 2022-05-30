@@ -249,17 +249,19 @@ export class Renderer{
 			var projectors = []
 			var textures = []
 			var shadowMaps = []
+			var projectorIntensities = []
 			for(var i = 0; i < this.lights.projectors.length; i++){
 				let projectorMatrix = this.lights.projectors[i].getMatrix()
-				//glMatrix.mat4.mul(projectorMatrix, this.lights.projectors[i].camera.projectionMatrix(0, 0), projectorMatrix)
 				for(var j = 0; j < 16; j++){
 					projectors.push(projectorMatrix[j])
-					textures.push(this.textureManager.getTextureUnit(this.lights.projectors[i].getTexture(), this.gl.CLAMP_TO_EDGE))
-					shadowMaps.push(this.lights.projectors[i].framebuffer.getTexture())
 				}
+				textures.push(this.textureManager.getTextureUnit(this.lights.projectors[i].getTexture(), this.gl.CLAMP_TO_EDGE))
+				shadowMaps.push(this.lights.projectors[i].framebuffer.getTexture())
+				projectorIntensities.push(this.lights.projectors[i].intensity)
 			}
 			this.gl.uniform1iv(material.shader.uProjectorSamplerLocation, textures)
 			this.gl.uniform1iv(material.shader.uProjectorShadowSamplerLocation, shadowMaps)
+			this.gl.uniform1fv(material.shader.uProjectorIntensityLocation, projectorIntensities)
 			this.gl.uniformMatrix4fv(material.shader.uProjectorMatrixLocation, false, projectors)
 		}
 
@@ -375,7 +377,18 @@ export class Renderer{
 		this.updateGameObjects(this.scene, time - this.currentTime)
 		if(this.currentCamera){
 			if(this.skybox){
-				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.skybox, true, () => {this.gl.disable(this.gl.DEPTH_TEST)})
+				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.skybox, true, () => {
+					this.gl.disable(this.gl.DEPTH_TEST)
+					this.gl.disable(this.gl.CULL_FACE)
+				})
+			}
+			if(this.wireframeMode != 1){
+				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)})
+			}
+			if(this.wireframeMode != 0){
+				this.wireframeEnabled = true
+				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, this.wireframeMode == 1 && !this.skybox, () => {this.gl.disable(this.gl.DEPTH_TEST)}, this.defaultMaterial)
+				this.wireframeEnabled = false
 			}
 			if(this.wireframeMode != 1){
 				this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {this.updateViewSpaceLightDirection(); this.gl.enable(this.gl.DEPTH_TEST)})
@@ -386,15 +399,36 @@ export class Renderer{
 				this.wireframeEnabled = false
 			}
 
+			this.drawFB(this.postProcessingFrameBuffer, this.currentCamera, this.scene, !this.skybox, () => {
+				this.updateViewSpaceLightDirection()
+				this.gl.enable(this.gl.DEPTH_TEST)
+				this.gl.enable(this.gl.CULL_FACE)
+				this.gl.cullFace(this.gl.BACK)
+			})
+
+			let ground = this.findGameObjectWithName("Ground")
 			for(var i = 0; i < this.lights.projectors.length; i++){
-				this.drawFB(this.lights.projectors[i].framebuffer, this.lights.projectors[i].camera, this.scene, true, () => {this.gl.enable(this.gl.DEPTH_TEST)}, this.depthMaterial)
+				this.drawFB(this.lights.projectors[i].framebuffer, this.lights.projectors[i].camera, this.scene, true, () => {
+					this.gl.enable(this.gl.DEPTH_TEST)
+					this.gl.enable(this.gl.CULL_FACE)
+					this.gl.cullFace(this.gl.FRONT)
+				}, this.depthMaterial)
+
+				if(ground){
+					this.drawFB(this.lights.projectors[i].framebuffer, this.lights.projectors[i].camera, ground, false, () => {
+						this.gl.enable(this.gl.DEPTH_TEST)
+						this.gl.enable(this.gl.CULL_FACE)
+						this.gl.cullFace(this.gl.BACK)
+					}, this.depthMaterial)
+				}
 			}
 
 			this.drawFB(this.lights.directional.blurFramebuffer, this.lights.directional.camera, this.scene, true, () => {
+				this.gl.enable(this.gl.DEPTH_TEST)
 				this.gl.enable(this.gl.CULL_FACE)
 				this.gl.cullFace(this.gl.FRONT)
 			}, this.depthMaterial)
-			this.gl.disable(this.gl.CULL_FACE)
+
 			this.gl.cullFace(this.gl.BACK)
 
 			this.drawFullscreenQuad(this.gaussianBlurShader, this.lights.directional.framebuffer, this.lights.directional.blurFramebuffer)

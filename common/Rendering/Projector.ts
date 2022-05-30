@@ -9,13 +9,14 @@ export class Projector extends GameObject{
 
     public camera: Camera
     public framebuffer: Framebuffer
+    public intensity: number = 1
 
-    constructor(name: string, parent: GameObject, texture: string){
+    constructor(name: string, parent: GameObject, texture: string, fov: number, ratio: number){
         super(name, parent, null)
         this.texture = texture
         Renderer.instance.textureManager.loadImage(texture)
 
-        this.camera = new ProjectorCamera()
+        this.camera = new ProjectorCamera(fov, ratio)
         this.framebuffer = new Framebuffer(name + " shadow framebuffer", {x: 1024, y: 1024})
         
         Renderer.instance.addProjector(this)
@@ -47,9 +48,16 @@ export class Projector extends GameObject{
 }
 
 class ProjectorCamera implements Camera{
+    private fov: number
+    private ratio: number
     viewMatrix: mat4
     mouseMoved(coords: vec2): void {}
     projectionMatrix(fov: number, ratio: number): mat4 {
-		return glMatrix.mat4.perspective(glMatrix.mat4.create(), Math.PI / 4, 1, 1, 100)
+		return glMatrix.mat4.perspective(glMatrix.mat4.create(), this.fov, this.ratio, 1, 100)
+    }
+
+    constructor(fov: number, ratio: number){
+        this.fov = fov
+        this.ratio = ratio
     }
 }

@@ -10,30 +10,38 @@ import { Projector } from "../../common/Rendering/Projector.js";
 
 
 export class Car extends GameObject{
-	maxWheelsAngle = 0.15;
-	wheelAngleIncrement = 0.006;
+	private maxWheelsAngle = 0.15;
+	private wheelAngleIncrement = 0.006;
 
-	max_speed: number = 0.4
-	max_back_speed: number = 0.1
-	isRotatingLeft: boolean = false
-	isRotatingRight: boolean = false
-	isAccelerating: boolean = false
-	isBraking: boolean = false
-	wheelsAngle: number
-	speed: number
-	angle: number
-	direction: vec3
+	private max_speed: number = 0.4
+	private max_back_speed: number = 0.1
+	private isRotatingLeft: boolean = false
+	private isRotatingRight: boolean = false
+	private isAccelerating: boolean = false
+	private isBraking: boolean = false
+	private wheelsAngle: number
+	private speed: number
+	private angle: number
+	private direction: vec3
 	control_keys: StringIndexedBooleanArray
-	lastAnimationTime: number
+	private lastAnimationTime: number
 
 	private audioTrack: AudioBufferSourceNode
 
-	wheels: {
+	private wheels: {
 		frontLeft: GameObject
 		frontRight: GameObject
 		rearLeft: GameObject
 		rearRight: GameObject
 	}
+
+	private headlights: {
+		projectorLeft: Projector
+		projectorRight: Projector
+		spotlightLeft: Spotlight
+		spotlightRight: Spotlight
+	}
+	private headlightMode: number = 2
 
 	constructor(name: string, startPosition: vec3) {
 		super(name, null, null)
@@ -56,29 +64,31 @@ export class Car extends GameObject{
 		new FollowFromUpCamera(this)
 		new ChaseCamera(this)
 
-		let leftLight = new Spotlight()
-		leftLight.parent = this.transform
-		leftLight.position = [-0.35, 0.6, -0.5]
-		leftLight.direction = [0, -0.5, -1]
-		leftLight.cutoff = 0.95
-		leftLight.attenuation = 0.9
-		leftLight.intensity = 0
+		this.headlights = {} as any
 
-		let rightLight = new Spotlight()
-		rightLight.parent = this.transform
-		rightLight.position = [0.35, 0.6, -0.5]
-		rightLight.direction = [0, -0.5, -1]
-		rightLight.cutoff = 0.95
-		rightLight.attenuation = 0.9
-		rightLight.intensity = 0
+		this.headlights.spotlightLeft = new Spotlight()
+		this.headlights.spotlightLeft.parent = this.transform
+		this.headlights.spotlightLeft.position = [-0.35, 0.6, -0.5]
+		this.headlights.spotlightLeft.direction = [0, -0.5, -1]
+		this.headlights.spotlightLeft.cutoff = 0.95
+		this.headlights.spotlightLeft.attenuation = 0.9
 
-		let leftProjector = new Projector("LeftHeadlight", this, "../../Assets/Textures/headlight.png")
-		leftProjector.transform.rotation[0] = -Math.PI / 16
-		let rightProjector = new Projector("RightHeadlight", this, "../../Assets/Textures/headlight.png")
-		rightProjector.transform.rotation[0] = -Math.PI / 16
+		this.headlights.spotlightRight = new Spotlight()
+		this.headlights.spotlightRight.parent = this.transform
+		this.headlights.spotlightRight.position = [0.35, 0.6, -0.5]
+		this.headlights.spotlightRight.direction = [0, -0.5, -1]
+		this.headlights.spotlightRight.cutoff = 0.95
+		this.headlights.spotlightRight.attenuation = 0.9
 
-		leftProjector.transform.position = [-0.3, 0.3, -0.5]
-		rightProjector.transform.position = [0.3, 0.3, -0.5]
+		this.headlights.projectorLeft = new Projector("LeftHeadlight", this, "../../Assets/Textures/headlight.png", Math.PI / 4, 1)
+		this.headlights.projectorLeft.transform.rotation[0] = -Math.PI / 16
+		this.headlights.projectorRight = new Projector("RightHeadlight", this, "../../Assets/Textures/headlight.png", Math.PI / 4, 1)
+		this.headlights.projectorRight.transform.rotation[0] = -Math.PI / 16
+
+		this.headlights.projectorLeft.transform.position = [-0.3, 0.7, -0.5]
+		this.headlights.projectorRight.transform.position = [0.3, 0.7, -0.5]
+
+		this.setHeadlights()
 
 		var carHull = new GameObject("CarHull", this, Shape.cube)
 		carHull.transform.position[1] += 0.6
@@ -237,6 +247,40 @@ export class Car extends GameObject{
 	private updatePitch(){
 		if(this.audioTrack){
 			this.audioTrack.playbackRate.value = Math.abs(this.speed)/2.5 + 0.75
+		}
+	}
+
+	toggleHeadlights(){
+		this.headlightMode = (this.headlightMode + 1) % 4
+		this.setHeadlights()
+	}
+
+	private setHeadlights(){
+		switch(this.headlightMode){
+			case 0:
+				this.headlights.projectorLeft.intensity = 0.3
+				this.headlights.projectorRight.intensity = 0.3
+				this.headlights.spotlightLeft.intensity = 0
+				this.headlights.spotlightRight.intensity = 0
+				break
+			case 1:
+				this.headlights.projectorLeft.intensity = 0
+				this.headlights.projectorRight.intensity = 0
+				this.headlights.spotlightLeft.intensity = 0.2
+				this.headlights.spotlightRight.intensity = 0.2
+				break
+			case 2:
+				this.headlights.projectorLeft.intensity = 0.2
+				this.headlights.projectorRight.intensity = 0.2
+				this.headlights.spotlightLeft.intensity = 0.15
+				this.headlights.spotlightRight.intensity = 0.15
+				break
+			case 3:
+				this.headlights.projectorLeft.intensity = 0
+				this.headlights.projectorRight.intensity = 0
+				this.headlights.spotlightLeft.intensity = 0
+				this.headlights.spotlightRight.intensity = 0
+				break
 		}
 	}
 }
