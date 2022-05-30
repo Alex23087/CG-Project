@@ -52,7 +52,13 @@
   <br/>
   <input name="skybox" id="skybox" type="checkbox"><label for="skybox">Skybox</label>
   <br/>
-  <input name="shadowmap" id="shadowmap" type="checkbox"><label for="shadowmap">Show Shadow Map</label>
+  <label for="framebuffer">Framebuffer:</label>
+  <select name="framebuffer" id="framebuffer">
+    <option value="0">Default</option>
+    <option value="1">Directional Light</option>
+    <option value="2">Left Projector</option>
+    <option value="3">Right Projector</option>
+  </select>
   <br/>
   <label for="shadowmappingmode">Shadow Mapping Mode:</label>
   <select name="shadowmappingmode" id="shadowmappingmode">

@@ -25,7 +25,7 @@ void main(void){
     vViewSpaceViewDirection = -normalize(vspos).xyz;
     vViewSpacePosition = vspos.xyz;
 
-    vViewSpaceLightDirection = (uViewMatrix * vec4(uLightDirection, 0.0)).xyz;
+    vViewSpaceLightDirection = normalize(uViewMatrix * vec4(uLightDirection, 0.0)).xyz;
     vTexCoords = aTexCoords.xy;
     vPosition = uModelMatrix * vec4(aPosition, 1.0);
 }

@@ -99,14 +99,14 @@ skyboxCheckbox.onchange = function(e: Event){
 	}
 }
 
-var shadowmapCheckbox = document.getElementById("shadowmap") as HTMLInputElement
-shadowmapCheckbox.onchange = function(e: Event){
-	renderer.showShadowMap = shadowmapCheckbox.checked as unknown as boolean
+var framebufferPicker = document.getElementById("framebuffer") as HTMLSelectElement
+framebufferPicker.onchange = function (){
+	renderer.showFramebuffer = parseInt(framebufferPicker.value)
 }
 
 var shadowMappingModePicker = document.getElementById("shadowmappingmode") as HTMLSelectElement
 shadowMappingModePicker.onchange = function (){
-	renderer.shadowMappingMode = shadowMappingModePicker.value as unknown as number
+	renderer.shadowMappingMode = parseInt(shadowMappingModePicker.value)
 }
 
 chromaticAberrationCheckbox.checked = false

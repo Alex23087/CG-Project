@@ -58,7 +58,7 @@ export class Transform{
 
     getWorldMatrix(): mat4{
         if(this.parent){
-            return glMatrix.mat4.mul(glMatrix.mat4.create(), this.parent.getLocalMatrix(), this.getLocalMatrix())
+            return glMatrix.mat4.mul(glMatrix.mat4.create(), this.parent.getWorldMatrix(), this.getLocalMatrix())
         }else{
             return this.getLocalMatrix()
         }

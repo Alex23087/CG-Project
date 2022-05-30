@@ -32,6 +32,6 @@ class DirectionalLightCamera implements Camera{
     viewMatrix: mat4
     mouseMoved(coords: vec2): void {}
     projectionMatrix(fov: number, ratio: number): mat4 {
-        return glMatrix.mat4.ortho(glMatrix.mat4.create(), -80, 100, -120, 100, 0, 220)
+        return glMatrix.mat4.ortho(glMatrix.mat4.create(), -80, 100, -120, 100, 40, 205)
     }
 }

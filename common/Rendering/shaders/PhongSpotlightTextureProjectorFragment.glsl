@@ -1,5 +1,9 @@
 #define SPOTLIGHTS_COUNT 14
 #define PROJECTOR_COUNT 2
+#define KERNEL_RADIUS 3
+#define KERNEL_SIZE (2 * KERNEL_RADIUS + 1)
+#define KERNEL_CARD float(KERNEL_SIZE * KERNEL_SIZE)
+
 precision highp float;
 
 uniform sampler2D uSampler;
@@ -30,6 +34,24 @@ varying vec2 vTexCoords;
 varying vec4 vPosition;
 varying vec3 vViewSpaceLightDirection;
 
+
+float computePCFLight(sampler2D shadowMap, vec2 shadowMapSize, vec4 lightCoordinates, float bias, float minLight){
+    float lightamount = 1.0;
+    vec2 delta = 1.0 / shadowMapSize;
+    for (int i = 0; i <= KERNEL_SIZE; i++) {
+        for (int j = 0; j<= KERNEL_SIZE; j++) {
+            vec2 offset = lightCoordinates.xy + vec2(i - KERNEL_RADIUS, j - KERNEL_RADIUS) * delta;
+            float shadowDepth = texture2D(shadowMap, offset).z;
+
+            if(shadowDepth - bias < lightCoordinates.z){
+                lightamount -= (1.0 - minLight) / KERNEL_CARD;
+            }
+        }
+    }
+    return lightamount;
+}
+
+
 void main(void){
     vec3 color = texture2D(uSampler, vTexCoords).xyz;
 
@@ -44,12 +66,11 @@ void main(void){
     float specularLight = pow(max(0.0, dot(vViewSpaceViewDirection, reflectedLightDirection)), uShininess);
     vec3 specularColor = color * specularLight;
 
+    float slopeDependentBias = clamp(0.005 * tan(acos(dot(vViewSpaceNormal, vViewSpaceLightDirection))), 0.00001, 0.01);
 
     if(uShadowMappingMode == 2){
         float shadowDepth = texture2D(uShadowMap, lightSpaceCoordinates.xy).z;
-        float bias = clamp(0.005 * tan(acos(dot(vViewSpaceNormal, vViewSpaceLightDirection))), 0.00001, 0.01);
-        bias = 0.0;
-        if(shadowDepth < lightSpaceCoordinates.z - bias || dot(vViewSpaceNormal, vViewSpaceLightDirection) < 0.0){
+        if(shadowDepth < lightSpaceCoordinates.z || dot(vViewSpaceNormal, vViewSpaceLightDirection) < 0.0){
             float firstMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).x;
             float secondMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).y;
             float variance = secondMoment - (firstMoment * firstMoment);
@@ -59,26 +80,12 @@ void main(void){
         }
     }else if(uShadowMappingMode == 0){
         float shadowDepth = texture2D(uShadowMap, lightSpaceCoordinates.xy).z;
-        float bias = clamp(0.005 * tan(acos(dot(vViewSpaceNormal, vViewSpaceLightDirection))), 0.00001, 0.01);
-        if(shadowDepth < lightSpaceCoordinates.z - bias || dot(vViewSpaceNormal, vViewSpaceLightDirection) < 0.0){
+        if(shadowDepth < lightSpaceCoordinates.z - slopeDependentBias || dot(vViewSpaceNormal, vViewSpaceLightDirection) < 0.0){
             diffuseColor *= 0.5;
             specularColor *= 0.0;
         }
     }else if(uShadowMappingMode == 1){
-        float bias = clamp(0.005 * tan(acos(dot(vViewSpaceNormal, vViewSpaceLightDirection))), 0.00001, 0.01);
-        bias = 0.0;
-        float lightamount = 1.0;
-        vec2 delta = 1.0 / uShadowMapSize;
-        for (int i=0; i<=7; i++) {
-            for (int j=0; j<=7; j++) {
-                vec2 offset = lightSpaceCoordinates.xy + vec2(i-1, j-1) * delta;
-                float shadowDepth = texture2D(uShadowMap, offset).z;
-
-                if(shadowDepth < lightSpaceCoordinates.z - bias){
-                    lightamount -= 0.5/49.0;
-                }
-            }
-        }
+        float lightamount = computePCFLight(uShadowMap, uShadowMapSize, lightSpaceCoordinates, 0.0, 0.5);
         diffuseColor *= lightamount;
         specularColor *= lightamount;
     }
@@ -98,21 +105,29 @@ void main(void){
 
 
     vec3 projectorFinalLight = vec3(0.0, 0.0, 0.0);
+    
     for(int i = 0; i < PROJECTOR_COUNT; i++){
-        vec4 projectorSpaceCoordinates = (uProjectorMatrix[i] * vPosition);
+        vec4 projectorSpaceCoordinates = uProjectorMatrix[i] * vPosition;
         projectorSpaceCoordinates = projectorSpaceCoordinates / projectorSpaceCoordinates.w;
-        projectorSpaceCoordinates += vec4(0.5, 0.0, 0.0, 0.0);
+        projectorSpaceCoordinates = projectorSpaceCoordinates * 0.5 + 0.5;
+
         if(projectorSpaceCoordinates.x >= 0.0 && projectorSpaceCoordinates.x <= 1.0 && projectorSpaceCoordinates.y >= 0.0 && projectorSpaceCoordinates.y <= 1.0){
             vec4 currentProjectorLight = texture2D(uProjectorSampler[i], projectorSpaceCoordinates.xy);
 
-            float depth = texture2D(uProjectorShadowSampler[i], projectorSpaceCoordinates.xy).z;
-            if(depth > projectorSpaceCoordinates.z){
-                projectorFinalLight += currentProjectorLight.rgb * currentProjectorLight.a;
+            if(true){
+                float depth = texture2D(uProjectorShadowSampler[i], projectorSpaceCoordinates.xy).z;
+                if(depth + 0.005 > projectorSpaceCoordinates.z){
+                    projectorFinalLight += currentProjectorLight.rgb * sin(pow(currentProjectorLight.a, 2.0));
+                }
+            }else if(uShadowMappingMode == 1){
+                float lightamount = computePCFLight(uProjectorShadowSampler[i], vec2(1024, 1024), projectorSpaceCoordinates, 0.0001, 0.0);
+                if(lightamount > 0.0){
+                    projectorFinalLight += currentProjectorLight.rgb * currentProjectorLight.a * lightamount;
+                }
             }
         }
+
     }
 
     gl_FragColor = vec4(diffuseColor + specularColor + spotlightColor + projectorFinalLight, 1.0);
-    //gl_FragColor = vec4(texture2D(uShadowMap, lightSpaceCoordinates.xy).z - lightSpaceCoordinates.z, 0.0, 0.0, 1.0);
-    //gl_FragColor = lightSpaceCoordinates;
 }

@@ -64,7 +64,7 @@ export class Renderer{
 	private projectionMatrix: mat4
 	private viewSpaceLightDirection: mat4
 
-	public showShadowMap: boolean = true
+	public showFramebuffer: number = 0
 	public shadowMappingMode: number = 1
 
 	public constructor(canvas: HTMLCanvasElement){
@@ -94,7 +94,7 @@ export class Renderer{
 
 		this.lights = {
 			spotlights: [],
-			directional: new DirectionalLight([0, -1, 0], {x: this.viewportSize.x * 8, y: this.viewportSize.y * 8}), //{x: this.viewportSize.x * 4, y: this.viewportSize.y * 4}
+			directional: new DirectionalLight([0, -1, 0], {x: this.viewportSize.x * 2, y: this.viewportSize.y * 2}), //{x: this.viewportSize.x * 4, y: this.viewportSize.y * 4}
 			projectors: []
 		}
 		this.defaultFrameBuffer = this.makeDefaultFramebuffer()
@@ -112,7 +112,7 @@ export class Renderer{
 				this.gl.activeTexture(this.gl.TEXTURE0);
 				this.defaultTexture = this.gl.createTexture();
 				this.gl.bindTexture(this.gl.TEXTURE_2D, this.defaultTexture);
-				this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, this.gl.RGB, this.gl.UNSIGNED_BYTE, image);
+				this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
 				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
 				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
 				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
@@ -393,9 +393,25 @@ export class Renderer{
 
 			this.drawFullscreenQuad(this.gaussianBlurShader, this.lights.directional.framebuffer, this.lights.directional.blurFramebuffer)
 
-			this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.postProcessingFrameBuffer)
-			if(this.showShadowMap){
-				this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.lights.directional.framebuffer)			
+			switch(this.showFramebuffer){
+				default:
+				case 0:{
+					this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.postProcessingFrameBuffer)
+					break
+				}
+				case 1:{
+					this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.lights.directional.framebuffer)		
+					break
+				}
+				case 2:{
+					this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.lights.projectors[0].framebuffer)		
+					break
+				}
+				case 3:{
+					this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.lights.projectors[1].framebuffer)		
+					break
+				}
+
 			}
 		}
 		this.currentTime = time
