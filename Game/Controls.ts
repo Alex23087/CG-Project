@@ -38,35 +38,35 @@ export class Controls {
         let cam = (this.renderer.currentCamera as unknown as FreeCamera)
         if(Controls.forwardKeys.indexOf(key) >= 0){
             if(passToCamera){
-                cam.movement[2] = value ? 1 : 0
+                cam.movement[2] = value ? -1 : 0
             }else{
                 car.control_keys["ArrowUp"] = value
             }
         } else if(Controls.backwardKeys.indexOf(key) >= 0){
             if(passToCamera){
-                cam.movement[2] = value ? -1 : 0
+                cam.movement[2] = value ? 1 : 0
             }else{
                 car.control_keys["ArrowDown"] = value
             }
         } else if(Controls.leftKeys.indexOf(key) >= 0){
             if(passToCamera){
-                cam.movement[0] = value ? 1 : 0
+                cam.movement[0] = value ? -1 : 0
             }else{
                 car.control_keys["ArrowLeft"] = value
             }
         } else if(Controls.rightKeys.indexOf(key) >= 0){
             if(passToCamera){
-                cam.movement[0] = value ? -1 : 0
+                cam.movement[0] = value ? 1 : 0
             }else{
                 car.control_keys["ArrowRight"] = value
             }
         } else if(Controls.upKeys.indexOf(key) >= 0){
             if(passToCamera){
-                cam.movement[1] = value ? -1 : 0
+                cam.movement[1] = value ? 1 : 0
             }
         } else if(Controls.downKeys.indexOf(key) >= 0){
             if(passToCamera){
-                cam.movement[1] = value ? 1 : 0
+                cam.movement[1] = value ? -1 : 0
             }
         } else if(Controls.changeCameraKeys.indexOf(key) >= 0){
             if(value){
@@ -133,6 +133,7 @@ export class Controls {
 
     onClick(e){
         return //pointer lock disabled because it causes issues on some platforms
+        /*
         this.renderer.canvas.requestPointerLock = this.renderer.canvas.requestPointerLock || (this.renderer.canvas as any).mozRequestPointerLock;
         document.exitPointerLock = document.exitPointerLock || (document as any).mozExitPointerLock;
 
@@ -140,6 +141,7 @@ export class Controls {
         document.addEventListener('mozpointerlockchange', this.lockChangeAlert, false);
 
         this.renderer.canvas.requestPointerLock()
+        */
     }
 
     lockChangeAlert = () => {

@@ -1,7 +1,7 @@
-import { Controls } from "../Game/Controls.js"
-import { Game } from "../Game/Game.js"
-import { Renderer } from "../common/Rendering/Renderer.js"
-import * as Globals from "../Game/Globals.js"
+import { Controls } from "./Game/Controls.js"
+import { Game } from "./Game/Game.js"
+import { Renderer } from "./common/Rendering/Renderer.js"
+import * as Globals from "./Game/Globals.js"
 
 var renderer: Renderer
 var controls: Controls

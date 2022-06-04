@@ -153,17 +153,21 @@ export class LateChaseCamera extends GameObject implements Camera{
 }
 
 export class FreeCamera extends GameObject implements Camera{
+	tMat: mat4
+	rMat: mat4
 	viewMatrix: mat4
+	
 	movement: vec3
 	private rotationDelta: vec2 = [0,0]
 	private previousMouseCoords: vec2 = [0,0]
-	private rotation: vec2 = [0,0]
 	private mousePressed: boolean = false
 
 	constructor(){
 		super("FreeCamera", null, null)
 		Renderer.instance.addObjectToScene(this)
-		this.movement = [0,0,0]
+		this.movement = [0,0,0,0]
+		this.tMat = glMatrix.mat4.create()
+		this.rMat = glMatrix.mat4.create()
 		this.viewMatrix = glMatrix.mat4.create()
 	}
 
@@ -177,19 +181,36 @@ export class FreeCamera extends GameObject implements Camera{
 
 	public update(deltaT: number): void {
 		var translation = glMatrix.mat4.create()
-		glMatrix.mat4.fromTranslation(translation, this.movement)
 
-		glMatrix.mat4.mul(this.viewMatrix, translation, this.viewMatrix)
+
+		{
+			let worldEye = glMatrix.vec4.transformMat4(glMatrix.vec3.create(), [0, 0, 0, 0], this.viewMatrix)
+			let worldTarget = glMatrix.vec4.transformMat4(glMatrix.vec3.create(), [0, 0, -1, 0], this.viewMatrix)
+			let worldUp = glMatrix.vec4.transformMat4(glMatrix.vec3.create(), [0, 1, 0, 0], this.viewMatrix)
+			glMatrix.vec3.add(worldTarget, worldTarget, worldEye)
+			let tmp = glMatrix.mat4.lookAt(glMatrix.mat4.create(), worldEye, worldTarget, worldUp)
+			glMatrix.mat4.fromTranslation(translation, glMatrix.vec4.transformMat4(glMatrix.vec3.create(), this.movement, tmp))
+		}
+
+		glMatrix.mat4.mul(this.tMat, translation, this.tMat)
+
+
+		let multiplier = Math.sign(glMatrix.vec3.dot(glMatrix.vec4.transformMat4(glMatrix.vec3.create(), [0, 1, 0, 0], this.rMat), glMatrix.vec4.transformMat4(glMatrix.vec3.create(), [0, 1, 0, 0], this.viewMatrix)))
 
 		var rotation = glMatrix.mat4.create()
-		glMatrix.mat4.fromXRotation(rotation, this.rotationDelta[1] * 0.2)
-		glMatrix.mat4.mul(this.viewMatrix, rotation, this.viewMatrix)
+		glMatrix.mat4.fromRotation(rotation, -multiplier * this.rotationDelta[1] * 0.2, glMatrix.vec4.transformMat4(glMatrix.vec3.create(), [1, 0, 0, 0], this.rMat))
+		glMatrix.mat4.mul(this.rMat, rotation, this.rMat)
 
 		rotation = glMatrix.mat4.create()
-		glMatrix.mat4.fromYRotation(rotation, this.rotationDelta[0] * 0.2)
-		glMatrix.mat4.mul(this.viewMatrix, rotation, this.viewMatrix)
+		glMatrix.mat4.fromRotation(rotation, -multiplier * this.rotationDelta[0] * 0.2, glMatrix.vec4.transformMat4(glMatrix.vec3.create(), [0, 1, 0, 0], this.rMat))
+		glMatrix.mat4.mul(this.rMat, rotation, this.rMat)
 
 		this.rotationDelta = [0,0]
+
+		let worldEye = glMatrix.vec3.transformMat4(glMatrix.vec3.create(), [0, 0, 0], this.tMat)
+		let worldTarget = glMatrix.vec4.transformMat4(glMatrix.vec3.create(), [0, 0, -1, 0], this.rMat)
+		glMatrix.vec3.add(worldTarget, worldTarget, worldEye)
+		glMatrix.mat4.lookAt(this.viewMatrix, worldEye, worldTarget, [0, 1, 0])
 	}
 
 	public mouseup(){
