@@ -3,6 +3,7 @@ import { ShaderMaterial } from "../../common/Rendering/ShaderMaterial.js";
 import { Spotlight } from "../../common/Rendering/Spotlight.js";
 import { Shape } from "../../common/shapes/Shape.js";
 import * as Shaders from "../../common/Rendering/Shaders.js"
+import * as Globals from "../Globals.js"
 
 export class LampPost extends GameObject{
     spotlight: Spotlight
@@ -28,7 +29,7 @@ export class LampPost extends GameObject{
         post.transform.scaling = [0.1,2,0.1]
         post.transform.position = [0, -4, 0]
 
-        ShaderMaterial.create(Shaders.PhongSpotlightShader).then(mat => {
+        ShaderMaterial.create(Globals.renderer < 2 ? Shaders.PhongSpotlightShader : Shaders.PhongSpotlightProjectorShader).then(mat => {
             lampCover.material = mat
             post.material = mat
             mat.setColor([29/256, 15/256, 17/256, 1])

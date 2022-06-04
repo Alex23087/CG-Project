@@ -53,6 +53,7 @@ export class Renderer{
 	private viewportSize: Dimension
 	public chromaticAberration: boolean = false
 	public quantize: boolean = false
+	public invert: boolean = false
 
 	public textureManager: TextureManager
 	private postProcessingFrameBuffer: Framebuffer | null = null
@@ -105,26 +106,11 @@ export class Renderer{
 		this.postProcessingQuad = new GameObject("PostProcessing quad", null, Shape.quad)
 		
 		ShaderMaterial.create(Shaders.UniformShader).then(material => {
-			let image = new Image()
-			image.src = "../../Assets/Textures/street4.png"
-			image.addEventListener('load', () => {
-				this.defaultMaterial = material
+			this.defaultMaterial = material
+			ShaderMaterial.create(Shaders.DepthShader).then(material => {
+				this.depthMaterial = material
 
-				this.gl.activeTexture(this.gl.TEXTURE0);
-				this.defaultTexture = this.gl.createTexture();
-				this.gl.bindTexture(this.gl.TEXTURE_2D, this.defaultTexture);
-				this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
-				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
-				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
-				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-				this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
-				this.gl.generateMipmap(this.gl.TEXTURE_2D)
-
-				ShaderMaterial.create(Shaders.DepthShader).then(material => {
-					this.depthMaterial = material
-
-					this.startRendering(0)
-				})
+				this.startRendering(0)
 			})
 		})
 	}
@@ -357,6 +343,7 @@ export class Renderer{
 			this.gl.viewport(0, 0, this.viewportSize.x / this.scale, this.viewportSize.y / this.scale)
 			gl.uniform1f(gl.getUniformLocation(shader.program, "uAmount"), 1 + (this.findGameObjectWithName("mycar") as any).speed / 12)
 			gl.uniform1i(gl.getUniformLocation(shader.program, "uQuantize"), this.quantize == true ? 1 : 0)
+			gl.uniform1i(gl.getUniformLocation(shader.program, "uInvert"), this.invert == true ? 1 : 0)
 			gl.uniform1i(gl.getUniformLocation(shader.program, "uAberration"), this.chromaticAberration == true ? 1 : 0)
 		}else if(shader instanceof GaussianBlurShader){
 			gl.uniform2fv(gl.getUniformLocation(shader.program, "uSize"), [previousFramebuffer.size.x, previousFramebuffer.size.y])
@@ -432,7 +419,7 @@ export class Renderer{
 					break
 				}
 				case 1:{
-					this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.lights.directional.framebuffer)		
+					this.drawFullscreenQuad(this.postProcessingShader, this.defaultFrameBuffer, this.lights.directional.framebuffer)	
 					break
 				}
 				case 2:{
@@ -483,12 +470,16 @@ export class Renderer{
 		this.computeViewportSize()
 	}
 
+	public setShadowmapScale(scale: number){
+		this.lights?.directional?.resize({x: this.viewportSize.x * scale, y: this.viewportSize.y * scale})
+	}
+
 	private computeViewportSize(){
 		this.viewportSize = {
 			x: this.canvas.width * this.scale,
 			y: this.canvas.height * this.scale
 		}
-
+		
 		this.postProcessingFrameBuffer?.resize(this.viewportSize)
 	}
 

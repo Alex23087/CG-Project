@@ -6,7 +6,7 @@
 
 precision highp float;
 
-uniform sampler2D uSampler;
+uniform vec4 uColor;
 uniform float uShininess;
 
 uniform mat4 uViewMatrix;
@@ -31,7 +31,6 @@ uniform vec2 uShadowMapSize;
 varying vec3 vViewSpaceNormal;
 varying vec3 vViewSpaceViewDirection;
 varying vec3 vViewSpacePosition;
-varying vec2 vTexCoords;
 varying vec4 vPosition;
 varying vec3 vViewSpaceLightDirection;
 
@@ -54,7 +53,7 @@ float computePCFLight(sampler2D shadowMap, vec2 shadowMapSize, vec4 lightCoordin
 
 
 void main(void){
-    vec3 color = texture2D(uSampler, vTexCoords).xyz;
+    vec3 color = uColor.xyz;
 
     vec4 lightSpaceCoordinates = uLightMatrix * vPosition;
     lightSpaceCoordinates = lightSpaceCoordinates * 0.5 + 0.5;
@@ -71,11 +70,11 @@ void main(void){
 
     if(uShadowMappingMode == 2){
         float shadowDepth = texture2D(uShadowMap, lightSpaceCoordinates.xy).z;
-        if(shadowDepth < lightSpaceCoordinates.z){
+        if(shadowDepth < lightSpaceCoordinates.z || dot(vViewSpaceNormal, vViewSpaceLightDirection) < 0.0){
             float firstMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).x;
             float secondMoment = texture2D(uShadowMap, lightSpaceCoordinates.xy).y;
             float variance = secondMoment - (firstMoment * firstMoment);
-            float shadow = min(0.5, variance / (variance  + (lightSpaceCoordinates.z - firstMoment)) * 0.5);
+            float shadow = variance / (variance  + (lightSpaceCoordinates.z - firstMoment)) * 0.5;
             diffuseColor *= shadow + 0.5;
             specularColor *= shadow + 0.5;
         }

@@ -26,6 +26,11 @@ export class DirectionalLight{
     public getLightMatrix(){
         return glMatrix.mat4.mul(glMatrix.mat4.create(), this.camera.projectionMatrix(0,0), this.camera.viewMatrix)
     }
+
+    public resize(size: Dimension){
+        this.framebuffer.resize(size)
+        this.blurFramebuffer.resize(size)
+    }
 }
 
 class DirectionalLightCamera implements Camera{

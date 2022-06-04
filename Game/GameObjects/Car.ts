@@ -141,7 +141,7 @@ export class Car extends GameObject{
 				})
 				break
 			}
-			default:{
+			case 1:{
 				ShaderMaterial.create(Shaders.PhongSpotlightShader).then(wheelMaterial => {
 					wheelMaterial.setColor([0.1, 0.1, 0.1, 1])
 
@@ -152,6 +152,21 @@ export class Car extends GameObject{
 				})
 
 				ShaderMaterial.create(Shaders.PhongSpotlightShader).then(carMaterial => {
+					carMaterial.setColor([1, 0, 0, 1])
+					carHull.material = carMaterial
+				})
+			}
+			default:{
+				ShaderMaterial.create(Shaders.PhongSpotlightProjectorShader).then(wheelMaterial => {
+					wheelMaterial.setColor([0.1, 0.1, 0.1, 1])
+
+					this.wheels.frontLeft.material = wheelMaterial
+					this.wheels.frontRight.material = wheelMaterial
+					this.wheels.rearLeft.material = wheelMaterial
+					this.wheels.rearRight.material = wheelMaterial
+				})
+
+				ShaderMaterial.create(Shaders.PhongSpotlightProjectorShader).then(carMaterial => {
 					carMaterial.setColor([1, 0, 0, 1])
 					carHull.material = carMaterial
 				})

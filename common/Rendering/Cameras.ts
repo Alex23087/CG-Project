@@ -153,8 +153,8 @@ export class LateChaseCamera extends GameObject implements Camera{
 }
 
 export class FreeCamera extends GameObject implements Camera{
-	tMat: mat4
-	rMat: mat4
+	private tMat: mat4
+	private rMat: mat4
 	viewMatrix: mat4
 	
 	movement: vec3

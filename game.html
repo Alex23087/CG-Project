@@ -3,7 +3,7 @@
 
   <head>    
     <script type="module" src="../tsOut/common/scenes/scene_0.js"></script>
-		<script type="module" src="../tsOut/renderer_00/main.js"></script>
+		<script type="module" src="../tsOut/main.js"></script>
   </head>
 
   <body>
@@ -28,6 +28,8 @@
       <input name="chromaticAberration" id="chromaticAberration" type="checkbox"><label for="chromaticAberration">Chromatic Aberration</label>
       <br/>
       <input name="quantize" id="quantize" type="checkbox"><label for="quantize">Quantize</label>
+      <br/>
+      <input name="invert" id="invert" type="checkbox"><label for="invert">Invert Colors</label>
       <br/>
       <input name="skybox" id="skybox" type="checkbox"><label for="skybox">Skybox</label>
       <br/>
@@ -57,6 +59,10 @@
       <label for="scale">Scale:</label>
       <input type="range" min="0.009" max="2" step="0.01" value="1" class="slider" id="scale">
       <label for="scale" id="scaleValue">1</label>
+      <br/>
+      <label for="shadowmapScale">Shadow Map Scale:</label>
+      <input type="range" min="0.009" max="4" step="0.01" value="2" class="slider" id="shadowmapScale">
+      <label for="shadowmapScale" id="shadowmapScaleValue">2</label>
     </div>
   </body>
 </html>

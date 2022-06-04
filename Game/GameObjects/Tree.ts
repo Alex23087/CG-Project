@@ -1,8 +1,8 @@
 import { GameObject } from "../../common/Rendering/GameObject.js";
 import { ShaderMaterial } from "../../common/Rendering/ShaderMaterial.js";
-import { Spotlight } from "../../common/Rendering/Spotlight.js";
 import { Shape } from "../../common/shapes/Shape.js";
 import * as Shaders from "../../common/Rendering/Shaders.js"
+import * as Globals from "../Globals.js"
 
 export class Tree extends GameObject{
 
@@ -17,12 +17,12 @@ export class Tree extends GameObject{
         trunk.transform.scaling = [0.3,2,0.3]
         trunk.transform.position = [0, 0, 0]
 
-        ShaderMaterial.create(Shaders.PhongSpotlightShader).then(mat => {
+        ShaderMaterial.create(Globals.renderer < 2 ? Shaders.PhongSpotlightShader : Shaders.PhongSpotlightProjectorShader).then(mat => {
             foliage.material = mat
             mat.setColor([48/256, 113/256, 8/256, 1])
             mat.setShininess(0)
         })
-        ShaderMaterial.create(Shaders.PhongSpotlightShader).then(mat => {
+        ShaderMaterial.create(Globals.renderer < 2 ? Shaders.PhongSpotlightShader : Shaders.PhongSpotlightProjectorShader).then(mat => {
             trunk.material = mat
             mat.setColor([29/256, 15/256, 17/256, 1])
         })

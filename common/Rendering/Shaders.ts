@@ -395,6 +395,66 @@ MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, Lig
 	}
 }
 
+export class PhongSpotlightProjectorShader extends Shader implements
+PositionableShader, NormalShader, ShinyShader,
+MVMatrixShader, ModelMatrixShader, ProjectionMatrixShader, ViewMatrixShader, LightDirectionShader, SpotlightShader, ColorableShader, ProjectorShader, ShadowMapShader {
+	name: string = "PhongSpotlightProjector"
+	
+	aPositionIndex: 0 = 0
+	aNormalIndex: 1 = 1
+	
+	uColorLocation: WebGLUniformLocation
+	uShininessLocation: WebGLUniformLocation
+	
+	uModelMatrixLocation: WebGLUniformLocation
+	uModelViewMatrixLocation: WebGLUniformLocation
+	uProjectionMatrixLocation: WebGLUniformLocation
+	uViewMatrixLocation: WebGLUniformLocation
+	
+	uLightDirectionLocation: WebGLUniformLocation
+	
+	uSpotlightPositionsLocation: WebGLUniformLocation
+	uSpotlightDirectionsLocation: WebGLUniformLocation
+	uSpotlightAttenuationLocation: WebGLUniformLocation
+	uSpotlightCutoffLocation: WebGLUniformLocation
+	uSpotlightColorsLocation: WebGLUniformLocation
+	uSpotlightFocusLocation: WebGLUniformLocation
+	uSpotlightIntensityLocation: WebGLUniformLocation
+	
+	uProjectorSamplerLocation: WebGLUniformLocation
+	uProjectorShadowSamplerLocation: WebGLUniformLocation
+	uProjectorMatrixLocation: WebGLUniformLocation
+	uProjectorIntensityLocation: WebGLUniformLocation
+	
+	uShadowMapLocation: WebGLUniformLocation
+	uLightMatrixLocation: WebGLUniformLocation
+	uShadowMappingModeLocation: WebGLUniformLocation
+	uShadowMapSizeLocation: WebGLUniformLocation
+
+	_bindAttribs(gl: WebGLRenderingContext): void {
+		gl.bindAttribLocation(this.program, this.aPositionIndex, "aPosition")
+		gl.bindAttribLocation(this.program, this.aNormalIndex, "aNormal")
+	}
+	_getLocations(gl: WebGLRenderingContext): void {
+		this.uModelViewMatrixLocation = gl.getUniformLocation(this.program, "uModelViewMatrix")
+		this.uModelMatrixLocation = gl.getUniformLocation(this.program, "uModelMatrix")
+		this.uProjectionMatrixLocation = gl.getUniformLocation(this.program, "uProjectionMatrix")
+		this.uShininessLocation = gl.getUniformLocation(this.program, "uShininess")
+		this.uLightDirectionLocation = gl.getUniformLocation(this.program, "uLightDirection")
+		this.uViewMatrixLocation = gl.getUniformLocation(this.program, "uViewMatrix")
+		this.uColorLocation = gl.getUniformLocation(this.program, "uColor")
+		this.uProjectorSamplerLocation = gl.getUniformLocation(this.program, "uProjectorSampler")
+		this.uProjectorShadowSamplerLocation = gl.getUniformLocation(this.program, "uProjectorShadowSampler")
+		this.uProjectorMatrixLocation = gl.getUniformLocation(this.program, "uProjectorMatrix")
+		this.uProjectorIntensityLocation = gl.getUniformLocation(this.program, "uProjectorIntensity")
+		this.uShadowMapLocation = gl.getUniformLocation(this.program, "uShadowMap")
+		this.uLightMatrixLocation = gl.getUniformLocation(this.program, "uLightMatrix")
+		this.uShadowMappingModeLocation = gl.getUniformLocation(this.program, "uShadowMappingMode")
+		this.uShadowMapSizeLocation = gl.getUniformLocation(this.program, "uShadowMapSize")
+		Shader.getSpotlightLocations(gl, this)
+	}
+}
+
 export class SkyboxShader extends Shader implements ProjectionMatrixShader, ViewMatrixShader, CubemappedShader, PositionableShader{
 	name: string ="Skybox"
 	

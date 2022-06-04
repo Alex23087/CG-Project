@@ -72,6 +72,13 @@ scaleSlider.oninput = (ev) => {
 	scaleValue.innerText = scaleSlider.value
 }
 
+let shadowMapScaleSlider = document.getElementById("shadowmapScale") as HTMLInputElement
+let shadowmapScaleValue = document.getElementById("shadowmapScaleValue") as HTMLInputElement
+shadowMapScaleSlider.oninput = (ev) => {
+	renderer.setShadowmapScale(shadowMapScaleSlider.value as unknown as number)
+	shadowmapScaleValue.innerText = shadowMapScaleSlider.value
+}
+
 var chromaticAberrationCheckbox = document.getElementById("chromaticAberration") as HTMLInputElement
 chromaticAberrationCheckbox.onchange = function(e: Event){
 	renderer.chromaticAberration = chromaticAberrationCheckbox.checked as unknown as boolean
@@ -80,6 +87,11 @@ chromaticAberrationCheckbox.onchange = function(e: Event){
 var quantizeCheckbox = document.getElementById("quantize") as HTMLInputElement
 quantizeCheckbox.onchange = function(e: Event){
 	renderer.quantize = quantizeCheckbox.checked as unknown as boolean
+}
+
+var invertCheckbox = document.getElementById("invert") as HTMLInputElement
+invertCheckbox.onchange = function(e: Event){
+	renderer.invert = invertCheckbox.checked as unknown as boolean
 }
 
 var skyboxCheckbox = document.getElementById("skybox") as HTMLInputElement
@@ -115,8 +127,10 @@ wireframePicker.onchange = function (){
 
 chromaticAberrationCheckbox.checked = false
 quantizeCheckbox.checked = false
+invertCheckbox.checked = false
 skyboxCheckbox.checked = true
 scaleSlider.value = "1"
+shadowMapScaleSlider.value = "2"
 cameraSelector.value = "1"
 shadowMappingModePicker.value = "1"
 wireframePicker.value = "0"

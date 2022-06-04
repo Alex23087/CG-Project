@@ -18,8 +18,8 @@ export class Framebuffer{
 
     resize(size: Dimension){
         Renderer.instance.textureManager.removeTexture(this.texture)
-        Renderer.instance.gl.deleteFramebuffer(this.framebuffer)
         Renderer.instance.gl.deleteRenderbuffer(this.depthbuffer)
+        Renderer.instance.gl.deleteFramebuffer(this.framebuffer)
 
         this.initFramebuffer(size)
     }

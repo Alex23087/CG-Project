@@ -47,6 +47,14 @@ export class TextureManager{
         this.images = []
     }
 
+    private getFreeUnit(): number{
+        var i = 0
+        while(this.elements.find(e => e.unit == i)){
+            i++
+        }
+        return i
+    }
+
     getTextureUnit(name: string, wrap: WEBGLTextureWrapMode = Renderer.instance.gl.REPEAT, size: Dimension = {x: 0, y: 0}): number{
         var tex = this.elements.find(e => e.name == name)
         if(!tex){
@@ -54,7 +62,7 @@ export class TextureManager{
                 let evicted = this.evict()
                 return this.loadTexture(name, evicted.unit, wrap, size)
             }else{
-                return this.loadTexture(name, this.size, wrap, size)
+                return this.loadTexture(name, this.getFreeUnit(), wrap, size)
             }
         }
         tex.lastUsed = Date.now()
@@ -77,7 +85,7 @@ export class TextureManager{
                 let evicted = this.evict()
                 return this.loadCubemapTexture(name, evicted.unit)
             }else{
-                return this.loadCubemapTexture(name, this.size)
+                return this.loadCubemapTexture(name, this.getFreeUnit())
             }
         }
         let img = this.images.find(i => i.name == name)
@@ -160,7 +168,6 @@ export class TextureManager{
     }
 
     private loadTexture(name: string, textureUnit: number, wrap: WEBGLTextureWrapMode, size: Dimension): number{
-        textureUnit += 1
         textureUnit += Renderer.instance.gl.TEXTURE0
 
         let image = this.getImage(name)
@@ -221,7 +228,6 @@ export class TextureManager{
             return 0
         }
 
-        textureUnit += 1
         textureUnit += Renderer.instance.gl.TEXTURE0
 
         Renderer.instance.gl.activeTexture(textureUnit);

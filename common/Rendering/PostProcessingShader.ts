@@ -23,6 +23,7 @@ export class PostProcessingShader {
 		uniform float uAmount;
 		uniform int uQuantize;
 		uniform int uAberration;
+		uniform int uInvert;
 		
 		varying vec2 vTexCoord;
 
@@ -67,6 +68,13 @@ export class PostProcessingShader {
 				vec3 color_resolution = vec3(1024.0, 1024.0, 8.0);
 				vec3 color_bands = floor(rgb2hsv(gl_FragColor.rgb) * color_resolution) / (color_resolution - 1.0);
 				gl_FragColor = vec4(min(hsv2rgb(color_bands), 1.0), gl_FragColor.a);
+			}
+
+			if(uInvert == 1){
+				vec3 col = rgb2hsv(gl_FragColor.rgb);
+				col.x += 0.5;
+				col = hsv2rgb(col);
+				gl_FragColor = vec4(col, gl_FragColor.a);
 			}
 		}`;
 
