@@ -192,6 +192,7 @@ export class Game {
 					tree.transform.position = this.scene._trees[i].position
 				}
 			}
+			case 2:
 			case 1:{
 				for(var i = 0; i < this.scene.lamps.length; i++){
 					let post = new LampPost("LampPost " + i, this.worldGameObject)

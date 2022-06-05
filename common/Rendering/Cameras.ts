@@ -167,6 +167,7 @@ export class FreeCamera extends GameObject implements Camera{
 		Renderer.instance.addObjectToScene(this)
 		this.movement = [0,0,0,0]
 		this.tMat = glMatrix.mat4.create()
+		glMatrix.mat4.translate(this.tMat, this.tMat, [0, 10, 30])
 		this.rMat = glMatrix.mat4.create()
 		this.viewMatrix = glMatrix.mat4.create()
 	}

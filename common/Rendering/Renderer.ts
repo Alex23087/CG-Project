@@ -71,6 +71,11 @@ export class Renderer{
 
 	public constructor(canvas: HTMLCanvasElement){
         this.canvas = canvas
+		this.canvas.onresize = () => {
+			this.resizeViewport({x: this.canvas.clientWidth, y: this.canvas.clientHeight})
+		}
+		window.addEventListener('resize', this.canvas.onresize)
+		this.canvas.onresize(null)
 
 		Renderer.instance = this
             
@@ -446,14 +451,10 @@ export class Renderer{
 
     toggleFullscreen(){
         if (!document.fullscreenElement) {
-            this.canvas.requestFullscreen();
-            this.canvas.onresize = () => {
-				this.resizeViewport({x: this.canvas.clientWidth, y: this.canvas.clientHeight})
-            }
-            window.addEventListener('resize', this.canvas.onresize)
+            this.canvas.requestFullscreen()
         } else {
           if (document.exitFullscreen) {
-            document.exitFullscreen();
+            document.exitFullscreen()
 			this.resizeViewport(this.canvasDefaultSize)
           }
         }

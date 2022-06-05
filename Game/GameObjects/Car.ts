@@ -42,7 +42,7 @@ export class Car extends GameObject{
 		spotlightLeft: Spotlight
 		spotlightRight: Spotlight
 	}
-	private headlightMode: number = 2
+	private headlightMode: number = Globals.renderer >=2 ? 2 : 1
 
 	constructor(name: string, startPosition: vec3) {
 		super(name, null, null)
