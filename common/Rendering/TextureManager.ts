@@ -32,76 +32,76 @@ type CubemapImages = {
 
 type WEBGLTextureWrapMode = typeof Renderer.instance.gl.REPEAT | typeof Renderer.instance.gl.CLAMP_TO_EDGE
 
-export class TextureManager{
+export class TextureManager {
     limit: number
     private elements: TextureCacheElement[]
     private images: ImageElement[]
 
-    get size(){
+    get size() {
         return this.elements.length
     }
 
-    constructor(){
+    constructor() {
         this.limit = Renderer.instance.gl.MAX_TEXTURE_IMAGE_UNITS - 1
         this.elements = []
         this.images = []
     }
 
-    private getFreeUnit(): number{
+    private getFreeUnit(): number {
         var i = 0
-        while(this.elements.find(e => e.unit == i)){
+        while (this.elements.find(e => e.unit == i)) {
             i++
         }
         return i
     }
 
-    getTextureUnit(name: string, wrap: WEBGLTextureWrapMode = Renderer.instance.gl.REPEAT, size: Dimension = {x: 0, y: 0}): number{
+    getTextureUnit(name: string, wrap: WEBGLTextureWrapMode = Renderer.instance.gl.REPEAT, size: Dimension = { x: 0, y: 0 }, isDepthbuffer: boolean = false): number {
         var tex = this.elements.find(e => e.name == name)
-        if(!tex){
-            if(this.size >= this.limit){
+        if (!tex) {
+            if (this.size >= this.limit) {
                 let evicted = this.evict()
-                return this.loadTexture(name, evicted.unit, wrap, size)
-            }else{
-                return this.loadTexture(name, this.getFreeUnit(), wrap, size)
+                return this.loadTexture(name, evicted.unit, wrap, size, isDepthbuffer)
+            } else {
+                return this.loadTexture(name, this.getFreeUnit(), wrap, size, isDepthbuffer)
             }
         }
         tex.lastUsed = Date.now()
         return tex.unit
     }
 
-    getTextureData(name: string){
+    getTextureData(name: string) {
         let img = this.images.find(v => v.name == name)
-        if(!img){
+        if (!img) {
             return null
-        }else{
+        } else {
             return img.texture
         }
     }
 
-    getCubemapTexture(name: string): number{
+    getCubemapTexture(name: string): number {
         var tex = this.elements.find(e => e.name == name)
-        if(!tex){
-            if(this.size >= this.limit){
+        if (!tex) {
+            if (this.size >= this.limit) {
                 let evicted = this.evict()
                 return this.loadCubemapTexture(name, evicted.unit)
-            }else{
+            } else {
                 return this.loadCubemapTexture(name, this.getFreeUnit())
             }
         }
         let img = this.images.find(i => i.name == name)
-        if(img && !img.texture){
+        if (img && !img.texture) {
             this.loadCubemapTexture(name, tex.unit, true)
         }
         tex.lastUsed = Date.now()
         return tex.unit
     }
 
-    loadImage(name: string){
+    loadImage(name: string) {
         let img = this.images.find(v => v.name == name)
-        if(!img){
+        if (!img) {
             this.loadSingleImage(name, (image) => {
                 let img = this.images.find(v => v.name == name)
-                if(!img){
+                if (!img) {
                     this.images.push({
                         name: name,
                         image: image,
@@ -112,7 +112,7 @@ export class TextureManager{
         }
     }
 
-    private loadSingleImage(name: string, callback: (image: HTMLImageElement) => void){
+    private loadSingleImage(name: string, callback: (image: HTMLImageElement) => void) {
         let image = new Image()
         image.src = name
         image.addEventListener('load', () => {
@@ -121,9 +121,9 @@ export class TextureManager{
     }
 
 
-    loadCubemap(textures: CubemapNames){
+    loadCubemap(textures: CubemapNames) {
         let img = this.images.find(v => v.name == textures.posX)
-        if(!img){
+        if (!img) {
             let cubemapImages: CubemapImages = {
                 posX: null,
                 negX: null,
@@ -146,7 +146,7 @@ export class TextureManager{
                                 cubemapImages.posZ = image
                                 this.loadSingleImage(textures.negZ, (image) => {
                                     cubemapImages.negZ = image
-                                    if(!img){
+                                    if (!img) {
                                         this.images.push({
                                             name: textures.posX,
                                             image: cubemapImages,
@@ -163,22 +163,29 @@ export class TextureManager{
     }
 
 
-    private getImage(name: string): ImageElement | undefined{
+    private getImage(name: string): ImageElement | undefined {
         return this.images.find(v => v.name == name)
     }
 
-    private loadTexture(name: string, textureUnit: number, wrap: WEBGLTextureWrapMode, size: Dimension): number{
+    private loadTexture(name: string, textureUnit: number, wrap: WEBGLTextureWrapMode, size: Dimension, isDepthbuffer: boolean = false): number {
         textureUnit += Renderer.instance.gl.TEXTURE0
 
         let image = this.getImage(name)
-        if(image){ //Image exists, load it into texture unit
+        if (image) { //Image exists, load it into texture unit
             Renderer.instance.gl.activeTexture(textureUnit);
-            if(image.texture){
+            if (image.texture) {
                 Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, image.texture)
-            }else{
+            } else {
                 let texture = Renderer.instance.gl.createTexture();
                 Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, texture);
-                Renderer.instance.gl.texImage2D(Renderer.instance.gl.TEXTURE_2D, 0, Renderer.instance.gl.RGBA, Renderer.instance.gl.RGBA, Renderer.instance.gl.UNSIGNED_BYTE, image.image as HTMLImageElement);
+                Renderer.instance.gl.texImage2D(
+                    Renderer.instance.gl.TEXTURE_2D,
+                    0,
+                    isDepthbuffer ? Renderer.instance.gl.DEPTH_COMPONENT24 : Renderer.instance.gl.RGBA,
+                    isDepthbuffer ? Renderer.instance.gl.DEPTH_COMPONENT : Renderer.instance.gl.RGBA,
+                    isDepthbuffer ? Renderer.instance.gl.UNSIGNED_INT : Renderer.instance.gl.UNSIGNED_BYTE,
+                    image.image as HTMLImageElement
+                );
                 Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_S, wrap);
                 Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_T, wrap);
                 Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MAG_FILTER, Renderer.instance.gl.LINEAR);
@@ -188,28 +195,38 @@ export class TextureManager{
                     Renderer.instance.gl.getExtension('MOZ_EXT_texture_filter_anisotropic') ||
                     Renderer.instance.gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic')
                 )
-                if (ext){
+                if (ext) {
                     var max = Renderer.instance.gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT)
                     Renderer.instance.gl.texParameterf(Renderer.instance.gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, max)
                 }
                 Renderer.instance.gl.generateMipmap(Renderer.instance.gl.TEXTURE_2D)
                 image.texture = texture
             }
-        }else{ //Image doesn't exist, create new empty texture
-            if(size.x == 0 || size.y == 0){ //Invalid dimensions, return first texture
+        } else { //Image doesn't exist, create new empty texture
+            if (size.x == 0 || size.y == 0) { //Invalid dimensions, return first texture
                 return 0
             }
             //alert("Creating texture " + name)
-			Renderer.instance.gl.activeTexture(textureUnit)
-			let texture = Renderer.instance.gl.createTexture()
-			Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, texture)
-			Renderer.instance.gl.texImage2D(Renderer.instance.gl.TEXTURE_2D, 0, Renderer.instance.gl.RGBA, size.x, size.y, 0, Renderer.instance.gl.RGBA, Renderer.instance.gl.UNSIGNED_BYTE, null)
-			Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MIN_FILTER, Renderer.instance.gl.NEAREST)
-			Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MAG_FILTER, Renderer.instance.gl.NEAREST)
-			Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_S, wrap)
-			Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_T, wrap)
+            Renderer.instance.gl.activeTexture(textureUnit)
+            let texture = Renderer.instance.gl.createTexture()
+            Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_2D, texture)
+            Renderer.instance.gl.texImage2D(
+                Renderer.instance.gl.TEXTURE_2D,
+                0,
+                isDepthbuffer ? Renderer.instance.gl.DEPTH_COMPONENT24 : Renderer.instance.gl.RGBA,
+                size.x,
+                size.y,
+                0,
+                isDepthbuffer ? Renderer.instance.gl.DEPTH_COMPONENT : Renderer.instance.gl.RGBA,
+                isDepthbuffer ? Renderer.instance.gl.UNSIGNED_INT : Renderer.instance.gl.UNSIGNED_BYTE,
+                null
+            )
+            Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MIN_FILTER, Renderer.instance.gl.NEAREST)
+            Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_MAG_FILTER, Renderer.instance.gl.NEAREST)
+            Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_S, wrap)
+            Renderer.instance.gl.texParameteri(Renderer.instance.gl.TEXTURE_2D, Renderer.instance.gl.TEXTURE_WRAP_T, wrap)
 
-            this.images.push({name: name, image: null, texture: texture})
+            this.images.push({ name: name, image: null, texture: texture })
         }
 
         textureUnit -= Renderer.instance.gl.TEXTURE0
@@ -222,21 +239,21 @@ export class TextureManager{
         return textureUnit
     }
 
-    private loadCubemapTexture(name: string, textureUnit: number, update: boolean = false): number{
+    private loadCubemapTexture(name: string, textureUnit: number, update: boolean = false): number {
         let image = this.getImage(name)
-        if(!image){
+        if (!image) {
             return 0
         }
 
         textureUnit += Renderer.instance.gl.TEXTURE0
 
         Renderer.instance.gl.activeTexture(textureUnit);
-        if(image.texture){
+        if (image.texture) {
             Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_CUBE_MAP, image.texture)
-        }else{
+        } else {
             let texture = Renderer.instance.gl.createTexture();
             Renderer.instance.gl.bindTexture(Renderer.instance.gl.TEXTURE_CUBE_MAP, texture);
-            
+
             let imgs = (image.image as CubemapImages)
 
             Renderer.instance.gl.texImage2D(Renderer.instance.gl.TEXTURE_CUBE_MAP_POSITIVE_X, 0, Renderer.instance.gl.RGBA, Renderer.instance.gl.RGBA, Renderer.instance.gl.UNSIGNED_BYTE, imgs.posX ?? imgs.posX as HTMLImageElement);
@@ -256,7 +273,7 @@ export class TextureManager{
 
         textureUnit -= Renderer.instance.gl.TEXTURE0
 
-        if(!update){
+        if (!update) {
             this.elements.push({
                 name: name,
                 unit: textureUnit,
@@ -267,20 +284,20 @@ export class TextureManager{
         return textureUnit
     }
 
-    private evict(): TextureCacheElement{
+    private evict(): TextureCacheElement {
         let evicted = this.elements.reduce((prev, curr, index, array) => {
-            if(!prev){
+            if (!prev) {
                 return curr
-            }else if(curr.lastUsed < prev.lastUsed){
+            } else if (curr.lastUsed < prev.lastUsed) {
                 return curr
-            }else{
+            } else {
                 return prev
             }
         })
         return this.elements.splice(this.elements.findIndex(e => e.lastUsed == evicted.lastUsed), 1)[0]
     }
 
-    removeTexture(name: string){
+    removeTexture(name: string) {
         this.elements.splice(this.elements.findIndex(e => e.name == name), 1)
         let img = this.images.findIndex(e => e.name == name)
         Renderer.instance.gl.deleteTexture(this.images[img].texture)

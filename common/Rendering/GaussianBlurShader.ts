@@ -17,7 +17,7 @@ export class GaussianBlurShader {
 		   gl_Position = vec4(aPosition, 0.0, 1.0);
 		}`;
 		let fsSource = `
-		precision mediump float;
+		precision highp float;
  
 		uniform sampler2D uTexture;
 		uniform vec2 uSize;
