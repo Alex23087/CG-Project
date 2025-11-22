@@ -1,128 +1,134 @@
 <!DOCTYPE html>
 <html>
 
-  <head>    
-    <script type="module" src="../tsOut/common/scenes/scene_0.js"></script>
-		<script type="module" src="../tsOut/main.js"></script>
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> 
-  </head>
+<head>
+  <script type="module" src="../tsOut/common/scenes/scene_0.js"></script>
+  <script type="module" src="../tsOut/main.js"></script>
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+</head>
 
-  <body>
-    <div tabindex="1">
-        <canvas  tabindex='1'
-          id     = "OUTPUT-CANVAS"
-          style  = "border: 1px solid black; width: 100%"
-        />
-    </div>
+<body>
+  <div tabindex="1">
+    <canvas tabindex='1' id="OUTPUT-CANVAS" style="border: 1px solid black; width: 100%" />
+  </div>
 
-    <div class="w3-half">
-      <div class="w3-card w3-teal w3-margin w3-padding-16 w3-round">
+  <div class="w3-half">
+    <div class="w3-card w3-teal w3-margin w3-padding-16 w3-round">
+      <div class="w3-container">
+        <h3>Renderer options:</h3>
+        <div class="w3-padding-16">
+          <label for="cameras">Camera:</label>
+          <select class="w3-select" name="cameras" id="cameras">
+            <option value="0">FollowFromUp</option>
+            <option value="1">Chase</option>
+            <option value="2">Late Chase</option>
+            <option value="3">Free Camera</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="w3-padding-16">
+            <input class="w3-check" name="fogEnable" id="fogEnable" type="checkbox">
+            <label for="fogEnable">Enable Fog</label>
+          </div>
+        </div>
+
+        <div>
+          <div class="w3-half w3-padding-16">
+            <input class="w3-check" name="chromaticAberration" id="chromaticAberration" type="checkbox">
+            <label for="chromaticAberration">Chromatic Aberration</label>
+          </div>
+          <div class="w3-half w3-padding-16">
+            <input class="w3-check" name="skybox" id="skybox" type="checkbox">
+            <label for="skybox">Skybox</label>
+          </div>
+        </div>
+
+        <div>
+          <div class="w3-half w3-padding-16">
+            <input class="w3-check" name="quantize" id="quantize" type="checkbox">
+            <label for="quantize">Quantize</label>
+          </div>
+          <div class="w3-half w3-padding-16">
+            <input class="w3-check" name="invert" id="invert" type="checkbox">
+            <label for="invert">Invert Colors</label>
+          </div>
+        </div>
+
+        <div class="w3-padding-16">
+          <label for="framebuffer">Framebuffer:</label>
+          <select class="w3-select" name="framebuffer" id="framebuffer">
+            <option value="0">Default</option>
+            <option value="1">Directional Light</option>
+            <option value="2">Left Projector</option>
+            <option value="3">Right Projector</option>
+          </select>
+        </div>
+
+        <div class="w3-padding-16">
+          <label for="shadowmappingmode">Shadow Mapping Mode:</label>
+          <select class="w3-select" name="shadowmappingmode" id="shadowmappingmode">
+            <option value="0">Basic Shadow Map</option>
+            <option value="1">Percentage Closer Filtering</option>
+            <option value="2">Variance Shadow Mapping</option>
+            <option value="3">Disabled</option>
+          </select>
+        </div>
+
+        <div class="w3-padding-16">
+          <label for="wireframe">Wireframe Mode:</label>
+          <select class="w3-select" name="wireframe" id="wireframe">
+            <option value="0">No wireframe</option>
+            <option value="1">Only wireframe</option>
+            <option value="2">Wireframe + Normal</option>
+          </select>
+        </div>
+
         <div class="w3-container">
-          <h3>Renderer options:</h3>
-          <div class="w3-padding-16">
-            <label for="cameras">Camera:</label>
-            <select class="w3-select" name="cameras" id="cameras">
-              <option value="0">FollowFromUp</option>
-              <option value="1">Chase</option>
-              <option value="2">Late Chase</option>
-              <option value="3">Free Camera</option>
-            </select>
-          </div>
+          <label class="w3-quarter" for="scale">Scale:</label>
+          <input class="w3-input w3-half" type="range" min="0.009" max="2" step="0.01" value="1" class="w3-input"
+            id="scale">
+          <label class="w3-quarter w3-center" for="scale" id="scaleValue">1</label>
+        </div>
 
-          <div>
-            <div class="w3-half w3-padding-16">
-              <input class="w3-check" name="chromaticAberration" id="chromaticAberration" type="checkbox">
-              <label for="chromaticAberration">Chromatic Aberration</label>
-            </div>
-            <div class="w3-half w3-padding-16">
-              <input class="w3-check" name="skybox" id="skybox" type="checkbox">
-              <label for="skybox">Skybox</label>
-            </div>
-          </div>
+        <div class="w3-container">
+          <label class="w3-quarter" for="shadowmapScale">Shadow Map Scale:</label>
+          <input class="w3-input w3-half" type="range" min="0.009" max="4" step="0.01" value="2" id="shadowmapScale">
+          <label class="w3-quarter w3-center" for="shadowmapScale" id="shadowmapScaleValue">2</label>
+        </div>
 
-          <div>
-            <div class="w3-half w3-padding-16">
-              <input class="w3-check" name="quantize" id="quantize" type="checkbox">
-              <label for="quantize">Quantize</label>
-            </div>
-            <div class="w3-half w3-padding-16">
-              <input class="w3-check" name="invert" id="invert" type="checkbox">
-              <label for="invert">Invert Colors</label>
-            </div>
-          </div>
+      </div>
+    </div>
+  </div>
 
-          <div class="w3-padding-16">
-            <label for="framebuffer">Framebuffer:</label>
-            <select class="w3-select" name="framebuffer" id="framebuffer">
-              <option value="0">Default</option>
-              <option value="1">Directional Light</option>
-              <option value="2">Left Projector</option>
-              <option value="3">Right Projector</option>
-            </select>
-          </div>
 
-          <div class="w3-padding-16">
-            <label for="shadowmappingmode">Shadow Mapping Mode:</label>
-            <select class="w3-select" name="shadowmappingmode" id="shadowmappingmode">
-              <option value="0">Basic Shadow Map</option>
-              <option value="1">Percentage Closer Filtering</option>
-              <option value="2">Variance Shadow Mapping</option>
-              <option value="3">Disabled</option>
-            </select>
-          </div>
-
-          <div class="w3-padding-16">
-            <label for="wireframe">Wireframe Mode:</label>
-            <select class="w3-select" name="wireframe" id="wireframe">
-              <option value="0">No wireframe</option>
-              <option value="1">Only wireframe</option>
-              <option value="2">Wireframe + Normal</option>
-            </select>
-          </div>
-
-          <div class="w3-container">
-            <label class="w3-quarter" for="scale">Scale:</label>
-            <input class="w3-input w3-half" type="range" min="0.009" max="2" step="0.01" value="1" class="w3-input" id="scale">
-            <label class="w3-quarter w3-center" for="scale" id="scaleValue">1</label>
-          </div>
-
-          <div class="w3-container">
-            <label class="w3-quarter" for="shadowmapScale">Shadow Map Scale:</label>
-            <input class="w3-input w3-half" type="range" min="0.009" max="4" step="0.01" value="2" id="shadowmapScale">
-            <label class="w3-quarter w3-center" for="shadowmapScale" id="shadowmapScaleValue">2</label>
-          </div>
-          
+  <div class="w3-half">
+    <div class="w3-card w3-teal w3-margin w3-padding-16 w3-round">
+      <div class="w3-container">
+        <h3>Controls:</h3>
+        <div class="w3-padding-16">
+          <div class="w3-card w3-round w3-center w3-dark-grey w3-half">WASD/Arrows</div>
+          <div class="w3-center w3-half">Move car/point of view</div>
+        </div>
+        <div class="w3-padding-16">
+          <div class="w3-card w3-round w3-center w3-dark-grey w3-half">Mouse</div>
+          <div class="w3-center w3-half">Move camera</div>
+        </div>
+        <div class="w3-padding-16">
+          <div class="w3-card w3-round w3-center w3-dark-grey w3-half">C</div>
+          <div class="w3-center w3-half">Toggle camera</div>
+        </div>
+        <div class="w3-padding-16">
+          <div class="w3-card w3-round w3-center w3-dark-grey w3-half">H</div>
+          <div class="w3-center w3-half">Toggle headlights</div>
+        </div>
+        <div class="w3-padding-16">
+          <div class="w3-card w3-round w3-center w3-dark-grey w3-half">F</div>
+          <div class="w3-center w3-half">Toggle fullscreen</div>
         </div>
       </div>
     </div>
+  </div>
+</body>
 
-
-    <div class="w3-half">
-      <div class="w3-card w3-teal w3-margin w3-padding-16 w3-round">
-        <div class="w3-container">
-          <h3>Controls:</h3>
-          <div class="w3-padding-16">
-            <div class="w3-card w3-round w3-center w3-dark-grey w3-half">WASD/Arrows</div>
-            <div class="w3-center w3-half">Move car/point of view</div>
-          </div>
-          <div class="w3-padding-16">
-            <div class="w3-card w3-round w3-center w3-dark-grey w3-half">Mouse</div>
-            <div class="w3-center w3-half">Move camera</div>
-          </div>
-          <div class="w3-padding-16">
-            <div class="w3-card w3-round w3-center w3-dark-grey w3-half">C</div>
-            <div class="w3-center w3-half">Toggle camera</div>
-          </div>
-          <div class="w3-padding-16">
-            <div class="w3-card w3-round w3-center w3-dark-grey w3-half">H</div>
-            <div class="w3-center w3-half">Toggle headlights</div>
-          </div>
-          <div class="w3-padding-16">
-            <div class="w3-card w3-round w3-center w3-dark-grey w3-half">F</div>
-            <div class="w3-center w3-half">Toggle fullscreen</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </body>
 </html>

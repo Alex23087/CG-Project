@@ -54,6 +54,7 @@ export class Renderer {
 	public chromaticAberration: boolean = false
 	public quantize: boolean = false
 	public invert: boolean = false
+	public fogEnabled: boolean = false
 
 	public textureManager: TextureManager
 	private postProcessingFrameBuffer: Framebuffer | null = null
@@ -352,6 +353,8 @@ export class Renderer {
 			gl.uniform1i(gl.getUniformLocation(shader.program, "uInvert"), this.invert == true ? 1 : 0)
 			gl.uniform1i(gl.getUniformLocation(shader.program, "uAberration"), this.chromaticAberration == true ? 1 : 0)
 
+			gl.uniform1i(gl.getUniformLocation(shader.program, "uFogEnabled"), this.fogEnabled == true ? 1 : 0)
+			// Pass depth texture and projection params
 			gl.uniform1i(gl.getUniformLocation(shader.program, "uDepthTex"), previousFramebuffer.getDepthTexture())
 			gl.uniform1f(gl.getUniformLocation(shader.program, "uNear"), this.currentCamera.near)
 			gl.uniform1f(gl.getUniformLocation(shader.program, "uFar"), this.currentCamera.far)
@@ -363,9 +366,16 @@ export class Renderer {
 			glMatrix.mat4.invert(invVP, vp);
 			gl.uniformMatrix4fv(gl.getUniformLocation(shader.program, "uInvVPMatrix"), false, invVP as Float32List)
 
+			// Pass Camera position
 			let invView = glMatrix.mat4.invert(glMatrix.mat4.create(), this.viewMatrix);
 			let cameraPos = glMatrix.vec3.fromValues(invView[12], invView[13], invView[14]);
 			gl.uniform3fv(gl.getUniformLocation(shader.program, "uCameraPosWS"), cameraPos as Float32List)
+
+			// Pass shadow map to do god rays
+			gl.uniformMatrix4fv(gl.getUniformLocation(shader.program, "uLightMatrix"), false, this.lights.directional.getLightMatrix() as Float32List)
+			gl.uniform1i(gl.getUniformLocation(shader.program, "uShadowMap"), this.lights.directional.framebuffer.getTexture())
+
+			gl.uniform2fv(gl.getUniformLocation(shader.program, "uViewportSize"), [this.viewportSize.x, this.viewportSize.y])
 		} else if (shader instanceof GaussianBlurShader) {
 			gl.uniform2fv(gl.getUniformLocation(shader.program, "uSize"), [previousFramebuffer.size.x, previousFramebuffer.size.y])
 			gl.uniformMatrix3fv(gl.getUniformLocation(shader.program, "uKernel"), false, [0.0625, 0.125, 0.0625, 0.125, 0.25, 0.125, 0.0625, 0.125, 0.0625])

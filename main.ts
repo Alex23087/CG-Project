@@ -8,24 +8,24 @@ var controls: Controls
 var game: Game
 var canvas: HTMLCanvasElement
 
-function on_keyup(e: KeyboardEvent){
+function on_keyup(e: KeyboardEvent) {
 	controls.keyReleased(e.key);
 }
-function on_keydown(e: KeyboardEvent){
+function on_keydown(e: KeyboardEvent) {
 	controls.keyPressed(e.key);
 }
 
 var cameraSelector = (document.getElementById("cameras") as HTMLSelectElement)
-cameraSelector.onchange = function (){
+cameraSelector.onchange = function () {
 	update_camera(cameraSelector.value as unknown as number)
 }
 
-window.onload = function (){
+window.onload = function () {
 	canvas = document.getElementById("OUTPUT-CANVAS") as HTMLCanvasElement;
 	renderer = new Renderer(canvas)
 	game = new Game(renderer)
 	controls = new Controls(renderer, game, cameraSelector)
-	renderer.canvas.addEventListener('mousemove', function(e: MouseEvent){controls.on_mouseMove(e)}, false)
+	renderer.canvas.addEventListener('mousemove', function (e: MouseEvent) { controls.on_mouseMove(e) }, false)
 	renderer.canvas.addEventListener('mouseup', controls.mouseup, false)
 	renderer.canvas.addEventListener('mousedown', controls.mousedown, false)
 	renderer.canvas.addEventListener('keydown', on_keydown, false)
@@ -35,13 +35,13 @@ window.onload = function (){
 		controls.onClick(e)
 	}
 
-	switch(Globals.renderer){
-		case 0:{
+	switch (Globals.renderer) {
+		case 0: {
 			renderer.wireframeMode = 2
 			wireframePicker.value = "2"
 		}
 		case 1:
-		case 2:{
+		case 2: {
 			renderer.disableSkybox()
 			renderer.shadowMappingMode = 3
 
@@ -54,14 +54,16 @@ window.onload = function (){
 			framebufferPicker.value = "0"
 			break
 		}
-		case 3:{
+		case 3: {
 			renderer.chromaticAberration = true
 			chromaticAberrationCheckbox.checked = true
+			renderer.fogEnabled = true
+			fogCheckbox.checked = true
 		}
 	}
 }
 
-function update_camera(value: number){
+function update_camera(value: number) {
 	controls.setCamera(value)
 }
 
@@ -80,23 +82,28 @@ shadowMapScaleSlider.oninput = (ev) => {
 }
 
 var chromaticAberrationCheckbox = document.getElementById("chromaticAberration") as HTMLInputElement
-chromaticAberrationCheckbox.onchange = function(e: Event){
+chromaticAberrationCheckbox.onchange = function (e: Event) {
 	renderer.chromaticAberration = chromaticAberrationCheckbox.checked as unknown as boolean
 }
 
 var quantizeCheckbox = document.getElementById("quantize") as HTMLInputElement
-quantizeCheckbox.onchange = function(e: Event){
+quantizeCheckbox.onchange = function (e: Event) {
 	renderer.quantize = quantizeCheckbox.checked as unknown as boolean
 }
 
 var invertCheckbox = document.getElementById("invert") as HTMLInputElement
-invertCheckbox.onchange = function(e: Event){
+invertCheckbox.onchange = function (e: Event) {
 	renderer.invert = invertCheckbox.checked as unknown as boolean
 }
 
+var fogCheckbox = document.getElementById("fogEnable") as HTMLInputElement
+fogCheckbox.onchange = function (e: Event) {
+	renderer.fogEnabled = fogCheckbox.checked as unknown as boolean
+}
+
 var skyboxCheckbox = document.getElementById("skybox") as HTMLInputElement
-skyboxCheckbox.onchange = function(e: Event){
-	if(skyboxCheckbox.checked as unknown as boolean){
+skyboxCheckbox.onchange = function (e: Event) {
+	if (skyboxCheckbox.checked as unknown as boolean) {
 		renderer.setSkybox({
 			posX: "../../Assets/Textures/cubemap/posx.jpg",
 			negX: "../../Assets/Textures/cubemap/negx.jpg",
@@ -105,23 +112,23 @@ skyboxCheckbox.onchange = function(e: Event){
 			posZ: "../../Assets/Textures/cubemap/posz.jpg",
 			negZ: "../../Assets/Textures/cubemap/negz.jpg"
 		})
-	}else{
+	} else {
 		renderer.disableSkybox()
 	}
 }
 
 var framebufferPicker = document.getElementById("framebuffer") as HTMLSelectElement
-framebufferPicker.onchange = function (){
+framebufferPicker.onchange = function () {
 	renderer.showFramebuffer = parseInt(framebufferPicker.value)
 }
 
 var shadowMappingModePicker = document.getElementById("shadowmappingmode") as HTMLSelectElement
-shadowMappingModePicker.onchange = function (){
+shadowMappingModePicker.onchange = function () {
 	renderer.shadowMappingMode = parseInt(shadowMappingModePicker.value)
 }
 
 var wireframePicker = document.getElementById("wireframe") as HTMLSelectElement
-wireframePicker.onchange = function (){
+wireframePicker.onchange = function () {
 	renderer.wireframeMode = parseInt(wireframePicker.value)
 }
 
@@ -129,6 +136,7 @@ chromaticAberrationCheckbox.checked = false
 quantizeCheckbox.checked = false
 invertCheckbox.checked = false
 skyboxCheckbox.checked = true
+fogCheckbox.checked = false
 scaleSlider.value = "1"
 shadowMapScaleSlider.value = "2"
 cameraSelector.value = "1"
